@@ -1,4 +1,4 @@
-# smart-agriculture-management智慧农业管理系统
+![image](https://github.com/user-attachments/assets/e54b0079-8a0a-472b-a071-991fd30c699d)# smart-agriculture-management智慧农业管理系统
 
 
 
@@ -11,10 +11,8 @@
 `dormitoory-admin`是一个简单的学生宿舍管理系统，基于Springboot+Layui实现。主要实现学生管理、宿舍管理、管理员管理、登记管理等的简单CURD和分页登录功能。
 
 ### 项目演示
+![image](https://github.com/user-attachments/assets/b925ddf6-b3d4-4569-b085-e83cc3826dbf)
 
-![截屏2023-02-18 03.12.55.png](https://s2.loli.net/2023/02/18/PkGX9TH8I674KD2.png)
-![截屏2023-02-18 02.57.50.png](https://s2.loli.net/2023/02/18/doexb2uKazCmG9g.png)
-![截屏2023-02-18 02.58.07.png](https://s2.loli.net/2023/02/18/ScNFjQeB48gfrHY.png)
 
 ### 技术选型
 
