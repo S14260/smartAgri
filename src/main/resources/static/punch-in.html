@@ -142,6 +142,11 @@
                     iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png'
                 })
             }).addTo(map).bindPopup("打卡位置").openPopup();
+            // 让地图视角飞到打卡点位置，缩放级别保持当前或自己定义
+            // 打卡点经纬度
+            const latlng = [lat, lng];
+            map.flyTo(latlng, 18); // 这里18是缩放等级，可以按需调整
+
 
             // 匹配地块
             let matched = false;
