@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html class="x-admin-sm">
+
+<head>
+  <meta charset="UTF-8">
+  <title>新增地块信息 - X-admin2.2</title>
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8,target-densitydpi=low-dpi" />
+  <link rel="stylesheet" href="./css/font.css">
+  <link rel="stylesheet" href="./css/xadmin.css">
+  <script type="text/javascript" src="./lib/layui/layui.js" charset="utf-8"></script>
+  <script type="text/javascript" src="./js/xadmin.js"></script>
+  <!-- 让IE8/9支持媒体查询，从而兼容栅格 -->
+  <!--[if lt IE 9]>
+  <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+  <script src="https://cdn.staticfile.org/respond.js/1.4.2/respond.min.js"></script>
+  <![endif]-->
+</head>
+
+<body>
+<div class="layui-fluid">
+  <div class="layui-row">
+    <form class="layui-form" action="" id="plotForm">
+      <div class="layui-form-item">
+        <label class="layui-form-label">地块名称</label>
+        <div class="layui-input-block">
+          <input type="text" name="name" lay-verify="required|nameLimit" placeholder="请输入地块名称（最长20字符）" class="layui-input">
+        </div>
+      </div>
+      <div class="layui-form-item">
+        <label class="layui-form-label">上季作物</label>
+        <div class="layui-input-block">
+          <select name="lastCrop" lay-verify="required">
+            <option value="">请选择作物类型</option>
+            <option value="玉米">玉米</option>
+            <option value="水稻">水稻</option>
+            <option value="甜菜">甜菜</option>
+            <option value="土豆">土豆</option>
+            <option value="其他">其他</option>
+          </select>
+        </div>
+      </div>
+      <div class="layui-form-item">
+        <label class="layui-form-label">本季作物</label>
+        <div class="layui-input-block">
+          <select name="currentCrop" lay-verify="required">
+            <option value="">请选择作物类型</option>
+            <option value="玉米">玉米</option>
+            <option value="水稻">水稻</option>
+            <option value="甜菜">甜菜</option>
+            <option value="土豆">土豆</option>
+            <option value="其他">其他</option>
+          </select>
+        </div>
+      </div>
+      <div class="layui-form-item">
+        <label class="layui-form-label">联系人</label>
+        <div class="layui-input-block">
+          <input type="text" name="contactPerson" lay-verify="required" placeholder="请输入联系人姓名" class="layui-input">
+        </div>
+      </div>
+      <div class="layui-form-item">
+        <label class="layui-form-label">联系电话</label>
+        <div class="layui-input-block">
+          <input type="text" name="phone" lay-verify="required|phone" placeholder="请输入联系电话" class="layui-input">
+        </div>
+      </div>
+      <div class="layui-form-item">
+        <label class="layui-form-label">土壤类型</label>
+        <div class="layui-input-block">
+          <select name="soilType" lay-verify="required">
+            <option value="">请选择土壤类型</option>
+            <option value="砂质土">砂质土</option>
+            <option value="黏质土">黏质土</option>
+            <option value="壤土">壤土</option>
+          </select>
+        </div>
+      </div>
+      <div class="layui-form-item">
+        <label class="layui-form-label">灌溉条件</label>
+        <div class="layui-input-block">
+          <select name="irrigation" lay-verify="required">
+            <option value="">请选择灌溉条件</option>
+            <option value="喷灌">喷灌</option>
+            <option value="滴灌">滴灌</option>
+            <option value="渠灌">渠灌</option>
+            <option value="自然降水">自然降水</option>
+          </select>
+        </div>
+      </div>
+      <div class="layui-form-item">
+        <label class="layui-form-label">土地类型</label>
+        <div class="layui-input-block">
+          <select name="landType" lay-verify="required">
+            <option value="">请选择土地类型</option>
+            <option value="租赁">租赁</option>
+            <option value="流转">流转</option>
+            <option value="开垦荒地">开垦荒地</option>
+            <option value="承包">承包</option>
+          </select>
+        </div>
+      </div>
+      <div class="layui-form-item">
+        <label class="layui-form-label">地块面积</label>
+        <div class="layui-input-block">
+          <input type="text" name="area" readonly class="layui-input" value="">
+        </div>
+      </div>
+      <div class="layui-form-item">
+        <div class="layui-input-block">
+          <button class="layui-btn" lay-submit lay-filter="submitPlot" type="submit">保存</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // 获取URL中的参数
+  function getQueryParam(param) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(param);
+  }
+
+  // 页面加载完成后执行
+  window.onload = function() {
+    // 获取传递的面积值
+    const area = getQueryParam('area');
+
+    // 如果获取到面积值，填充到表单的面积输入框中
+    if (area) {
+      const areaInput = document.querySelector('input[name="area"]');
+      if (areaInput) {
+        areaInput.value = area;  // 设置面积值
+      }
+    }
+  }
+
+
+  layui.use(['form'], function(){
+    var form = layui.form;
+
+    form.verify({
+      nameLimit: function(value){
+        if (value.length > 20) return '地块名称不能超过20字符';
+        if (!/^[\u4e00-\u9fa5a-zA-Z0-9]+$/.test(value)) return '仅限中英文和数字';
+      },
+      phone: function(value){
+        if (!/^1\d{10}$/.test(value)) return '请输入有效手机号';
+      }
+    });
+
+    form.on('submit(submitPlot)', function(data){
+      console.log('提交数据：', data.field);
+      layer.msg('提交成功！');
+      return false;
+    });
+  });
+</script>
+</body>
+
+</html>

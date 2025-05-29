@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8"/>
+    <title>地块打卡</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.staticfile.org/layui/2.8.18/css/layui.css"/>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+
+        .layui-container, .layui-card, .layui-card-body {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .layui-card-header {
+            flex: 0 0 auto;
+            padding: 10px;
+            font-weight: bold;
+            font-size: 18px;
+            border-bottom: 1px solid #e6e6e6;
+        }
+
+        #map {
+            flex: 1 1 auto;
+            min-height: 300px;
+            border: 1px solid #ccc;
+        }
+
+        #msg {
+            padding: 10px;
+            color: #333;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div class="layui-container" style="padding-top: 20px; height: 100vh;">
+    <div class="layui-card">
+        <div class="layui-card-header">地块打卡</div>
+        <div class="layui-card-body">
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <div class="layui-btn-container" style="margin: 0;">
+                    <button class="layui-btn" onclick="punch()">立即打卡</button>
+                </div>
+                <div id="msg" style="margin-left: 15px; color: #333; font-weight: bold;"></div>
+            </div>
+            <div id="map"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Leaflet -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/@turf/turf/turf.min.js"></script>
+<script src="https://cdn.staticfile.org/layui/2.8.18/layui.js"></script>
+
+<script>
+    let map, plotLayers = [];
+
+    function initMap() {
+        const imgLayer = L.tileLayer("http://t0.tianditu.gov.cn/img_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=img&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=19fc987939ebbcbcb3f0954ab6cf75be");
+        const vecLayer = L.tileLayer("http://t0.tianditu.gov.cn/vec_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=vec&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=19fc987939ebbcbcb3f0954ab6cf75be");
+        const labelLayer = L.tileLayer("http://t0.tianditu.gov.cn/cia_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=cia&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=19fc987939ebbcbcb3f0954ab6cf75be");
+
+        map = L.map("map", {
+            center: [39.065, 117.1050],
+            zoom: 16,
+            layers: [imgLayer, labelLayer]
+        });
+
+        L.control.layers({
+            "影像底图": imgLayer,
+            "矢量底图": vecLayer
+        }, {
+            "注记": labelLayer
+        }).addTo(map);
+    }
+
+    async function loadPlots() {
+        try {
+            const res = await fetch('/plots');
+            const plots = await res.json();
+            console.log("地块数据：", plots);
+
+            plots.forEach(plot => {
+                try {
+                    // 兼容驼峰和下划线
+                    plot.shape_type = plot.shape_type || plot.shapeType;
+
+                    const coords = JSON.parse(plot.coordinates);
+                    let layer;
+
+                    if (plot.shape_type === 'polygon' && coords.latlngs) {
+                        const latlngs = coords.latlngs.map(p => [p.lat, p.lng]);
+                        layer = L.polygon(latlngs).addTo(map);
+                    } else if (plot.shape_type === 'circle' && coords.center && coords.radius) {
+                        const center = [coords.center.lat, coords.center.lng];
+                        layer = L.circle(center, {
+                            radius: coords.radius,
+                        }).addTo(map);
+                    }
+
+                    if (layer) {
+                        layer.bindPopup(plot.name || "未命名地块");
+                        plotLayers.push({plot, layer});
+                    }
+                } catch (e) {
+                    console.error("解析某个地块失败：", plot, e);
+                }
+            });
+
+        } catch (e) {
+            console.error("加载地块失败：", e);
+            document.getElementById('msg').innerText = '地块加载失败';
+        }
+    }
+
+
+    function punch() {
+        if (!navigator.geolocation) {
+            document.getElementById('msg').innerText = '浏览器不支持定位功能';
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(success, error);
+
+        function success(pos) {
+            const lng = pos.coords.longitude;
+            const lat = pos.coords.latitude;
+
+            const punchPoint = turf.point([lng, lat]);
+
+            // 添加打卡点
+            L.marker([lat, lng], {
+                icon: L.icon({
+                    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png'
+                })
+            }).addTo(map).bindPopup("打卡位置").openPopup();
+
+            // 匹配地块
+            let matched = false;
+            plotLayers.forEach(({plot, layer}) => {
+                let polygon;
+                if (plot.shape_type === 'polygon') {
+                    const latlngs = JSON.parse(plot.coordinates).latlngs;
+                    const coords = latlngs.map(p => [p.lng, p.lat]);
+                    polygon = turf.polygon([[...coords, coords[0]]]); // 闭合
+                } else if (plot.shape_type === 'circle') {
+                    const {center, radius} = JSON.parse(plot.coordinates);
+                    polygon = turf.circle([center.lng, center.lat], radius / 1000, {steps: 64, units: 'kilometers'});
+                }
+
+                if (polygon && turf.booleanPointInPolygon(punchPoint, polygon)) {
+                    matched = true;
+                    layer.setStyle({color: 'red'}); // 修改为红色
+                    layer.openPopup();
+                }
+            });
+
+
+            // 发送打卡记录到后端
+            fetch('/punch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lng, lat })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('msg').innerText = data.data || '打卡成功';
+                })
+                .catch(() => {
+                    document.getElementById('msg').innerText = '打卡请求失败';
+                });
+        }
+
+        function error() {
+            document.getElementById('msg').innerText = '获取定位失败';
+        }
+    }
+
+
+    // 初始化
+    document.addEventListener('DOMContentLoaded', () => {
+        initMap();
+        loadPlots();
+    });
+</script>
+</body>
+</html>

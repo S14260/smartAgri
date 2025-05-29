@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8"/>
+    <title>地块绘制</title>
+
+    <!-- Leaflet 和 Draw 样式 -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw/dist/leaflet.draw.css"/>
+
+    <!-- Layui 样式 -->
+    <link rel="stylesheet" href="https://cdn.staticfile.org/layui/2.8.18/css/layui.css"/>
+
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background-color: #f5f5f5;
+            overflow: hidden; /* 避免出现滚动条 */
+        }
+
+        .layui-container,
+        .layui-card,
+        .layui-card-body {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 保持头部高度固定 */
+        .layui-card-header {
+            flex: 0 0 auto;
+            padding: 10px 10px;
+            font-weight: bold;
+            font-size: 18px;
+            border-bottom: 1px solid #e6e6e6;
+            background: #fff;
+        }
+
+        /* 工具栏高度固定 */
+        .layui-form {
+            flex: 0 0 auto;
+            margin-bottom: 10px;
+            padding: 0 10px;
+            background: #fff;
+        }
+
+        /* 地图容器撑满剩余高度 */
+        #map {
+            flex: 1 1 auto;
+            border-radius: 4px;
+            border: 1px solid #e6e6e6;
+            /* 让地图撑满剩余高度 */
+            min-height: 300px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="layui-container" style="padding-top: 20px; height: 100vh;">
+    <div class="layui-card">
+        <div class="layui-card-header">
+            地块绘制工具
+        </div>
+        <div class="layui-card-body">
+
+            <!-- 工具栏 -->
+            <div class="layui-form layui-row layui-col-space10">
+                <div class="layui-col-md4">
+                    <input type="text" id="searchInput" placeholder="请输入地名" class="layui-input">
+                </div>
+                <div class="layui-col-md2">
+                    <button class="layui-btn layui-btn-normal" id="searchBtn">搜索</button>
+                </div>
+                <div class="layui-col-md6 layui-text-right">
+                    <button class="layui-btn layui-btn-warm" id="queryPlot">查询地块</button>
+                </div>
+            </div>
+
+            <!-- 地图容器 -->
+            <div id="map"></div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Leaflet 与插件 -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-draw/dist/leaflet.draw.js"></script>
+<script src="https://unpkg.com/@turf/turf/turf.min.js"></script>
+
+<!-- Layui -->
+<script src="https://cdn.staticfile.org/layui/2.8.18/layui.js"></script>
+
+<!-- 自定义逻辑 -->
+<script src="js/app.js"></script>
+
+<script>
+    // 监听窗口大小变化，刷新地图大小
+    window.addEventListener('resize', () => {
+        if (window.map && typeof window.map.invalidateSize === "function") {
+            window.map.invalidateSize();
+        }
+    });
+
+    // 页面加载完成后延迟刷新地图大小
+    window.onload = () => {
+        setTimeout(() => {
+            if (window.map && typeof window.map.invalidateSize === "function") {
+                window.map.invalidateSize();
+            }
+        }, 300);
+    }
+</script>
+
+<!-- Leaflet Draw 中文配置（覆盖默认英文） -->
+<script>
+    L.drawLocal = {
+        draw: {
+            toolbar: {
+                actions: {
+                    title: '取消绘制',
+                    text: '取消'
+                },
+                finish: {
+                    title: '完成绘制',
+                    text: '完成'
+                },
+                undo: {
+                    title: '删除最后一个点',
+                    text: '删除最后一个点'
+                },
+                buttons: {
+                    polyline: '绘制折线',
+                    polygon: '绘制多边形',
+                    rectangle: '绘制矩形',
+                    circle: '绘制圆形',
+                    marker: '绘制标记',
+                    circlemarker: '绘制圆点标记'
+                }
+            },
+            handlers: {
+                circle: {
+                    tooltip: {
+                        start: '点击并拖动绘制圆形'
+                    },
+                    radius: '半径'
+                },
+                circlemarker: {
+                    tooltip: {
+                        start: '点击地图放置圆点标记'
+                    }
+                },
+                marker: {
+                    tooltip: {
+                        start: '点击地图放置标记'
+                    }
+                },
+                polygon: {
+                    tooltip: {
+                        start: '点击开始绘制多边形',
+                        cont: '点击继续绘制多边形',
+                        end: '点击第一个点完成绘制'
+                    }
+                },
+                polyline: {
+                    error: '<strong>错误:</strong> 多边形边不能相交!',
+                    tooltip: {
+                        start: '点击开始绘制折线',
+                        cont: '点击继续绘制折线',
+                        end: '点击最后一个点完成绘制'
+                    }
+                },
+                rectangle: {
+                    tooltip: {
+                        start: '点击并拖动绘制矩形'
+                    }
+                },
+                simpleshape: {
+                    tooltip: {
+                        end: '释放鼠标完成绘制'
+                    }
+                }
+            }
+        },
+        edit: {
+            toolbar: {
+                actions: {
+                    save: {
+                        title: '保存修改',
+                        text: '保存'
+                    },
+                    cancel: {
+                        title: '取消编辑，撤销所有更改',
+                        text: '取消'
+                    },
+                    clearAll: {
+                        title: '清除所有绘制图形',
+                        text: '清除所有'
+                    }
+                },
+                buttons: {
+                    edit: '编辑图形',
+                    editDisabled: '没有可编辑的图形',
+                    remove: '删除图形',
+                    removeDisabled: '没有可删除的图形'
+                }
+            },
+            handlers: {
+                edit: {
+                    tooltip: {
+                        text: '拖动控制点编辑图形',
+                        subtext: '点击取消撤销修改'
+                    }
+                },
+                remove: {
+                    tooltip: {
+                        text: '点击图形删除'
+                    }
+                }
+            }
+        }
+    };
+</script>
+
+</body>
+</html>

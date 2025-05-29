@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html class="x-admin-sm">
+<head>
+    <meta charset="UTF-8">
+    <title>地块列表 - 智慧农业</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport"
+          content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8,target-densitydpi=low-dpi"/>
+    <link rel="stylesheet" href="./css/font.css">
+    <link rel="stylesheet" href="./css/xadmin.css">
+    <script src="./lib/layui/layui.js" charset="utf-8"></script>
+    <script type="text/javascript" src="./js/xadmin.js"></script>
+    <script src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
+
+    <!-- Leaflet 样式和脚本 -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-image/leaflet-image.js"></script>
+</head>
+
+<body>
+<div class="x-nav">
+    <span class="layui-breadcrumb">
+        <a href="">首页</a>
+        <a href="">地块管理</a>
+        <a><cite>地块列表</cite></a>
+    </span>
+    <a class="layui-btn layui-btn-sm" style="float:right;margin-top:3px;" onclick="location.reload()" title="刷新">
+        <i class="layui-icon layui-icon-refresh"></i>
+    </a>
+</div>
+
+<div class="layui-fluid">
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-body">
+                    <table class="layui-table">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>面积(/亩)</th>
+                            <th>名称</th>
+                            <th>上季作物</th>
+                            <th>本季作物</th>
+                            <th>联系人</th>
+                            <th>电话</th>
+                            <th>土壤类型</th>
+                            <th>灌溉条件</th>
+                            <th>土地类型</th>
+                            <th>生成地块图片</th>
+                        </tr>
+                        </thead>
+                        <tbody id="tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        query();
+    });
+
+    function query() {
+        $.ajax({
+            url: '/student/queryPlot',
+            type: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                var htmlstr = "";
+                for (var i = 0; i < data.length; i++) {
+                    var plots = data[i];
+                    var str = "<tr><td>" + plots.id
+                        + "</td><td>" + plots.area
+                        + "</td><td>" + plots.name
+                        + "</td><td>" + plots.lastCrop
+                        + "</td><td>" + plots.currentCrop
+                        + "</td><td>" + plots.contactPerson
+                        + "</td><td>" + plots.phone
+                        + "</td><td>" + plots.soilType
+                        + "</td><td>" + plots.irrigationType
+                        + "</td><td>" + plots.landType
+                        + "</td><td><button class='layui-btn layui-btn-xs' onclick='showMap(`" + plots.coordinates + "`)'>生成地块图片</button></td></tr>";
+                    htmlstr += str;
+                }
+                $("#tbody").html(htmlstr);
+            },
+            error: function () {
+                layer.msg('服务器执行错误！', {icon: 2});
+            }
+        });
+    }
+
+    let map;  // 全局 map 对象
+    function showMap(coordStr) {
+        const coord = JSON.parse(coordStr);
+
+        layer.open({
+            type: 1,
+            area: ['650px', '500px'],
+            title: '地图预览',
+            content: `
+                <div style="padding:10px;">
+                    <div id="map" style="width:100%; height:400px;"></div>
+                    <button class="layui-btn layui-btn-sm" style="margin-top:10px;" onclick="captureMap()">截图</button>
+                    <div id="result" style="margin-top:10px;"></div>
+                </div>
+            `,
+            success: function () {
+                if (map) map.remove();  // 清理旧地图
+                map = L.map('map').setView([39, 117], 16);
+
+                L.tileLayer('https://t{s}.tianditu.gov.cn/DataServer?T=img_w&x={x}&y={y}&l={z}&tk=19fc987939ebbcbcb3f0954ab6cf75be', {
+                    subdomains: ['0', '1', '2', '3', '4', '5', '6', '7'],
+                    maxZoom: 18
+                }).addTo(map);
+
+                let shape;
+                if (coord.shapeType === 'polygon') {
+                    shape = L.polygon(coord.latlngs).addTo(map);
+                    map.fitBounds(shape.getBounds());
+                } else if (coord.shapeType === 'circle') {
+                    shape = L.circle(coord.center, { radius: coord.radius }).addTo(map);
+                    map.setView([coord.center.lat, coord.center.lng], 17);
+                }
+            }
+        });
+    }
+
+    function captureMap() {
+        leafletImage(map, function(err, canvas) {
+            const img = document.createElement('img');
+            img.src = canvas.toDataURL();
+            const result = document.getElementById('result');
+            result.innerHTML = '';
+            result.appendChild(img);
+        });
+    }
+</script>
+</body>
+</html>
