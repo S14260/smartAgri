@@ -139,6 +139,8 @@
         query();
     });
 
+
+
     function query() {
         $.ajax({
             url: '/student/queryPlot',
@@ -172,6 +174,7 @@
     }
 
     let map;
+    let shape;
     let currentImageData = null; // 用于保存当前截图Base64
 
     function showMap(coordStr) {
@@ -179,22 +182,36 @@
 
         layer.open({
             type: 1,
-            area: ['900px', '520px'],
+            area: ['1000px', '520px'],
             title: '地图截图预览',
             content: `
-                <div class="map-dialog">
-                    <div class="map-left">
-                        <div id="map"></div>
-                        <button class="layui-btn capture-btn" onclick="captureMap()">📸 生成截图</button>
-                    </div>
-                    <div class="map-right" style="display:flex; flex-direction:column; align-items:center;">
-                        <div id="result" style="flex:1; min-height:350px; width:100%; display:flex; align-items:center; justify-content:center; background:#f5f7fa; border-radius:8px; border:2px dashed #d0d0d0; overflow:hidden;">
-                            <span>截图将在此处展示</span>
+        <div class="map-dialog" style="gap:10px;">
+            <div class="map-left">
+                <div id="map"></div>
+                <button class="layui-btn capture-btn" onclick="captureMap()">📸 生成截图</button>
+            </div>
+            <div class="map-right" style="display:flex; flex-direction:column; width: 650px;">
+                <div style="flex: 1; display: flex; gap: 10px; overflow-x: auto; align-items: center; justify-content: center; padding: 10px; background:#f5f7fa; border-radius:8px; border:2px dashed #d0d0d0;">
+                    <div style="flex-shrink: 0; width: 200px; height: 200px; display:flex; flex-direction:column; align-items:center;">
+                        <div style="flex:1; width:100%; border-radius:6px; box-shadow:0 0 8px rgba(0,0,0,0.05); overflow:hidden; background:white;" id="fullScreenshotContainer">
+                            <span style="color:#999; font-size: 14px; display:flex; height: 100%; align-items: center; justify-content: center;">完整截图</span>
                         </div>
-                        <button id="downloadBtn" class="layui-btn capture-btn" style="display:none;" onclick="downloadImage()">⬇️ 下载截图</button>
+                    </div>
+                    <div style="flex-shrink: 0; width: 200px; height: 200px; display:flex; flex-direction:column; align-items:center;">
+                        <div style="flex:1; width:100%; border-radius:6px; box-shadow:0 0 8px rgba(0,0,0,0.05); overflow:hidden; background:white;" id="clipScreenshotContainer">
+                            <span style="color:#999; font-size: 14px; display:flex; height: 100%; align-items: center; justify-content: center;">裁剪截图</span>
+                        </div>
+                    </div>
+                    <div style="flex-shrink: 0; width: 200px; height: 200px; display:flex; flex-direction:column; align-items:center;">
+                        <div style="flex:1; width:100%; border-radius:6px; box-shadow:0 0 8px rgba(0,0,0,0.05); overflow:hidden; background:white;" id="shapeOutlineContainer">
+                            <span style="color:#999; font-size: 14px; display:flex; height: 100%; align-items: center; justify-content: center;">轮廓图</span>
+                        </div>
                     </div>
                 </div>
-            `,
+                <button id="downloadBtn" class="layui-btn capture-btn" style="margin-top: 10px; display:none;" onclick="downloadImage()">⬇️ 下载裁剪图</button>
+            </div>
+        </div>
+    `,
             success: function () {
                 if (map) map.remove();
                 map = L.map('map').setView([39, 117], 16);
@@ -204,7 +221,6 @@
                     maxZoom: 18
                 }).addTo(map);
 
-                let shape;
                 if (coord.shapeType === 'polygon') {
                     shape = L.polygon(coord.latlngs).addTo(map);
                     map.fitBounds(shape.getBounds());
@@ -214,6 +230,7 @@
                 }
             }
         });
+
     }
 
     function captureMap() {
@@ -222,20 +239,122 @@
                 layer.msg('截图失败！', {icon: 2});
                 return;
             }
-            const img = document.createElement('img');
-            currentImageData = canvas.toDataURL('image/png');
-            img.src = currentImageData;
-            const result = document.getElementById('result');
-            result.innerHTML = '';
-            result.appendChild(img);
 
-            // 显示下载按钮
+            // 1. 显示完整截图（canvas转图片）
+            const fullImg = new Image();
+            fullImg.src = canvas.toDataURL('image/png');
+            fullImg.style.width = '100%';
+            fullImg.style.height = '100%';
+
+            const fullContainer = document.getElementById('fullScreenshotContainer');
+            fullContainer.innerHTML = '';
+            fullContainer.appendChild(fullImg);
+
+            // 2. 裁剪截图逻辑（同你之前的）
+            const clipCanvas = document.createElement('canvas');
+            const ctx = clipCanvas.getContext('2d');
+            clipCanvas.width = canvas.width;
+            clipCanvas.height = canvas.height;
+
+            if (!shape) {
+                layer.msg('地块未加载', {icon: 0});
+                return;
+            }
+
+            function latLngToCanvasPoint(latlng) {
+                const point = map.latLngToContainerPoint(latlng);
+                return [point.x, point.y];
+            }
+
+            ctx.save();
+
+            if (shape instanceof L.Polygon) {
+                const latlngs = shape.getLatLngs()[0];
+                ctx.beginPath();
+                latlngs.forEach((latlng, i) => {
+                    const [x, y] = latLngToCanvasPoint(latlng);
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                });
+                ctx.closePath();
+                ctx.clip();
+            } else if (shape instanceof L.Circle) {
+                const center = latLngToCanvasPoint(shape.getLatLng());
+                const radius = map.latLngToContainerPoint(shape.getLatLng()).distanceTo(
+                    map.latLngToContainerPoint([shape.getLatLng().lat + shape.getRadius() / 111320, shape.getLatLng().lng])
+                );
+                ctx.beginPath();
+                ctx.arc(center[0], center[1], radius, 0, Math.PI * 2);
+                ctx.clip();
+            } else {
+                layer.msg('不支持的地块形状', {icon: 0});
+                ctx.restore();
+                return;
+            }
+
+            ctx.drawImage(canvas, 0, 0);
+            ctx.restore();
+
+            // 裁剪图
+            const clipImg = new Image();
+            clipImg.src = clipCanvas.toDataURL('image/png');
+            clipImg.style.width = '100%';
+            clipImg.style.height = '100%';
+
+            const clipContainer = document.getElementById('clipScreenshotContainer');
+            clipContainer.innerHTML = '';
+            clipContainer.appendChild(clipImg);
+
+            // 3. 绘制轮廓图（仅绘制shape边缘，背景透明）
+            const outlineCanvas = document.createElement('canvas');
+            outlineCanvas.width = canvas.width;
+            outlineCanvas.height = canvas.height;
+            const outlineCtx = outlineCanvas.getContext('2d');
+
+            outlineCtx.clearRect(0, 0, outlineCanvas.width, outlineCanvas.height);
+            outlineCtx.strokeStyle = 'rgba(255, 0, 0, 0.8)';
+            outlineCtx.lineWidth = 4;
+
+            outlineCtx.beginPath();
+
+            if (shape instanceof L.Polygon) {
+                const latlngs = shape.getLatLngs()[0];
+                latlngs.forEach((latlng, i) => {
+                    const [x, y] = latLngToCanvasPoint(latlng);
+                    if (i === 0) outlineCtx.moveTo(x, y);
+                    else outlineCtx.lineTo(x, y);
+                });
+                outlineCtx.closePath();
+            } else if (shape instanceof L.Circle) {
+                const center = latLngToCanvasPoint(shape.getLatLng());
+                const radius = map.latLngToContainerPoint(shape.getLatLng()).distanceTo(
+                    map.latLngToContainerPoint([shape.getLatLng().lat + shape.getRadius() / 111320, shape.getLatLng().lng])
+                );
+                outlineCtx.arc(center[0], center[1], radius, 0, Math.PI * 2);
+            }
+
+            outlineCtx.stroke();
+
+            const outlineImg = new Image();
+            outlineImg.src = outlineCanvas.toDataURL('image/png');
+            outlineImg.style.width = '100%';
+            outlineImg.style.height = '100%';
+
+            const outlineContainer = document.getElementById('shapeOutlineContainer');
+            outlineContainer.innerHTML = '';
+            outlineContainer.appendChild(outlineImg);
+
+            // 保存裁剪图用于下载
+            currentImageData = clipCanvas.toDataURL('image/png');
+
             const downloadBtn = document.getElementById('downloadBtn');
             if (downloadBtn) {
                 downloadBtn.style.display = 'inline-block';
             }
         });
     }
+
+
 
     function downloadImage() {
         if (!currentImageData) {
