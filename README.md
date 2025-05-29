@@ -1,4 +1,4 @@
-![image](https://github.com/user-attachments/assets/e54b0079-8a0a-472b-a071-991fd30c699d)# smart-agriculture-management智慧农业管理系统
+# smart-agriculture-management智慧农业管理系统
 
 
 
@@ -12,6 +12,8 @@
 
 ### 项目演示
 ![image](https://github.com/user-attachments/assets/b925ddf6-b3d4-4569-b085-e83cc3826dbf)
+![image](https://github.com/user-attachments/assets/4b21256e-cbf8-4017-9f35-c19418bb7c7b)
+![image](https://github.com/user-attachments/assets/d3217fe7-5ec5-4e36-a73c-feeb75e97fb9)
 
 
 ### 技术选型
