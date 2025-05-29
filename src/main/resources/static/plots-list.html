@@ -17,6 +17,80 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-image/leaflet-image.js"></script>
+
+    <style>
+        .map-dialog {
+            display: flex;
+            gap: 20px;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .map-left, .map-right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #fdfdfd;
+            border-radius: 10px;
+            padding: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        #map {
+            flex: 1;
+            min-height: 350px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        #result {
+            flex: 1;
+            min-height: 350px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #f5f7fa;
+            border-radius: 8px;
+            border: 2px dashed #d0d0d0;
+            overflow: hidden;
+        }
+
+        #result img {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 6px;
+            box-shadow: 0 0 8px rgba(0,0,0,0.05);
+        }
+
+        #result span {
+            color: #999;
+            font-size: 15px;
+        }
+
+        .capture-btn, .download-btn {
+            margin-top: 10px;
+            align-self: center;
+            background-color: #5FB878;
+            color: white;
+            transition: all 0.3s ease;
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            cursor: pointer;
+            padding: 6px 15px;
+            border: none;
+        }
+
+        .capture-btn:hover, .download-btn:hover {
+            background-color: #4aae65;
+            transform: scale(1.02);
+        }
+
+        .download-btn {
+            display: none;
+        }
+    </style>
+
 </head>
 
 <body>
@@ -49,7 +123,7 @@
                             <th>土壤类型</th>
                             <th>灌溉条件</th>
                             <th>土地类型</th>
-                            <th>生成地块图片</th>
+                            <th>操作</th>
                         </tr>
                         </thead>
                         <tbody id="tbody"></tbody>
@@ -71,21 +145,23 @@
             type: 'GET',
             dataType: 'json',
             success: function (data) {
-                var htmlstr = "";
-                for (var i = 0; i < data.length; i++) {
-                    var plots = data[i];
-                    var str = "<tr><td>" + plots.id
-                        + "</td><td>" + plots.area
-                        + "</td><td>" + plots.name
-                        + "</td><td>" + plots.lastCrop
-                        + "</td><td>" + plots.currentCrop
-                        + "</td><td>" + plots.contactPerson
-                        + "</td><td>" + plots.phone
-                        + "</td><td>" + plots.soilType
-                        + "</td><td>" + plots.irrigationType
-                        + "</td><td>" + plots.landType
-                        + "</td><td><button class='layui-btn layui-btn-xs' onclick='showMap(`" + plots.coordinates + "`)'>生成地块图片</button></td></tr>";
-                    htmlstr += str;
+                let htmlstr = "";
+                for (let i = 0; i < data.length; i++) {
+                    const plots = data[i];
+                    htmlstr += `
+                        <tr>
+                            <td>${plots.id}</td>
+                            <td>${plots.area}</td>
+                            <td>${plots.name}</td>
+                            <td>${plots.lastCrop}</td>
+                            <td>${plots.currentCrop}</td>
+                            <td>${plots.contactPerson}</td>
+                            <td>${plots.phone}</td>
+                            <td>${plots.soilType}</td>
+                            <td>${plots.irrigationType}</td>
+                            <td>${plots.landType}</td>
+                            <td><button class='layui-btn layui-btn-xs' onclick='showMap(\`${plots.coordinates}\`)'>获取地块图片</button></td>
+                        </tr>`;
                 }
                 $("#tbody").html(htmlstr);
             },
@@ -95,23 +171,32 @@
         });
     }
 
-    let map;  // 全局 map 对象
+    let map;
+    let currentImageData = null; // 用于保存当前截图Base64
+
     function showMap(coordStr) {
         const coord = JSON.parse(coordStr);
 
         layer.open({
             type: 1,
-            area: ['650px', '500px'],
-            title: '地图预览',
+            area: ['900px', '520px'],
+            title: '地图截图预览',
             content: `
-                <div style="padding:10px;">
-                    <div id="map" style="width:100%; height:400px;"></div>
-                    <button class="layui-btn layui-btn-sm" style="margin-top:10px;" onclick="captureMap()">截图</button>
-                    <div id="result" style="margin-top:10px;"></div>
+                <div class="map-dialog">
+                    <div class="map-left">
+                        <div id="map"></div>
+                        <button class="layui-btn capture-btn" onclick="captureMap()">📸 生成截图</button>
+                    </div>
+                    <div class="map-right" style="display:flex; flex-direction:column; align-items:center;">
+                        <div id="result" style="flex:1; min-height:350px; width:100%; display:flex; align-items:center; justify-content:center; background:#f5f7fa; border-radius:8px; border:2px dashed #d0d0d0; overflow:hidden;">
+                            <span>截图将在此处展示</span>
+                        </div>
+                        <button id="downloadBtn" class="layui-btn capture-btn" style="display:none;" onclick="downloadImage()">⬇️ 下载截图</button>
+                    </div>
                 </div>
             `,
             success: function () {
-                if (map) map.remove();  // 清理旧地图
+                if (map) map.remove();
                 map = L.map('map').setView([39, 117], 16);
 
                 L.tileLayer('https://t{s}.tianditu.gov.cn/DataServer?T=img_w&x={x}&y={y}&l={z}&tk=19fc987939ebbcbcb3f0954ab6cf75be', {
@@ -124,7 +209,7 @@
                     shape = L.polygon(coord.latlngs).addTo(map);
                     map.fitBounds(shape.getBounds());
                 } else if (coord.shapeType === 'circle') {
-                    shape = L.circle(coord.center, { radius: coord.radius }).addTo(map);
+                    shape = L.circle(coord.center, {radius: coord.radius}).addTo(map);
                     map.setView([coord.center.lat, coord.center.lng], 17);
                 }
             }
@@ -132,13 +217,37 @@
     }
 
     function captureMap() {
-        leafletImage(map, function(err, canvas) {
+        leafletImage(map, function (err, canvas) {
+            if (err) {
+                layer.msg('截图失败！', {icon: 2});
+                return;
+            }
             const img = document.createElement('img');
-            img.src = canvas.toDataURL();
+            currentImageData = canvas.toDataURL('image/png');
+            img.src = currentImageData;
             const result = document.getElementById('result');
             result.innerHTML = '';
             result.appendChild(img);
+
+            // 显示下载按钮
+            const downloadBtn = document.getElementById('downloadBtn');
+            if (downloadBtn) {
+                downloadBtn.style.display = 'inline-block';
+            }
         });
+    }
+
+    function downloadImage() {
+        if (!currentImageData) {
+            layer.msg('请先生成截图！', {icon: 0});
+            return;
+        }
+        const a = document.createElement('a');
+        a.href = currentImageData;
+        a.download = 'plot-map.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
     }
 </script>
 </body>
