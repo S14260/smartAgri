@@ -10,3 +10,5 @@ spring:
       exclude: public/**,config/application.yml
 server:
   port: 8080
+amap:
+  key: 9c7f97e95b93948af40ddab4871ffa18

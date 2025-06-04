@@ -26,6 +26,7 @@ public class Plot {
     @Column(columnDefinition = "TEXT")
     private String coordinates; // 坐标数据（JSON字符串）
     private Double area; // 面积
+    private String address;
 
 
 

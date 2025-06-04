@@ -5,9 +5,11 @@ import com.example.dormitoryadmin.dao.PlotDao;
 import com.example.dormitoryadmin.model.Student;
 import com.example.dormitoryadmin.service.PlotService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -50,5 +52,18 @@ public class PlotController {
         return plotDao.save(plot);
     }
 
+
+    @PostMapping("/plots/{id}/address")
+    public ResponseEntity<?> updatePlotAddress(@PathVariable Long id, @RequestBody Map<String, String> payload) {
+        String address = payload.get("address");
+        Plot plot = plotDao.findById(id).get();
+        if (plot != null) {
+            plot.setAddress(address);
+            plotDao.save(plot);
+            return ResponseEntity.ok("地址更新成功");
+        } else {
+            return ResponseEntity.status(404).body("地块不存在");
+        }
+    }
 
 }

@@ -54,6 +54,39 @@
             /* 让地图撑满剩余高度 */
             min-height: 300px;
         }
+        #drawControls {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background: #f0f0f0;
+            border-top: 1px solid #ccc;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            flex-wrap: nowrap;
+            display: flex;
+            /*防止地图穿透*/
+            pointer-events: auto;
+        }
+        #drawTip{
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            color: #333;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            z-index: 9999;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
     </style>
 </head>
 <body>
@@ -75,11 +108,28 @@
                 </div>
                 <div class="layui-col-md6 layui-text-right">
                     <button class="layui-btn layui-btn-warm" id="queryPlot">查询地块</button>
+                    <button class="layui-btn layui-btn-red" id="startDrawBtn">开始圈地</button>
                 </div>
             </div>
 
             <!-- 地图容器 -->
-            <div id="map"></div>
+            <div id="map">
+                <div id="drawControls">
+                    <button id="btn-start" class="layui-btn layui-btn-danger" style="margin: 0 10px;">开始绘制</button>
+                    <button id="btn-finish" class="layui-btn layui-btn-normal" style="margin: 0 10px;">完成绘制</button>
+                    <button id="btn-undo" class="layui-btn layui-btn-danger" style="margin: 0 10px;">撤回</button>
+                    <button id="btn-cancel" class="layui-btn" style="margin: 0 10px;">取消绘制</button>
+                </div>
+                <div id="drawTip">
+                    已进入圈地模式，请点击“开始绘图”按钮
+                </div>
+            </div>
+
+
+            <!--绘制相关按钮，绑定leaflet-->
+            <!-- 全屏圈地底部操作按钮 -->
+
+
 
         </div>
     </div>
