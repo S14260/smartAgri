@@ -75,7 +75,7 @@
     <div class="layui-form-item">
       <label class="layui-form-label">灌溉条件</label>
       <div class="layui-input-block">
-        <select name="irrigation" lay-verify="required">
+        <select name="irrigationType" lay-verify="required">
           <option value="">请选择灌溉条件</option>
           <option value="喷灌">喷灌</option>
           <option value="滴灌">滴灌</option>
@@ -107,7 +107,7 @@
 
     <div class="layui-form-item">
       <div class="layui-input-block">
-        <button class="layui-btn" type="submit">保存</button>
+        <button class="layui-btn" lay-submit lay-filter="submitForm">保存</button>
       </div>
     </div>
   </form>
@@ -145,9 +145,36 @@
       }
     });
 
+    // 拦截表单提交事件
+    form.on('submit(submitForm)', function(data){
+      // 移除“亩”字并转成数值
+      const areaValue = document.getElementById('areaInput').value.replace(/[^\d.]/g, '');
+
+      // 构造 payload
+      const payload = {
+        ...data.field,
+        area: areaValue
+      };
+
+      // 发送给 opener（地图主页面）
+      if (window.opener) {
+        window.opener.postMessage({
+          type: "submitPlot",
+          payload
+        }, "*");
+      } else {
+        alert("无法回传数据，请从地图页面打开该窗口！");
+      }
+
+      return false; // 阻止表单默认提交
+    });
+
     form.render();
   });
 </script>
+
+
+
 
 </body>
 </html>

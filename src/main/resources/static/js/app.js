@@ -56,7 +56,7 @@ function initMap() {
             polygon: true,
             rectangle: false,
             marker: false,
-            circle: false,       // 你代码里用了circle，必须开启
+            circle: false,
             circlemarker: false
         }
     });
@@ -135,6 +135,8 @@ function initMap() {
                     });
                     if (!res.ok) throw new Error("请求失败");
                     const saved = await res.json();
+
+                    console.log("发送给主窗口的数据 payload:", plotData);  // 调试输出
                     popupWindow.close();
                     alert("保存成功！");
                     displayPlot(saved);
@@ -385,7 +387,7 @@ async function enterDrawMode() {
 
             // 显示绘图控制按钮和提示文字
             drawControls.style.display = 'flex';
-            showCustomMsg("已进入圈地模式，请点击“开始绘图”按钮");
+            showCustomMsg("已进入圈地模式，请点击“开始绘制”按钮");
 
             console.log('按钮和提示显示了！');
 
