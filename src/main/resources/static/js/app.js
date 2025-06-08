@@ -7,7 +7,6 @@ document.addEventListener("DOMContentLoaded", () => {
     setupSearch();
 });
 
-
 /**
  * 初始化地图与绘图控件
  */
@@ -146,6 +145,7 @@ function initMap() {
                 }
             }
         }, {once: true});
+
     });
 }
 
@@ -170,7 +170,6 @@ function getCurrentLocation() {
         );
     });
 }
-
 
 
 /**
@@ -238,72 +237,62 @@ async function deletePlot(id) {
     }
 }
 
-/**
- * 修改面积示例
- */
-async function updateArea(id) {
-    const newArea = prompt("请输入新的面积（亩）");
-    if (!newArea) return;
-
-    try {
-        const res = await fetch(`http://localhost:8080/plots/${id}/area`, {
-            method: "PUT",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({area: newArea})
-        });
-        if (!res.ok) throw new Error("更新失败");
-        alert("更新成功");
-        loadPlots();
-    } catch (err) {
-        console.error(err);
-        alert("更新失败");
-    }
-}
 
 /**
- * 简单搜索功能示范（天地图POI检索接口）
+ * 搜索地址并跳转地图位置
  */
 function setupSearch() {
-    const searchBtn = document.getElementById("searchBtn");
-    const searchInput = document.getElementById("searchInput");
+    const btn = document.getElementById("searchBtn");
+    const input = document.getElementById("searchInput");
 
-    searchBtn.onclick = async () => {
-        const keyword = searchInput.value.trim();
-        if (!keyword) return alert("请输入搜索关键词");
+    const doSearch = async () => {
+        const keyword = input.value.trim();
+        if (!keyword) {
+            layer.msg("请输入关键字", {icon: 0});
+            return;
+        }
+
+        const url = `https://api.tianditu.gov.cn/geocoder?ds={"keyWord":"${keyword}"}&tk=19fc987939ebbcbcb3f0954ab6cf75be`;
 
         try {
-            const res = await fetch(`http://api.tianditu.gov.cn/search?postStr={"keyWord":"${keyword}","level":"15","mapBound":"39.4,116.8,38.8,117.5","queryType":"1"}&type=search&tk=19fc987939ebbcbcb3f0954ab6cf75be`);
-            if (!res.ok) throw new Error("搜索失败");
+            const res = await fetch(url);
             const data = await res.json();
-
-            if (data.datas && data.datas.length > 0) {
-                const first = data.datas[0];
-                map.setView([first.y, first.x], 17);
-                L.popup().setLatLng([first.y, first.x]).setContent(`<b>${first.name}</b><br>${first.address}`).openOn(map);
+            if (data?.location) {
+                const {lon, lat} = data.location;
+                const latlng = [lat, lon];
+                map.setView(latlng, 14);
+                L.marker(latlng).addTo(map).bindPopup(`搜索结果：${keyword}`).openPopup();
+                layer.msg("定位成功", {icon: 1});
             } else {
-                alert("无搜索结果");
+                layer.alert("未找到该位置", {icon: 2});
             }
         } catch (err) {
-            console.error(err);
-            alert("搜索异常");
+            console.error("搜索失败：", err);
+            layer.alert("搜索失败，请检查网络或天地图服务", {icon: 2});
         }
     };
+
+    btn.addEventListener("click", doSearch);
+    input.addEventListener("keypress", e => {
+        if (e.key === "Enter") doSearch();
+    });
 }
 
-// 更新面积按钮事件
-async function updateArea(id) {
-    const newArea = prompt("请输入新的面积（亩）：");
 
-    if (newArea === null || newArea.trim() === "") {
+/**
+ * 修改面积（亩）
+ */
+async function updateArea(id) {
+    const input = prompt("请输入新的面积（亩）：");
+    if (input === null || input.trim() === "") {
         alert("面积不能为空");
         return;
     }
 
-    const area = parseFloat(newArea.trim());
+    const area = parseFloat(input.trim());
 
-    // 验证面积格式
     if (isNaN(area) || area <= 0) {
-        alert("面积必须大于0并且是数字");
+        alert("请输入大于0的数字");
         return;
     }
 
@@ -311,20 +300,14 @@ async function updateArea(id) {
         const res = await fetch(`http://localhost:8080/plots/${id}/area`, {
             method: "PUT",
             headers: {
-                "Content-Type": "application/json",
+                "Content-Type": "application/json"
             },
-            body: JSON.stringify({area}), // 传对象更语义化
+            body: JSON.stringify({ area: parseFloat(area.toFixed(2)) }) // 保留两位小数
         });
 
-        if (!res.ok) {
-            alert("更新失败，请检查后端服务");
-            return;
-        }
-
-        const updatedPlot = await res.json();
-        alert("面积更新成功！");
-        loadPlots(); // 重新加载地块数据
-
+        if (!res.ok) throw new Error("更新失败");
+        alert("更新成功");
+        loadPlots();
     } catch (err) {
         console.error("更新失败：", err);
         alert("更新失败，请检查后端服务");
@@ -377,9 +360,19 @@ async function enterDrawMode() {
             map.setZoom(17);
 
             try {
-                const coords = await getCurrentLocation();
+                // 替换原来的定位代码
+                const currentCenter = map.getCenter();
+                const currentZoom = map.getZoom();
+
+                if (currentZoom < 17) {
+                    map.setView(currentCenter, 17);
+                } else {
+                    map.setView(currentCenter, currentZoom);
+                }
+                //下面这段是设置为当前所处位置。
+                /*const coords = await getCurrentLocation();
                 map.setView([coords.latitude, coords.longitude]);
-                console.log('定位成功，已设置视图', coords);
+                console.log('定位成功，已设置视图', coords);*/
             } catch (err) {
                 console.warn('定位失败，使用默认坐标', err);
                 map.setView([39.065, 117.105]);
@@ -421,7 +414,7 @@ document.getElementById('btn-start').addEventListener('click', (e) => {
         currentDrawer = new L.Draw.Polygon(map, window.drawControl.options.draw.polygon);
         currentDrawer.enable();
     } else {
-        layer.msg("绘图控件未初始化", { icon: 2 });
+        layer.msg("绘图控件未初始化", {icon: 2});
     }
 });
 
@@ -446,9 +439,10 @@ function undoLastVertex(e) {
     if (currentDrawer && currentDrawer.enabled() && currentDrawer.deleteLastVertex) {
         currentDrawer.deleteLastVertex();
     } else {
-        layer.msg("当前没有正在绘制的多边形，无法撤回", { icon: 0, time: 2000 });
+        layer.msg("当前没有正在绘制的多边形，无法撤回", {icon: 0, time: 2000});
     }
 }
+
 const undoBtn = document.getElementById('btn-undo');
 undoBtn.addEventListener('click', undoLastVertex);
 undoBtn.addEventListener('touchstart', undoLastVertex); // 手机兼容
@@ -483,8 +477,6 @@ function showCustomMsg(text, duration = 3000) {
         }, 300);
     }, duration);
 }
-
-
 
 
 // 查询地块功能（layui）
@@ -587,3 +579,6 @@ layui.use(['layer', 'laytpl'], function () {
         }
     };
 });
+
+
+
