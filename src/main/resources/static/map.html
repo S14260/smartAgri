@@ -21,11 +21,17 @@
         }
 
         .layui-container,
-        .layui-card,
-        .layui-card-body {
+        .layui-card {
             height: 100%;
             display: flex;
             flex-direction: column;
+        }
+
+        .layui-card-body {
+            flex: 1 1 auto; /* 撑满剩余 */
+            display: flex;
+            flex-direction: column;
+            min-height: 0; /* 重要，防止flex子元素溢出 */
         }
 
         /* 保持头部高度固定 */
@@ -49,11 +55,15 @@
         /* 地图容器撑满剩余高度 */
         #map {
             flex: 1 1 auto;
+            min-height: 300px;
             border-radius: 4px;
             border: 1px solid #e6e6e6;
-            /* 让地图撑满剩余高度 */
-            min-height: 300px;
+            min-width: 0; /* 重要，防止flex子元素溢出 */
+            min-height: 0; /* 重要，防止flex子元素溢出 */
+            display: block; /* 确保是块级元素 */
         }
+
+        /* 你已有的draw控件样式保持不变 */
         #drawControls {
             display: none;
             position: fixed;
@@ -71,7 +81,7 @@
             /*防止地图穿透*/
             pointer-events: auto;
         }
-        #drawTip{
+        #drawTip {
             display: none;
             position: fixed;
             top: 50%;
@@ -87,6 +97,7 @@
             opacity: 0;
             transition: opacity 0.3s ease;
         }
+
     </style>
 </head>
 <body>
@@ -138,6 +149,8 @@
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet-draw/dist/leaflet.draw.js"></script>
 <script src="https://unpkg.com/@turf/turf/turf.min.js"></script>
+<!--热力图-->
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 
 <!-- Layui -->
 <script src="https://cdn.staticfile.org/layui/2.8.18/layui.js"></script>

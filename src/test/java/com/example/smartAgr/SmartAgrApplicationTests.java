@@ -24,3 +24,5 @@ class SmartAgrApplicationTests {
         System.out.println(studentDao.queryPlot().get(2));
     }
 }
+
+

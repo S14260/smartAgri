@@ -1,5 +1,6 @@
 let map;            // 地图实例
 let drawnItems;     // 用户绘制图层集合
+let heatLayer;      // 热力图图层，全局变量，避免重复创建
 
 document.addEventListener("DOMContentLoaded", () => {
     initMap();
@@ -11,6 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
  * 初始化地图与绘图控件
  */
 function initMap() {
+    // 天地图影像、矢量、注记图层
     const imgLayer = L.tileLayer("http://t0.tianditu.gov.cn/img_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=img&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=19fc987939ebbcbcb3f0954ab6cf75be", {
         attribution: "天地图影像"
     });
@@ -21,14 +23,14 @@ function initMap() {
         attribution: "注记"
     });
 
-    // 默认中心为天津工业大学，获得到定位后覆盖
+    // 初始化地图，默认天津工业大学
     map = L.map("map", {
         center: [39.065, 117.105],
         zoom: 16,
         layers: [imgLayer, labelLayer]
     });
 
-    // 尝试获取当前定位，成功后调整中心
+    // 尝试获取定位，失败则用默认
     getCurrentLocation()
         .then(coords => {
             map.setView([coords.latitude, coords.longitude], 16);
@@ -36,7 +38,6 @@ function initMap() {
         .catch(err => {
             console.warn('定位失败，使用默认坐标', err);
         });
-
 
     drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
@@ -48,8 +49,11 @@ function initMap() {
     const overlayMaps = {
         "注记": labelLayer
     };
-    L.control.layers(baseMaps, overlayMaps).addTo(map);
 
+    // 先创建图层控制器
+    const layersControl = L.control.layers(baseMaps, overlayMaps).addTo(map);
+
+    // 添加绘图控件，只允许画多边形
     window.drawControl = new L.Control.Draw({
         draw: {
             polygon: true,
@@ -110,17 +114,15 @@ function initMap() {
             }
         }
 
-        const url = `plot-admin-add.html?area=${area}`;  // 不传地址，前端填写
+        const url = `plot-admin-add.html?area=${area}`;
         const width = 667, height = 543;
         const left = (window.screen.width - width) / 2;
         const top = (window.screen.height - height) / 2;
         const popupWindow = window.open(url, '_blank', `width=${width},height=${height},left=${left},top=${top}`);
 
-        // 通过postMessage通信更安全，不推荐直接操作popup DOM（跨域等坑）
         window.addEventListener("message", async (event) => {
             if (event.source === popupWindow && event.data.type === "submitPlot") {
                 const plotData = event.data.payload;
-                // 补充shapeType、coordinates、area、address
                 plotData.shapeType = shapeType;
                 plotData.coordinates = coordinates;
                 plotData.area = area;
@@ -135,7 +137,7 @@ function initMap() {
                     if (!res.ok) throw new Error("请求失败");
                     const saved = await res.json();
 
-                    console.log("发送给主窗口的数据 payload:", plotData);  // 调试输出
+                    console.log("发送给主窗口的数据 payload:", plotData);
                     popupWindow.close();
                     alert("保存成功！");
                     displayPlot(saved);
@@ -145,9 +147,128 @@ function initMap() {
                 }
             }
         }, {once: true});
+    });
 
+    // 地图ready后加载地块和热力图
+    map.whenReady(() => {
+        loadAndRenderPlots(layersControl, baseMaps, overlayMaps);
     });
 }
+
+/**
+ * 加载地块数据并渲染，包括热力图
+ * 传入图层控制器和图层对象，方便动态添加
+ */
+async function loadAndRenderPlots(layersControl, baseMaps, overlayMaps) {
+    try {
+        // 1. 检查地图容器是否准备就绪
+        const mapContainer = document.getElementById('map');
+        if (mapContainer.offsetWidth === 0 || mapContainer.offsetHeight === 0) {
+            console.warn('地图容器不可见，延迟加载');
+            setTimeout(() => loadAndRenderPlots(layersControl, baseMaps, overlayMaps), 100);
+            return;
+        }
+
+        // 2. 获取真实地块数据
+        let plots;
+        try {
+            const res = await fetch("http://localhost:8080/plots");
+            if (!res.ok) throw new Error(`HTTP状态 ${res.status}`);
+            plots = await res.json();
+            console.log("✅ 从API获取地块数据：", plots);
+        } catch (apiError) {
+            alert("警告：API请求错误，真实数据加载失败");
+        }
+
+        // 3. 渲染地块并计算地图范围
+        const featureGroup = L.featureGroup();
+        plots.forEach(plot => {
+            const layer = displayPlot(plot);
+            if (layer) featureGroup.addLayer(layer);
+        });
+
+        // 自动调整地图视野（包含所有地块+10%边距）
+        if (plots.length > 0) {
+            map.fitBounds(featureGroup.getBounds().pad(0.1));
+        }
+
+        // 4. 生成增强版热力图数据
+        const heatPoints = plots.flatMap((plot, index) => {
+            try {
+                if (!plot.coordinates) {
+                    console.warn(`第${index}个地块缺少coordinates字段`);
+                    return [];
+                }
+
+                const coord = JSON.parse(plot.coordinates);
+
+                // 圆形地块处理
+                if (coord.shapeType === "circle" && coord.center) {
+                    return [
+                        [coord.center.lat, coord.center.lng, 1.0], // 中心点
+                        [coord.center.lat + 0.0002, coord.center.lng, 0.6], // 周边点
+                        [coord.center.lat - 0.0002, coord.center.lng, 0.6]
+                    ];
+                }
+                // 多边形地块处理
+                else if (coord.shapeType === "polygon" && Array.isArray(coord.latlngs)) {
+                    const bounds = L.latLngBounds(coord.latlngs);
+                    return [
+                        [bounds.getCenter().lat, bounds.getCenter().lng, 1.0], // 中心点
+                        [bounds.getSouthWest().lat, bounds.getSouthWest().lng, 0.6], // 边界点
+                        [bounds.getNorthEast().lat, bounds.getNorthEast().lng, 0.6]
+                    ];
+                }
+                return [];
+            } catch (err) {
+                console.error(`处理第${index}个地块失败:`, err);
+                return [];
+            }
+        }).filter(point =>
+            point &&
+            !isNaN(point[0]) &&
+            !isNaN(point[1])
+        );
+
+        console.log("生成的热力点数据:", heatPoints);
+
+        // 5. 安全创建热力图
+        if (heatLayer) {
+            map.removeLayer(heatLayer);  //
+            if (layersControl && overlayMaps["热力图"]) {
+                layersControl.removeLayer(overlayMaps["热力图"]);
+            }
+            delete overlayMaps["热力图"];
+        }
+
+        if (heatPoints.length > 0 && typeof L.heatLayer === "function") {
+            heatLayer = L.heatLayer(heatPoints, {
+                radius: 28,    // 控制热力点影响范围（像素）
+                blur: 15,      // 控制模糊程度（越大越柔和）
+                maxZoom: 18,   // 热力图最大显示级别
+                minOpacity: 0.1, // 最小透明度（避免颜色太淡）
+                gradient: {           // 自定义颜色渐变
+                    0.4: 'blue',
+                    0.6: 'cyan',
+                    0.7: 'lime',
+                    0.8: 'yellow',
+                    1.0: 'red'
+                }
+            }).addTo(map);
+
+            overlayMaps["热力图"] = heatLayer;
+
+            if (layersControl) {
+                layersControl.addOverlay(heatLayer, "热力图");
+            }
+        }
+
+    } catch (err) {
+        console.error("地块加载失败：", err);
+        alert("地图加载错误: " + err.message);
+    }
+}
+
 
 /**
  * 获取当前定位
