@@ -30,9 +30,6 @@ public class Plot {
 
 
 
-
-
-
     public Long getId() {
         return id;
     }

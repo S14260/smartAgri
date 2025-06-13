@@ -114,39 +114,59 @@ function initMap() {
             }
         }
 
-        const url = `plot-admin-add.html?area=${area}`;
-        const width = 667, height = 543;
-        const left = (window.screen.width - width) / 2;
-        const top = (window.screen.height - height) / 2;
-        const popupWindow = window.open(url, '_blank', `width=${width},height=${height},left=${left},top=${top}`);
 
-        window.addEventListener("message", async (event) => {
-            if (event.source === popupWindow && event.data.type === "submitPlot") {
-                const plotData = event.data.payload;
-                plotData.shapeType = shapeType;
-                plotData.coordinates = coordinates;
-                plotData.area = area;
-                plotData.address = address;
+        // 弹出新增地块窗口（Layui 弹窗 iframe 方式）
+        layui.use('layer', function () {
+            const layer = layui.layer;
 
-                try {
-                    const res = await fetch("http://localhost:8080/plots", {
-                        method: "POST",
-                        headers: {"Content-Type": "application/json"},
-                        body: JSON.stringify(plotData)
-                    });
-                    if (!res.ok) throw new Error("请求失败");
-                    const saved = await res.json();
+            const url = `plot-admin-add.html?area=${area}`;
 
-                    console.log("发送给主窗口的数据 payload:", plotData);
-                    popupWindow.close();
-                    alert("保存成功！");
-                    displayPlot(saved);
-                } catch (err) {
-                    console.error("保存失败：", err);
-                    alert("保存失败，请检查后端服务是否可用！");
+            const index = layer.open({
+                type: 2, // iframe 类型
+                title: '新增地块',
+                shadeClose: true, // 点击遮罩关闭
+                shade: 0.3, // 遮罩透明度
+                area: ['667px', '543px'], // 宽高
+                content: url, // iframe 加载的地址
+                success: function (layero, index) {
+                    console.log('地块新增窗口已打开');
                 }
-            }
-        }, {once: true});
+            });
+
+            // 监听来自 iframe 的回传数据（新增地块提交）
+            window.addEventListener("message", async function (event) {
+                if (event.data.type === "submitPlot") {
+                    const plotData = event.data.payload;
+                    plotData.shapeType = shapeType;
+                    plotData.coordinates = coordinates;
+                    plotData.area = area;
+                    plotData.address = address;
+
+                    try {
+                        const res = await fetch("http://localhost:8080/plots", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(plotData)
+                        });
+
+                        if (!res.ok) throw new Error("请求失败");
+
+                        const saved = await res.json();
+                        console.log("发送到后端的数据:", plotData);
+
+                        // 成功后关闭弹窗
+                        layer.close(index);
+                        alert("保存成功！");
+                        displayPlot(saved); // 例如地图上渲染新地块
+
+                    } catch (err) {
+                        console.error("保存失败：", err);
+                        alert("保存失败，请检查后端服务是否可用！");
+                    }
+                }
+            }, { once: true });
+        });
+
     });
 
     // 地图ready后加载地块和热力图
@@ -348,15 +368,21 @@ async function deletePlot(id) {
     if (!confirm("确认删除该地块？")) return;
 
     try {
-        const res = await fetch(`http://localhost:8080/plots/${id}`, {method: "DELETE"});
+        const res = await fetch(`http://localhost:8080/plots/${id}`, {
+            method: "DELETE"
+        });
+
         if (!res.ok) throw new Error("删除失败");
-        alert("删除成功，请刷新页面查看");
-        loadPlots();
+
+        alert("删除成功，请刷新页面查看...");
+        loadPlots(); // 重新加载地块数据，刷新地图展示
+
     } catch (err) {
         console.error(err);
-        alert("删除失败");
+        alert("删除失败，请检查后端接口或网络状态");
     }
 }
+
 
 
 /**

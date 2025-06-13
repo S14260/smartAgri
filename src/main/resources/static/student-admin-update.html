@@ -1,120 +1,245 @@
 <!DOCTYPE html>
-<html class="x-admin-sm">
-
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>欢迎页面-X-admin2.2</title>
-  <meta name="renderer" content="webkit">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-  <meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8,target-densitydpi=low-dpi" />
-  <link rel="stylesheet" href="./css/font.css">
-  <link rel="stylesheet" href="./css/xadmin.css">
-  <script type="text/javascript" src="./lib/layui/layui.js" charset="utf-8"></script>
-  <script type="text/javascript" src="./js/xadmin.js"></script>
-  <!-- 让IE8/9支持媒体查询，从而兼容栅格 -->
-  <!--[if lt IE 9]>
-  <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
-  <script src="https://cdn.staticfile.org/respond.js/1.4.2/respond.min.js"></script>
-  <![endif]--></head>
-
+  <title>修改地块</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/layui@2.7.3/dist/css/layui.css">
+</head>
 <body>
-<div class="layui-fluid">
-  <div class="layui-row">
-    <form class="layui-form" action="" id="addForm">
-      <div class="layui-form-item">
-        <label class="layui-form-label">id</label>
-        <div class="layui-input-block">
-          <input type="text" name="id" id="id" required  lay-verify="required" placeholder="请输入id" autocomplete="off" class="layui-input">
-        </div>
-      </div>
-      <div class="layui-form-item">
-        <label class="layui-form-label">学号</label>
-        <div class="layui-input-block">
-          <input type="text" name="studentid" id="studentid" required  lay-verify="required" placeholder="请输入学号" autocomplete="off" class="layui-input">
-        </div>
-      </div>
-      <div class="layui-form-item">
-        <label class="layui-form-label">姓名</label>
-        <div class="layui-input-inline">
-          <input type="text" name="studentname" id="studentname" required lay-verify="required" placeholder="请输入姓名" autocomplete="off" class="layui-input">
-        </div>
-      </div>
-      <div class="layui-form-item">
-        <label class="layui-form-label">性别</label>
-        <div class="layui-input-block">
-          <select name="sex" lay-verify="required">
-            <option value=""></option>
-            <option value="男">男</option>
-            <option value="女">女</option>
-          </select>
-        </div>
-      </div>
-      <div class="layui-form-item">
-        <label class="layui-form-label">年龄</label>
-        <div class="layui-input-block">
-          <input type="text" name="age" id="age" required  lay-verify="required" placeholder="请输入年龄" autocomplete="off" class="layui-input">
-        </div>
-      </div><div class="layui-form-item">
-      <label class="layui-form-label">学院</label>
-      <div class="layui-input-block">
-        <input type="text" name="department" id="department" required  lay-verify="required" placeholder="请输入学院" autocomplete="off" class="layui-input">
-      </div>
-    </div>
-      <div class="layui-form-item">
-        <label class="layui-form-label">班级</label>
-        <div class="layui-input-block">
-          <input type="text" name="grade" id="grade" required  lay-verify="required" placeholder="请输入班级" autocomplete="off" class="layui-input">
-        </div>
-      </div><div class="layui-form-item">
-      <label class="layui-form-label">联系方式</label>
-      <div class="layui-input-block">
-        <input type="text" name="phone" id="phone" required  lay-verify="required" placeholder="请输入联系方式" autocomplete="off" class="layui-input">
-      </div>
-    </div>
-      <div class="layui-form-item">
-        <label class="layui-form-label">宿舍</label>
-        <div class="layui-input-block">
-          <input type="text" name="dormitory" id="dormitory" required  lay-verify="required" placeholder="请输入宿舍" autocomplete="off" class="layui-input">
-        </div>
-      </div>
-      <div class="layui-form-item">
-        <div class="layui-input-block">
-          <button class="layui-btn" lay-submit lay-filter="formDemo">修改</button>
-          <button type="reset" class="layui-btn layui-btn-primary">重置</button>
-        </div>
-      </div>
-    </form>
-  </div>
-</div>
-<script>
-  //Demo
-  layui.use('form', function(){
-    var form = layui.form;
 
-    //提交
-    form.on('submit(formDemo)', function(data){
-      $.ajax({
-        url: "/student/update",
-        type: "POST",
-        data: $("#addForm").serialize(),
-        success: function (data) {
-          alert("修改学生成功");   //打印提示信息
-        },
-        error: function (data) {
-          alert("修改学生失败!")
-        }
-      });
+<div class="layui-container" style="padding-top: 16px;">
+  <h2>修改地块信息</h2>
+  <form class="layui-form" id="plotForm">
+    <input type="hidden" name="id" id="plotId" />
+    <div class="layui-form-item">
+      <label class="layui-form-label">地块名称</label>
+      <div class="layui-input-block">
+        <input type="text" name="name" lay-verify="required|nameLimit" placeholder="请输入地块名称" class="layui-input">
+      </div>
+    </div>
+
+    <div class="layui-form-item">
+      <label class="layui-form-label">上季作物</label>
+      <div class="layui-input-block">
+        <select name="lastCrop" lay-verify="required">
+          <option value="">请选择作物类型</option>
+          <option value="玉米">玉米</option>
+          <option value="水稻">水稻</option>
+          <option value="甜菜">甜菜</option>
+          <option value="土豆">土豆</option>
+          <option value="其他">其他</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="layui-form-item">
+      <label class="layui-form-label">本季作物</label>
+      <div class="layui-input-block">
+        <select name="currentCrop" lay-verify="required">
+          <option value="">请选择作物类型</option>
+          <option value="玉米">玉米</option>
+          <option value="水稻">水稻</option>
+          <option value="甜菜">甜菜</option>
+          <option value="土豆">土豆</option>
+          <option value="其他">其他</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="layui-form-item">
+      <label class="layui-form-label">联系人</label>
+      <div class="layui-input-block">
+        <input type="text" name="contactPerson" lay-verify="required" class="layui-input">
+      </div>
+    </div>
+
+    <div class="layui-form-item">
+      <label class="layui-form-label">联系电话</label>
+      <div class="layui-input-block">
+        <input type="text" name="phone" lay-verify="required|phone" class="layui-input">
+      </div>
+    </div>
+
+    <div class="layui-form-item">
+      <label class="layui-form-label">土壤类型</label>
+      <div class="layui-input-block">
+        <select name="soilType" lay-verify="required">
+          <option value="">请选择土壤类型</option>
+          <option value="砂质土">砂质土</option>
+          <option value="黏质土">黏质土</option>
+          <option value="壤土">壤土</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="layui-form-item">
+      <label class="layui-form-label">灌溉条件</label>
+      <div class="layui-input-block">
+        <select name="irrigationType" lay-verify="required">
+          <option value="">请选择灌溉条件</option>
+          <option value="喷灌">喷灌</option>
+          <option value="滴灌">滴灌</option>
+          <option value="渠灌">渠灌</option>
+          <option value="自然降水">自然降水</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="layui-form-item">
+      <label class="layui-form-label">土地类型</label>
+      <div class="layui-input-block">
+        <select name="landType" lay-verify="required">
+          <option value="">请选择土地类型</option>
+          <option value="租赁">租赁</option>
+          <option value="流转">流转</option>
+          <option value="开垦荒地">开垦荒地</option>
+          <option value="承包">承包</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="layui-form-item">
+      <label class="layui-form-label">地块面积</label>
+      <div class="layui-input-block">
+        <input type="text" name="area" id="areaInput" readonly class="layui-input">
+      </div>
+    </div>
+
+    <div class="layui-form-item">
+      <div class="layui-input-block">
+        <button class="layui-btn" lay-submit lay-filter="submitForm">保存修改</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/layui@2.7.3/dist/layui.js"></script>
+
+<script>
+  layui.use(['layer', 'form', 'laytpl'], function () {
+    const layer = layui.layer;
+    const form = layui.form;
+    const laytpl = layui.laytpl;
+
+    // 打开页面后立即弹出地块选择器
+    fetch("http://localhost:8080/plots")
+            .then(res => res.json())
+            .then(plots => {
+              //搜索地块弹窗
+              const tpl = `
+              <style>
+                #plotSearchInput {
+                    flex: 1;
+                    padding: 8px 12px;
+                    border: 1px solid #ccc;
+                    border-radius: 4px;
+                    font-size: 14px;
+                }
+                #plotList {
+                    max-height: 320px;
+                    overflow-y: auto;
+                    list-style: none;
+                    padding: 0;
+                    margin: 0;
+                }
+                #plotList li {
+                    background: #f8f8f8;
+                    padding: 12px 16px;
+                    margin-bottom: 8px;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                    transition: background-color 0.2s ease;
+                }
+                #plotList li:hover {
+                    background-color: #e6f7ff;
+                }
+              </style>
+              <div style="padding: 16px; font-family: Arial, sans-serif;">
+                <div style="display: flex; align-items: center; margin-bottom: 12px;">
+                  <i class="layui-icon layui-icon-search" style="margin-right: 8px; font-size: 18px; color: #5FB878;"></i>
+                  <input id="plotSearchInput" type="text" placeholder="请输入地块名称进行搜索" />
+                </div>
+                <ul id="plotList">
+                  {{# layui.each(d.plots, function(index, item){ }}
+                    <li data-index="{{ index }}">
+                      <i class="layui-icon layui-icon-location" style="color: #1E9FFF; margin-right: 6px;"></i>
+                      {{ item.name }}
+                    </li>
+                  {{# }); }}
+                </ul>
+              </div>
+            `;
+
+              laytpl(tpl).render({ plots }, function (html) {
+                layer.open({
+                  title: '选择要修改的地块',
+                  content: html,
+                  area: ['400px', '400px'],
+                  success: function () {
+                    const input = document.getElementById('plotSearchInput');
+                    const list = document.getElementById('plotList');
+                    input.oninput = function () {
+                      const keyword = this.value.toLowerCase();
+                      list.querySelectorAll('li').forEach(li => {
+                        li.style.display = li.innerText.toLowerCase().includes(keyword) ? 'block' : 'none';
+                      });
+                    };
+                    list.querySelectorAll('li').forEach(li => {
+                      li.onclick = function () {
+                        const plot = plots[this.dataset.index];
+                        fillForm(plot);
+                        layer.closeAll();
+                      };
+                    });
+                  }
+                });
+              });
+            });
+
+    function fillForm(data) {
+      document.getElementById('plotId').value = data.id;
+      document.querySelector('input[name="name"]').value = data.name;
+      document.querySelector('select[name="lastCrop"]').value = data.lastCrop;
+      document.querySelector('select[name="currentCrop"]').value = data.currentCrop;
+      document.querySelector('input[name="contactPerson"]').value = data.contactPerson;
+      document.querySelector('input[name="phone"]').value = data.phone;
+      document.querySelector('select[name="soilType"]').value = data.soilType;
+      document.querySelector('select[name="irrigationType"]').value = data.irrigationType;
+      document.querySelector('select[name="landType"]').value = data.landType;
+      document.getElementById('areaInput').value = data.area + ' 亩';
+      form.render();
+    }
+
+    form.verify({
+      nameLimit: function (value) {
+        if (value.length > 20) return '名称不能超过20字符';
+      },
+      phone: function (value) {
+        if (!/^1\d{10}$/.test(value)) return '请输入有效手机号';
+      }
+    });
+
+    form.on('submit(submitForm)', function (data) {
+      const areaValue = document.getElementById('areaInput').value.replace(/[^\d.]/g, '');
+      const payload = {
+        ...data.field,
+        area: areaValue
+      };
+
+      if (window.parent !== window) {
+        window.parent.postMessage({
+          type: 'submitPlotUpdate',
+          payload
+        }, "*");
+      } else {
+        alert("未处于弹窗模式，无法回传数据");
+      }
+
       return false;
     });
   });
-
 </script>
-<script>var _hmt = _hmt || []; (function() {
-  var hm = document.createElement("script");
-  hm.src = "https://hm.baidu.com/hm.js?b393d153aeb26b46e9431fabaf0f6190";
-  var s = document.getElementsByTagName("script")[0];
-  s.parentNode.insertBefore(hm, s);
-})();</script>
 </body>
-
 </html>

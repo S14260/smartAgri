@@ -156,15 +156,16 @@
         area: areaValue
       };
 
-      // 发送给 opener（地图主页面）
-      if (window.opener) {
-        window.opener.postMessage({
+      // 发送给父页面（iframe 模式下是 parent，而不是 opener）
+      if (window.parent !== window) {
+        window.parent.postMessage({
           type: "submitPlot",
           payload
         }, "*");
       } else {
-        alert("无法回传数据，请从地图页面打开该窗口！");
+        alert("无法回传数据，请从地图页面弹出该窗口！");
       }
+
 
       return false; // 阻止表单默认提交
     });

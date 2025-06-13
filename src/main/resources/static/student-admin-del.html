@@ -1,70 +1,155 @@
 <!DOCTYPE html>
 <html class="x-admin-sm">
-
 <head>
-    <meta charset="UTF-8">
-    <title>欢迎页面-X-admin2.2</title>
-    <meta name="renderer" content="webkit">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8,target-densitydpi=low-dpi" />
-    <link rel="stylesheet" href="./css/font.css">
-    <link rel="stylesheet" href="./css/xadmin.css">
-    <script type="text/javascript" src="./lib/layui/layui.js" charset="utf-8"></script>
-    <script type="text/javascript" src="./js/xadmin.js"></script>
-    <!-- 让IE8/9支持媒体查询，从而兼容栅格 -->
-    <!--[if lt IE 9]>
-    <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
-    <script src="https://cdn.staticfile.org/respond.js/1.4.2/respond.min.js"></script>
-    <![endif]--></head>
+    <meta charset="UTF-8" />
+    <title>批量删除地块 - 勾选版</title>
+    <meta name="renderer" content="webkit" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+    <!-- Layui 样式 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/layui@2.7.6/dist/css/layui.css" />
+    <!-- jQuery -->
+    <script src="https://cdn.staticfile.org/jquery/3.6.0/jquery.min.js"></script>
+    <!-- Layui JS -->
+    <script src="https://cdn.jsdelivr.net/npm/layui@2.7.6/dist/layui.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to right, #e6f0ff, #ffffff);
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 60px auto;
+            padding: 40px;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 35px;
+            font-size: 26px;
+            color: #2c3e50;
+        }
+
+        .layui-table-view {
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .btn-group {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .layui-btn {
+            min-width: 140px;
+            font-weight: bold;
+            font-size: 15px;
+            margin: 0 10px;
+            border-radius: 6px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 20px;
+                padding: 20px;
+            }
+
+            h2 {
+                font-size: 22px;
+            }
+
+            .layui-btn {
+                min-width: 100px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
 <body>
-<div class="layui-fluid">
-    <div class="layui-row">
-        <form class="layui-form" action="" id="addForm">
-            <div class="layui-form-item">
-                <label class="layui-form-label">id</label>
-                <div class="layui-input-block">
-                    <input type="text" name="id" id="id" required  lay-verify="required" placeholder="请输入要删除的学生的id" autocomplete="off" class="layui-input">
-                </div>
-            </div>
-            <div class="layui-form-item">
-                <div class="layui-input-block">
-                    <button class="layui-btn" lay-submit lay-filter="formDemo">删除</button>
-                    <button type="reset" class="layui-btn layui-btn-primary">重置</button>
-                </div>
-            </div>
-        </form>
+<div class="container">
+    <h2>批量删除地块</h2>
+
+    <table id="plotsTable" lay-filter="plotsTableFilter"></table>
+
+    <div class="btn-group">
+        <button class="layui-btn layui-btn-danger" id="deleteSelected">删除选中地块</button>
+        <button class="layui-btn layui-btn-primary" id="refreshTable">刷新列表</button>
     </div>
 </div>
-<script>
-    //Demo
-    layui.use('form', function(){
-        var form = layui.form;
 
-        //提交
-        form.on('submit(formDemo)', function(id){
-            $.ajax({
-                url:"/student/delete?id="+$("#id").val(),
-                type:"GET",
-                data:$("#id").val(),
-                success:function(data){
-                    alert("删除成功")
+<script>
+    layui.use(['table', 'layer'], function () {
+        const table = layui.table;
+        const layer = layui.layer;
+
+        function renderTable() {
+            table.render({
+                elem: '#plotsTable',
+                id: 'plotsTable',
+                url: '/plots',
+                method: 'GET',
+                parseData: function(res) {
+                    return {
+                        code: 0,
+                        msg: '',
+                        count: res.length,
+                        data: res
+                    };
                 },
-                error:function(data){
-                    alert("error!")
-                }
+                cols: [[
+                    { type: 'checkbox', fixed: 'left' },
+                    { field: 'id', title: '地块ID', width: 100 },
+                    { field: 'name', title: '地块名称' },
+                    { field: 'lastCrop', title: '前作物', width: 100 },
+                    { field: 'currentCrop', title: '当前作物', width: 100 },
+                    { field: 'contactPerson', title: '联系人', width: 120 }
+                ]],
+                page: false
             });
-            return false;
+        }
+
+        renderTable();
+
+        $('#deleteSelected').click(function () {
+            const checkStatus = table.checkStatus('plotsTable');
+            const selected = checkStatus.data;
+
+            if (selected.length === 0) {
+                return layer.msg('请先勾选至少一个地块', { icon: 5 });
+            }
+
+            const ids = selected.map(item => item.id);
+
+            layer.confirm(`确定删除选中的 ${ids.length} 个地块吗？`, { icon: 3, title: '确认删除' }, function (index) {
+                $.ajax({
+                    url: '/plots/deleteBatch',
+                    type: 'DELETE',
+                    contentType: 'application/json',
+                    data: JSON.stringify(ids),
+                    success: function () {
+                        layer.msg('删除成功', { icon: 6 });
+                        renderTable();
+                    },
+                    error: function () {
+                        layer.msg('删除失败，请稍后重试', { icon: 2 });
+                    }
+                });
+                layer.close(index);
+            });
+        });
+
+        $('#refreshTable').click(function () {
+            renderTable();
         });
     });
-
 </script>
-<script>var _hmt = _hmt || []; (function() {
-    var hm = document.createElement("script");
-    hm.src = "https://hm.baidu.com/hm.js?b393d153aeb26b46e9431fabaf0f6190";
-    var s = document.getElementsByTagName("script")[0];
-    s.parentNode.insertBefore(hm, s);
-})();</script>
 </body>
-
 </html>

@@ -21,5 +21,9 @@ public class PlotService {
         return plotDao.findAll(); // 获取所有地块
     }
 
+    public void deletePlotsByIds(List<Long> ids) {
+        plotDao.deleteAllById(ids);
+    }
+
 
 }

@@ -110,6 +110,11 @@
         <div class="layui-col-md12">
             <div class="layui-card">
                 <div class="layui-card-body">
+                    <button class="layui-btn layui-btn-normal" onclick="xadmin.open('修改地块','./student-admin-update.html',800,600)">
+                        <i class="layui-icon"></i>修改地块</button>
+                    <button class="layui-btn layui-btn-danger" onclick="xadmin.open('删除地块','./student-admin-del.html',800,600)">
+                        <i class="layui-icon"></i>删除地块</button>
+
                     <table class="layui-table">
                         <thead>
                         <tr>
@@ -134,6 +139,39 @@
         </div>
     </div>
 </div>
+
+<script>
+    // 监听来自 iframe 的修改地块信息
+    window.addEventListener("message", function (event) {
+        if (event.data.type === "submitPlotUpdate") {
+            const updatedData = event.data.payload;
+
+            console.log("收到修改地块数据：", updatedData);
+
+            // 🔁 发起请求更新地块信息
+            fetch(`http://localhost:8080/plots/${updatedData.id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(updatedData)
+            })
+                .then(res => {
+                    if (!res.ok) throw new Error("修改失败");
+                    layer.msg("修改成功", {icon: 1});
+                    // ✅ 更新成功后刷新页面或重新加载地块数据
+                    // location.reload(); 或者你的列表刷新方法
+                })
+                .catch(err => {
+                    console.error(err);
+                    layer.msg("修改失败，请检查后端接口", {icon: 2});
+                });
+        }
+    });
+
+</script>
+
+
 
 <script>
     $(function () {
