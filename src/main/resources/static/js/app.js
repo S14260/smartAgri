@@ -1,18 +1,135 @@
-let map;            // 地图实例
-let drawnItems;     // 用户绘制图层集合
-let heatLayer;      // 热力图图层，全局变量，避免重复创建
+// 全局变量
+let map;               // 地图实例
+let drawnItems;        // 用户绘制图层集合
+let heatLayer;         // 热力图图层，避免重复创建
+let currentNdviLayer = null;
+let currentNdviTime = null;
+const ndviCache = {};  // 缓存 { timeKey: georaster }
+
+
+const ndviTifMap = {
+    "2024-08-18": "http://123.56.228.32/0818_NDVI.tif",
+    "2024-08-20": "http://123.56.228.32/0820_NDVI.tif",
+    "2024-08-23": "http://123.56.228.32/0823_NDVI.tif",
+    "2024-08-25": "http://123.56.228.32/0825_NDVI.tif"
+
+};
 
 document.addEventListener("DOMContentLoaded", () => {
     initMap();
     loadPlots();
     setupSearch();
+
+    // 原来 NDVI 滑块相关代码，这里先定义时间键
+    const timeKeys = Object.keys(ndviTifMap);
+
+    // 找到滑块和标签元素
+    const slider = document.getElementById("ndviSlider");
+    const timeLabel = document.getElementById("ndviTimeLabel");
+
+
+    slider.min = 0;
+    slider.step = 1;
+    slider.max = timeKeys.length - 1;
+
+    // 更新显示时间标签函数
+    function updateTimeLabel(index) {
+        if (timeKeys[index]) {
+            timeLabel.textContent = timeKeys[index];
+        } else {
+            timeLabel.textContent = "";
+        }
+    }
+
+    // 给滑块绑定事件
+    slider.addEventListener("input", function () {
+        updateTimeLabel(this.value);
+
+        // NDVI 切换逻辑
+        const selectedIndex = parseInt(this.value);
+        const selectedTime = timeKeys[selectedIndex];
+        if (!selectedTime || selectedTime === currentNdviTime) return;
+
+        currentNdviTime = selectedTime;
+        const tifUrl = ndviTifMap[selectedTime];
+
+        // 显示加载提示
+        showCustomMsg("正在加载 NDVI 图层，请稍候...");
+
+        if (currentNdviLayer) {
+            map.removeLayer(currentNdviLayer); //移除图层
+        }
+
+        //加载图层
+        if (ndviCache[selectedTime]) {
+            // 直接用缓存
+            const cachedRaster = ndviCache[selectedTime];
+            currentNdviLayer = new GeoRasterLayer({
+                georaster: cachedRaster,
+                opacity: 0.7,
+                resolution: 256,
+                pixelValuesToColorFn: pixelToColor
+            });
+            currentNdviLayer.addTo(map);
+        } else {
+            // 拉取并缓存
+            fetch(tifUrl)
+                .then(res => res.arrayBuffer())
+                .then(parseGeoraster)
+                .then(georaster => {
+                    ndviCache[selectedTime] = georaster; // ✅ 缓存
+                    currentNdviLayer = new GeoRasterLayer({
+                        georaster,
+                        opacity: 0.7,
+                        resolution: 256,
+                        pixelValuesToColorFn: pixelToColor
+                    });
+                    currentNdviLayer.addTo(map);
+                })
+                .catch(err => {
+                    console.error("加载 NDVI 图层失败：", err);
+                    alert("NDVI 加载失败：" + err.message);
+                });
+        }
+
+    });
+
+    // 初始化显示一次时间标签
+    updateTimeLabel(slider.value);
+
+    // “切换时间轴显示”的按钮逻辑
+    document.getElementById("toggleSliderBtn").addEventListener("click", () => {
+        const wrapper = document.getElementById("ndviSliderWrapper");
+        wrapper.style.display = wrapper.style.display === "none" ? "block" : "none";
+
+        // 👇 如果是第一次显示，手动触发一次 input 事件
+        if (!isVisible) {
+            const slider = document.getElementById("ndviSlider");
+            const event = new Event("input");
+            slider.dispatchEvent(event);
+        }
+    });
 });
+
+// 将 NDVI 像素值转换为颜色
+function pixelToColor(values) {
+    const ndvi = values[0];
+    if (ndvi === null || isNaN(ndvi)) return null;
+    if (ndvi < 0.0) return "#636363";
+    if (ndvi < 0.1) return "#d73027";
+    if (ndvi < 0.2) return "#f46d43";
+    if (ndvi < 0.3) return "#fdae61";
+    if (ndvi < 0.4) return "#fee08b";
+    if (ndvi < 0.5) return "#d9ef8b";
+    if (ndvi < 0.6) return "#a6d96a";
+    if (ndvi < 0.8) return "#1a9850";
+    return "#006837";
+}
 
 /**
  * 初始化地图与绘图控件
  */
 function initMap() {
-    // 天地图影像、矢量、注记图层
     const imgLayer = L.tileLayer("http://t0.tianditu.gov.cn/img_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=img&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=19fc987939ebbcbcb3f0954ab6cf75be", {
         attribution: "天地图影像"
     });
@@ -23,21 +140,15 @@ function initMap() {
         attribution: "注记"
     });
 
-    // 初始化地图，默认天津工业大学
     map = L.map("map", {
         center: [39.065, 117.105],
         zoom: 16,
         layers: [imgLayer, labelLayer]
     });
 
-    // 尝试获取定位，失败则用默认
     getCurrentLocation()
-        .then(coords => {
-            map.setView([coords.latitude, coords.longitude], 16);
-        })
-        .catch(err => {
-            console.warn('定位失败，使用默认坐标', err);
-        });
+        .then(coords => map.setView([coords.latitude, coords.longitude], 16))
+        .catch(err => console.warn("定位失败，使用默认坐标", err));
 
     drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
@@ -50,10 +161,8 @@ function initMap() {
         "注记": labelLayer
     };
 
-    // 先创建图层控制器
     const layersControl = L.control.layers(baseMaps, overlayMaps).addTo(map);
 
-    // 添加绘图控件，只允许画多边形
     window.drawControl = new L.Control.Draw({
         draw: {
             polygon: true,
@@ -65,7 +174,7 @@ function initMap() {
     });
     map.addControl(window.drawControl);
 
-    map.on(L.Draw.Event.CREATED, async (event) => {
+    map.on(L.Draw.Event.CREATED, async event => {
         const layer = event.layer;
         drawnItems.addLayer(layer);
 
@@ -77,12 +186,12 @@ function initMap() {
         if (shapeType === "circle") {
             const center = layer.getLatLng();
             const radius = layer.getRadius();
-            coordinates = JSON.stringify({shapeType, center, radius});
+            coordinates = JSON.stringify({ shapeType, center, radius });
             area = Math.PI * radius * radius;
             centerForGeocode = [center.lng, center.lat];
         } else if (shapeType === "polygon") {
             const latlngs = layer.getLatLngs()[0];
-            coordinates = JSON.stringify({shapeType, latlngs});
+            coordinates = JSON.stringify({ shapeType, latlngs });
 
             area = L.GeometryUtil.geodesicArea(latlngs);
 
@@ -114,27 +223,19 @@ function initMap() {
             }
         }
 
-
-        // 弹出新增地块窗口（Layui 弹窗 iframe 方式）
         layui.use('layer', function () {
             const layer = layui.layer;
-
             const url = `plot-admin-add.html?area=${area}`;
-
             const index = layer.open({
-                type: 2, // iframe 类型
+                type: 2,
                 title: '新增地块',
-                shadeClose: true, // 点击遮罩关闭
-                shade: 0.3, // 遮罩透明度
-                area: ['667px', '543px'], // 宽高
-                content: url, // iframe 加载的地址
-                success: function (layero, index) {
-                    console.log('地块新增窗口已打开');
-                }
+                shadeClose: true,
+                shade: 0.3,
+                area: ['667px', '543px'],
+                content: url
             });
 
-            // 监听来自 iframe 的回传数据（新增地块提交）
-            window.addEventListener("message", async function (event) {
+            window.addEventListener("message", async event => {
                 if (event.data.type === "submitPlot") {
                     const plotData = event.data.payload;
                     plotData.shapeType = shapeType;
@@ -154,10 +255,9 @@ function initMap() {
                         const saved = await res.json();
                         console.log("发送到后端的数据:", plotData);
 
-                        // 成功后关闭弹窗
                         layer.close(index);
                         alert("保存成功！");
-                        displayPlot(saved); // 例如地图上渲染新地块
+                        displayPlot(saved);
 
                     } catch (err) {
                         console.error("保存失败：", err);
@@ -166,10 +266,8 @@ function initMap() {
                 }
             }, { once: true });
         });
-
     });
 
-    // 地图ready后加载地块和热力图
     map.whenReady(() => {
         loadAndRenderPlots(layersControl, baseMaps, overlayMaps);
     });
@@ -278,6 +376,7 @@ async function loadAndRenderPlots(layersControl, baseMaps, overlayMaps) {
 
             overlayMaps["热力图"] = heatLayer;
 
+            // 添加热力图影像图层切换按钮
             if (layersControl) {
                 layersControl.addOverlay(heatLayer, "热力图");
             }
