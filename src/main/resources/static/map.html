@@ -17,55 +17,57 @@
             padding: 0;
             height: 100%;
             background-color: #f5f5f5;
-            overflow: hidden; /* 避免出现滚动条 */
+            overflow: hidden;
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
         }
 
-        .layui-container,
-        .layui-card {
-            height: 100%;
+        body > .layui-container {
+            width: 100vw;
+            max-width: 100vw;
+            padding: 0;
+            margin: 0;
+            height: 100vh;
             display: flex;
             flex-direction: column;
+            background: #fff;
+        }
+
+        .layui-card {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            border: none;
+            box-shadow: none;
+        }
+
+        .layui-form {
+            flex: 0 0 auto;
+            padding: 10px 16px;
+            background: #f8f8f8;
+            border-bottom: 1px solid #e6e6e6;
+            z-index: 10;
         }
 
         .layui-card-body {
-            flex: 1 1 auto; /* 撑满剩余 */
+            flex: 1 1 auto;
             display: flex;
             flex-direction: column;
-            min-height: 0; /* 重要，防止flex子元素溢出 */
+            padding: 0;
+            overflow: hidden;
         }
 
-        /* 保持头部高度固定 */
-        .layui-card-header {
-            flex: 0 0 auto;
-            padding: 10px 10px;
-            font-weight: bold;
-            font-size: 18px;
-            border-bottom: 1px solid #e6e6e6;
-            background: #fff;
-        }
-
-        /* 工具栏高度固定 */
-        .layui-form {
-            flex: 0 0 auto;
-            margin-bottom: 10px;
-            padding: 0 10px;
-            background: #fff;
-        }
-
-        /* 地图容器撑满剩余高度 */
         #map {
             flex: 1 1 auto;
-            min-height: 300px;
-            border-radius: 4px;
-            border: 1px solid #e6e6e6;
-            min-width: 0; /* 重要，防止flex子元素溢出 */
-            min-height: 0; /* 重要，防止flex子元素溢出 */
-            display: block; /* 确保是块级元素 */
+            width: 100%;
+            height: calc(100vh - 72px);
+            min-height: 0;
+            min-width: 0;
+            position: relative;
+            z-index: 1;
         }
 
-        /* 你已有的draw控件样式保持不变 */
         #drawControls {
-            display: none;
             position: fixed;
             bottom: 0;
             left: 0;
@@ -73,14 +75,14 @@
             height: 60px;
             background: #f0f0f0;
             border-top: 1px solid #ccc;
+            display: flex;
             justify-content: center;
             align-items: center;
             z-index: 9999;
             flex-wrap: nowrap;
-            display: flex;
-            /*防止地图穿透*/
             pointer-events: auto;
         }
+
         #drawTip {
             display: none;
             position: fixed;
@@ -98,19 +100,72 @@
             transition: opacity 0.3s ease;
         }
 
+        .layui-form .layui-btn {
+            margin-left: 6px;
+        }
+
+        /*整个NDVI 时间轴控件的外层容器*/
+        #ndviSliderWrapper {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #f8f9fa;
+            border-top: 1px solid #ccc;
+            padding: 15px 30px;
+            display: none;
+            z-index: 9999;
+            font-size: 15px;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
+        }
+        /*整个滑块的轨道的样式*/
+        #ndviSlider {
+            -webkit-appearance: none;
+            width: 300px;
+            height: 6px;
+            border-radius: 3px;
+            background: linear-gradient(to right, #4caf50, #2196f3);
+            outline: none;
+            transition: background 0.3s ease;
+        }
+        /*小圆点样式*/
+        #ndviSlider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #fff;
+            border: 2px solid #2196f3;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        #ndviSlider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+        /*Firefox小圆点样式*/
+        #ndviSlider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #fff;
+            border: 2px solid #2196f3;
+            cursor: pointer;
+        }
+        /*2024-08-18文字样式*/
+        #ndviTimeLabel {
+            font-weight: bold;
+            font-size: 14px;
+            margin-left: 12px;
+            color: #2c3e50;
+        }
     </style>
 </head>
 <body>
-
-<div class="layui-container" style="padding-top: 20px; height: 100vh;">
+<div class="layui-container">
     <div class="layui-card">
-        <div class="layui-card-header">
-            地块绘制工具
-        </div>
         <div class="layui-card-body">
-
-            <!-- 工具栏 -->
-            <div class="layui-form layui-row layui-col-space10">
+            <div class="layui-form layui-row layui-col-space10" style="position: sticky; top: 0; background: #fff; z-index: 10; border-bottom: 1px solid #eee; margin: 0;">
                 <div class="layui-col-md4">
                     <input type="text" id="searchInput" placeholder="请输入地名" class="layui-input">
                 </div>
@@ -120,12 +175,13 @@
                 <div class="layui-col-md6 layui-text-right">
                     <button class="layui-btn layui-btn-warm" id="queryPlot">查询地块</button>
                     <button class="layui-btn layui-btn-red" id="startDrawBtn">开始圈地</button>
-                    <button class="layui-btn layui-btn-blue"id="exportShpBtn">备用按钮</button>
+                    <button class="layui-btn layui-btn-blue" id="exportShpBtn">导出图形</button>
+                    <!-- 显示/隐藏时间轴按钮 -->
+                    <button id="toggleSliderBtn" class="layui-btn layui-btn-normal layui-btn-sm">切换NDVI时间轴</button>
 
                 </div>
             </div>
 
-            <!-- 地图容器 -->
             <div id="map">
                 <div id="drawControls">
                     <button id="btn-start" class="layui-btn layui-btn-danger" style="margin: 0 10px;">开始绘制</button>
@@ -133,17 +189,20 @@
                     <button id="btn-undo" class="layui-btn layui-btn-danger" style="margin: 0 10px;">撤回</button>
                     <button id="btn-cancel" class="layui-btn" style="margin: 0 10px;">取消绘制</button>
                 </div>
-                <div id="drawTip">
-                    已进入圈地模式，请点击“开始绘图”按钮
+                <div id="drawTip">已进入圈地模式，请点击“开始绘图”按钮</div>
+                <!-- NDVI 时间轴滑块 -->
+                <div id="ndviSliderWrapper" style="display:none; margin-top:10px;">
+                    <label for="ndviSlider">时间：</label>
+                    <input id="ndviSlider" type="range" min="0" step="1" />
+                    <span id="ndviTimeLabel"></span>
                 </div>
+
             </div>
-
-            <!--绘制相关按钮，绑定leaflet-->
-            <!-- 全屏圈地底部操作按钮 -->
-
         </div>
     </div>
 </div>
+
+
 
 <!-- Leaflet 与插件 -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -151,6 +210,10 @@
 <script src="https://unpkg.com/@turf/turf/turf.min.js"></script>
 <!--热力图-->
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<!--Geotiff-->
+<script src="https://unpkg.com/georaster"></script>
+<script src="https://unpkg.com/georaster-layer-for-leaflet"></script>
+
 
 <!-- Layui -->
 <script src="https://cdn.staticfile.org/layui/2.8.18/layui.js"></script>
