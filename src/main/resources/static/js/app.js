@@ -13,105 +13,87 @@ const ndviTifMap = {
     "2024-08-23": "http://123.56.228.32/0823_NDVI.tif",
     "2024-08-25": "http://123.56.228.32/0825_NDVI.tif"
 
-};
-
-document.addEventListener("DOMContentLoaded", () => {
+};document.addEventListener("DOMContentLoaded", () => {
     initMap();
     loadPlots();
     setupSearch();
 
-    // 原来 NDVI 滑块相关代码，这里先定义时间键
     const timeKeys = Object.keys(ndviTifMap);
+    const buttonContainer = document.getElementById("ndviTimeButtons");
 
-    // 找到滑块和标签元素
-    const slider = document.getElementById("ndviSlider");
-    const timeLabel = document.getElementById("ndviTimeLabel");
+    // 自动渲染时间按钮
+    timeKeys.forEach(time => {
+        const btn = document.createElement("button");
+        btn.textContent = time;
+        btn.className = "layui-btn layui-btn-sm layui-btn-primary";  // 默认样式
 
+        btn.addEventListener("click", () => {
+            if (time === currentNdviTime) return;
 
-    slider.min = 0;
-    slider.step = 1;
-    slider.max = timeKeys.length - 1;
+            currentNdviTime = time;
+            const tifUrl = ndviTifMap[time];
 
-    // 更新显示时间标签函数
-    function updateTimeLabel(index) {
-        if (timeKeys[index]) {
-            timeLabel.textContent = timeKeys[index];
-        } else {
-            timeLabel.textContent = "";
-        }
-    }
+            // 显示加载提示
+            showCustomMsg("正在加载 NDVI 图层，请稍候...");
 
-    // 给滑块绑定事件
-    slider.addEventListener("input", function () {
-        updateTimeLabel(this.value);
-
-        // NDVI 切换逻辑
-        const selectedIndex = parseInt(this.value);
-        const selectedTime = timeKeys[selectedIndex];
-        if (!selectedTime || selectedTime === currentNdviTime) return;
-
-        currentNdviTime = selectedTime;
-        const tifUrl = ndviTifMap[selectedTime];
-
-        // 显示加载提示
-        showCustomMsg("正在加载 NDVI 图层，请稍候...");
-
-        if (currentNdviLayer) {
-            map.removeLayer(currentNdviLayer); //移除图层
-        }
-
-        //加载图层
-        if (ndviCache[selectedTime]) {
-            // 直接用缓存
-            const cachedRaster = ndviCache[selectedTime];
-            currentNdviLayer = new GeoRasterLayer({
-                georaster: cachedRaster,
-                opacity: 0.7,
-                resolution: 256,
-                pixelValuesToColorFn: pixelToColor
+            // 高亮当前按钮
+            document.querySelectorAll("#ndviTimeButtons button").forEach(b => {
+                b.classList.remove("layui-btn-normal");
+                b.classList.add("layui-btn-primary");
             });
-            currentNdviLayer.addTo(map);
-        } else {
-            // 拉取并缓存
-            fetch(tifUrl)
-                .then(res => res.arrayBuffer())
-                .then(parseGeoraster)
-                .then(georaster => {
-                    ndviCache[selectedTime] = georaster; // ✅ 缓存
-                    currentNdviLayer = new GeoRasterLayer({
-                        georaster,
-                        opacity: 0.7,
-                        resolution: 256,
-                        pixelValuesToColorFn: pixelToColor
-                    });
-                    currentNdviLayer.addTo(map);
-                })
-                .catch(err => {
-                    console.error("加载 NDVI 图层失败：", err);
-                    alert("NDVI 加载失败：" + err.message);
-                });
-        }
+            btn.classList.remove("layui-btn-primary");
+            btn.classList.add("layui-btn-normal");
 
+            // 移除旧图层
+            if (currentNdviLayer) {
+                map.removeLayer(currentNdviLayer);
+            }
+
+            // 加载或使用缓存
+            if (ndviCache[time]) {
+                const cachedRaster = ndviCache[time];
+                currentNdviLayer = new GeoRasterLayer({
+                    georaster: cachedRaster,
+                    opacity: 0.7,
+                    resolution: 256,
+                    pixelValuesToColorFn: pixelToColor
+                });
+                currentNdviLayer.addTo(map);
+                showCustomMsg("✅ NDVI 图层加载完成");
+            } else {
+                fetch(tifUrl)
+                    .then(res => res.arrayBuffer())
+                    .then(parseGeoraster)
+                    .then(georaster => {
+                        ndviCache[time] = georaster;
+                        currentNdviLayer = new GeoRasterLayer({
+                            georaster,
+                            opacity: 0.7,
+                            resolution: 256,
+                            pixelValuesToColorFn: pixelToColor
+                        });
+                        currentNdviLayer.addTo(map);
+                        showCustomMsg("✅ NDVI 图层加载完成");
+                    })
+                    .catch(err => {
+                        console.error("加载 NDVI 图层失败：", err);
+                        alert("❌ NDVI 加载失败：" + err.message);
+                    });
+            }
+        });
+
+        buttonContainer.appendChild(btn);
     });
 
-    // 初始化显示一次时间标签
-    updateTimeLabel(slider.value);
 
-    // “切换时间轴显示”的按钮逻辑
+    // 切换 NDVI 控件显示/隐藏
     document.getElementById("toggleSliderBtn").addEventListener("click", () => {
         const wrapper = document.getElementById("ndviSliderWrapper");
         wrapper.style.display = wrapper.style.display === "none" ? "block" : "none";
-
-        // 👇 如果是第一次显示，手动触发一次 input 事件
-        if (!isVisible) {
-            const slider = document.getElementById("ndviSlider");
-            const event = new Event("input");
-            slider.dispatchEvent(event);
-        }
     });
 });
 
-// 将 NDVI 像素值转换为颜色
+// NDVI 像素值转颜色
 function pixelToColor(values) {
     const ndvi = values[0];
     if (ndvi === null || isNaN(ndvi)) return null;
@@ -125,6 +107,7 @@ function pixelToColor(values) {
     if (ndvi < 0.8) return "#1a9850";
     return "#006837";
 }
+
 
 /**
  * 初始化地图与绘图控件
@@ -567,6 +550,7 @@ drawControls.style.display = 'none';
 
 const startDrawBtn = document.getElementById('startDrawBtn');
 let currentDrawer = null;
+let drawingFinished = false;
 
 // 退出全屏清理逻辑封装
 function handleExitFullscreenCleanup() {
@@ -575,6 +559,13 @@ function handleExitFullscreenCleanup() {
     if (currentDrawer) {
         currentDrawer.disable();
         currentDrawer = null;
+    }
+
+    // 如果是绘制完成后退出全屏，显示填写弹窗
+    if (drawingFinished) {
+        setTimeout(() => {
+            drawingFinished = false; // 重置状态
+        }, 100);
     }
 }
 
@@ -615,10 +606,6 @@ async function enterDrawMode() {
                 } else {
                     map.setView(currentCenter, currentZoom);
                 }
-                //下面这段是设置为当前所处位置。
-                /*const coords = await getCurrentLocation();
-                map.setView([coords.latitude, coords.longitude]);
-                console.log('定位成功，已设置视图', coords);*/
             } catch (err) {
                 console.warn('定位失败，使用默认坐标', err);
                 map.setView([39.065, 117.105]);
@@ -636,7 +623,6 @@ async function enterDrawMode() {
         console.error('全屏失败:', err);
     }
 }
-
 
 // 点击“开始圈地”按钮（进入全屏并启动绘图）
 startDrawBtn.addEventListener('click', async (e) => {
@@ -658,6 +644,22 @@ document.getElementById('btn-start').addEventListener('click', (e) => {
 
     if (window.drawControl) {
         currentDrawer = new L.Draw.Polygon(map, window.drawControl.options.draw.polygon);
+
+        // 监听绘制完成事件
+        map.on('draw:created', function(e) {
+            const layer = e.layer;
+            // 可以在这里处理绘制好的多边形数据
+            console.log('绘制完成:', layer.toGeoJSON());
+
+            // 标记绘制已完成
+            drawingFinished = true;
+
+            // 退出全屏
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            }
+        });
+
         currentDrawer.enable();
     } else {
         layer.msg("绘图控件未初始化", {icon: 2});
@@ -668,13 +670,10 @@ document.getElementById('btn-start').addEventListener('click', (e) => {
 document.getElementById('btn-finish').addEventListener('click', (e) => {
     e.stopPropagation();
     if (currentDrawer) {
+        // 使用公开API触发绘制完成事件，而不是调用私有方法
         currentDrawer._fireCreated();
         currentDrawer.disable();
         currentDrawer = null;
-    }
-    drawControls.style.display = 'none';
-    if (document.fullscreenElement) {
-        document.exitFullscreen();
     }
 });
 
@@ -696,6 +695,7 @@ undoBtn.addEventListener('touchstart', undoLastVertex); // 手机兼容
 // 取消绘图
 document.getElementById('btn-cancel').addEventListener('click', (e) => {
     e.stopPropagation();
+    drawingFinished = false; // 重置状态
     if (currentDrawer) {
         currentDrawer.disable();
         currentDrawer = null;
@@ -705,6 +705,42 @@ document.getElementById('btn-cancel').addEventListener('click', (e) => {
         document.exitFullscreen();
     }
 });
+
+
+// 这里是单纯全屏展示的功能
+document.getElementById("btnFullscreenOnly").addEventListener("click", async () => {
+    const mapContainer = document.getElementById("map");
+    console.log('请求进入纯浏览全屏模式...');
+
+    try {
+        if (mapContainer.requestFullscreen) {
+            await mapContainer.requestFullscreen();
+        } else if (mapContainer.webkitRequestFullscreen) {
+            await mapContainer.webkitRequestFullscreen();
+        } else if (mapContainer.msRequestFullscreen) {
+            await mapContainer.msRequestFullscreen();
+        }
+
+        setTimeout(() => {
+            map.invalidateSize();  // 重要：重绘地图以适配全屏尺寸
+            console.log('✅ 已进入纯地图全屏模式');
+        }, 300);
+
+    } catch (err) {
+        console.error("❌ 无法进入全屏：", err);
+        alert("浏览器不支持或用户取消了全屏操作");
+    }
+});
+//自动退出全屏时恢复地图尺寸
+document.addEventListener("fullscreenchange", () => {
+    if (!document.fullscreenElement) {
+        console.log("🧭 退出了全屏模式");
+        setTimeout(() => {
+            map.invalidateSize();  // 退出全屏后也要刷新地图
+        }, 300);
+    }
+});
+
 
 // 显示提示信息
 function showCustomMsg(text, duration = 3000) {
