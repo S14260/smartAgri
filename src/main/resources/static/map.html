@@ -2,6 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>地块绘制</title>
 
     <!-- Leaflet 和 Draw 样式 -->
@@ -28,6 +29,7 @@
             --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.12); /* 中度阴影 */
         }
 
+        /* 基础样式（电脑端默认样式） */
         html, body {
             margin: 0;
             padding: 0;
@@ -89,7 +91,7 @@
             background-color: #e9ecef;
         }
 
-        /* 顶部搜索栏样式优化 */
+        /* 顶部搜索栏样式（电脑端） */
         .search-group {
             display: flex;
             align-items: center;
@@ -129,7 +131,7 @@
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
         }
 
-        /* 操作按钮样式优化 */
+        /* 操作按钮样式（电脑端） */
         .action-buttons {
             display: flex;
             align-items: center;
@@ -200,10 +202,6 @@
             box-shadow: var(--shadow-medium);
             pointer-events: auto;
             transition: all 0.3s ease;
-        }
-
-        #drawControls:hover {
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
         }
 
         #drawControls .layui-btn {
@@ -323,23 +321,115 @@
             background-color: var(--primary-color);
             border-color: var(--primary-color);
         }
+
+        /* 响应式适配 - 手机端优化（仅在屏幕宽度≤768px时生效） */
+        @media (max-width: 768px) {
+            .layui-form {
+                padding: 10px 12px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .search-group {
+                width: 100%;
+                gap: 8px;
+            }
+
+            .search-group .layui-input {
+                height: 32px;
+                padding: 0 10px;
+                font-size: 12px;
+            }
+
+            .search-group .layui-btn {
+                height: 32px;
+                padding: 0 12px;
+                font-size: 12px;
+            }
+
+            .action-buttons {
+                width: 100%;
+                justify-content: space-between;
+                gap: 6px;
+            }
+
+            .action-buttons .layui-btn {
+                height: 32px;
+                padding: 0 10px;
+                font-size: 12px;
+                gap: 4px;
+            }
+
+            .action-buttons .layui-btn i {
+                font-size: 12px;
+            }
+
+            #drawControls {
+                bottom: 16px;
+                padding: 6px 12px;
+                gap: 8px;
+            }
+
+            #drawControls .layui-btn {
+                height: 32px;
+                padding: 0 8px;
+                font-size: 11px;
+            }
+
+            #drawTip {
+                padding: 12px 18px;
+                font-size: 13px;
+            }
+
+            #drawTip i {
+                font-size: 14px;
+            }
+
+            #toggleSliderBtn {
+                top: 12px;
+                right: 12px;
+                height: 32px;
+                padding: 0 12px;
+                font-size: 12px;
+            }
+
+            #ndviSliderWrapper {
+                padding: 12px 16px;
+                font-size: 13px;
+            }
+
+            #ndviSliderWrapper .layui-btn-container {
+                gap: 4px;
+            }
+
+            #ndviSliderWrapper .layui-btn {
+                height: 28px;
+                padding: 0 8px;
+                font-size: 11px;
+            }
+
+            #map {
+                height: calc(100vh - 120px);
+            }
+        }
     </style>
 </head>
 <body>
 <div class="layui-container">
     <div class="layui-card">
         <div class="layui-card-body">
-            <!-- 优化后的顶部导航栏 -->
+            <!-- 顶部导航栏（电脑端为水平布局，手机端通过媒体查询转为垂直布局） -->
             <div class="layui-form layui-row" style="position: sticky; top: 0; background: white; z-index: 10; border-bottom: 1px solid #eee; margin: 0;">
                 <div class="layui-col-md12" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                    <div class="search-group" style="display: flex; align-items: center; gap: 5px;">
-                        <input type="text" id="searchInput" placeholder="请输入地名" class="layui-input" style="width: 320px;">
+                    <div class="search-group">
+                        <input type="text" id="searchInput" placeholder="请输入地名" class="layui-input">
                         <button class="layui-btn layui-btn-normal" id="searchBtn">
                             <i class="fa fa-search"></i> 搜索
                         </button>
                     </div>
 
-                    <div class="action-buttons" style="display: flex; align-items: center; gap: 10px;">
+                    <div class="action-buttons">
                         <button class="layui-btn layui-btn-warm" id="queryPlot">
                             <i class="fa fa-map-marker"></i> 查询地块
                         </button>

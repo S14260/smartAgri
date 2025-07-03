@@ -227,7 +227,7 @@ function initMap() {
                     plotData.address = address;
 
                     try {
-                        const res = await fetch("http://localhost:8080/plots", {
+                        const res = await fetch("http://123.56.228.32:8080/plots", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify(plotData)
@@ -273,7 +273,7 @@ async function loadAndRenderPlots(layersControl, baseMaps, overlayMaps) {
         // 2. 获取真实地块数据
         let plots;
         try {
-            const res = await fetch("http://localhost:8080/plots");
+            const res = await fetch("http://123.56.228.32:8080/plots");
             if (!res.ok) throw new Error(`HTTP状态 ${res.status}`);
             plots = await res.json();
             console.log("✅ 从API获取地块数据：", plots);
@@ -400,7 +400,7 @@ function getCurrentLocation() {
  */
 async function loadPlots() {
     try {
-        const res = await fetch("http://localhost:8080/plots");
+        const res = await fetch("http://123.56.228.32:8080/plots");
         if (!res.ok) throw new Error("请求失败");
         const plots = await res.json();
         plots.forEach(displayPlot);
@@ -450,7 +450,7 @@ async function deletePlot(id) {
     if (!confirm("确认删除该地块？")) return;
 
     try {
-        const res = await fetch(`http://localhost:8080/plots/${id}`, {
+        const res = await fetch(`http://123.56.228.32:8080/plots/${id}`, {
             method: "DELETE"
         });
 
@@ -526,7 +526,7 @@ async function updateArea(id) {
     }
 
     try {
-        const res = await fetch(`http://localhost:8080/plots/${id}/area`, {
+        const res = await fetch(`http://123.56.228.32:8080/plots/${id}/area`, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json"
@@ -768,7 +768,7 @@ layui.use(['layer', 'laytpl'], function () {
 
     document.getElementById('queryPlot').onclick = async function () {
         try {
-            const res = await fetch("http://localhost:8080/plots");
+            const res = await fetch("http://123.56.228.32:8080/plots");
             if (!res.ok) throw new Error("获取地块数据失败");
             const plots = await res.json();
 
