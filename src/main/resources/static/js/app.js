@@ -36,6 +36,7 @@ const ndviTifMap = {
             // 显示加载提示
             showCustomMsg("正在加载 NDVI 图层，请稍候...");
 
+
             // 高亮当前按钮
             document.querySelectorAll("#ndviTimeButtons button").forEach(b => {
                 b.classList.remove("layui-btn-normal");
@@ -59,6 +60,7 @@ const ndviTifMap = {
                     pixelValuesToColorFn: pixelToColor
                 });
                 currentNdviLayer.addTo(map);
+                console.log("NDVI图层已加载");
                 showCustomMsg("✅ NDVI 图层加载完成");
             } else {
                 fetch(tifUrl)
@@ -73,6 +75,7 @@ const ndviTifMap = {
                             pixelValuesToColorFn: pixelToColor
                         });
                         currentNdviLayer.addTo(map);
+                        console.log("NDVI图层已加载");
                         showCustomMsg("✅ NDVI 图层加载完成");
                     })
                     .catch(err => {
@@ -87,10 +90,17 @@ const ndviTifMap = {
 
 
     // 切换 NDVI 控件显示/隐藏
-    document.getElementById("toggleSliderBtn").addEventListener("click", () => {
-        const wrapper = document.getElementById("ndviSliderWrapper");
-        wrapper.style.display = wrapper.style.display === "none" ? "block" : "none";
+    ["toggleSliderBtn", "toggleSliderBtnMobile"].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+            btn.addEventListener("click", () => {
+                const wrapper = document.getElementById("ndviSliderWrapper");
+                const isHidden = getComputedStyle(wrapper).display === "none";
+                wrapper.style.display = isHidden ? "block" : "none";
+            });
+        }
     });
+
 });
 
 // NDVI 像素值转颜色

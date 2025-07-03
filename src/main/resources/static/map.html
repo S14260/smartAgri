@@ -517,22 +517,7 @@
         }, 300);
     }
 
-    // 确保两个按钮都能切换NDVI时间轴
-    document.addEventListener('DOMContentLoaded', function() {
-        const toggleBtnDesktop = document.getElementById('toggleSliderBtn');
-        const toggleBtnMobile = document.getElementById('toggleSliderBtnMobile');
-        const ndviSlider = document.getElementById('ndviSliderWrapper');
 
-        if (toggleBtnDesktop && toggleBtnMobile && ndviSlider) {
-            toggleBtnDesktop.addEventListener('click', function() {
-                ndviSlider.style.display = ndviSlider.style.display === 'block' ? 'none' : 'block';
-            });
-
-            toggleBtnMobile.addEventListener('click', function() {
-                ndviSlider.style.display = ndviSlider.style.display === 'block' ? 'none' : 'block';
-            });
-        }
-    });
 </script>
 
 <!-- Leaflet Draw 中文配置（覆盖默认英文） -->
