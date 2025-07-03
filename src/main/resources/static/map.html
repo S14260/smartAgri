@@ -247,28 +247,34 @@
             color: var(--accent-color);
         }
 
-        /* 切换NDVI按钮组 */
+        /* 切换NDVI按钮组 - 仅在大屏幕显示 */
         #toggleSliderBtn {
-            position: fixed;
-            top: 24px;
-            right: 24px;
-            z-index: 10000;
-            box-shadow: var(--shadow-light);
-            border-radius: 6px;
-            height: 40px;
-            line-height: 40px;
-            padding: 0 18px;
-            font-size: 14px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s;
+            display: none;
         }
 
-        #toggleSliderBtn:hover {
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-medium);
+        /* 大屏幕样式 */
+        @media (min-width: 769px) {
+            #toggleSliderBtn {
+                display: flex;
+                position: fixed;
+                top: 24px;
+                right: 24px;
+                z-index: 10000;
+                box-shadow: var(--shadow-light);
+                border-radius: 6px;
+                height: 40px;
+                line-height: 40px;
+                padding: 0 18px;
+                font-size: 14px;
+                font-weight: 500;
+                gap: 6px;
+                transition: all 0.2s;
+            }
+
+            #toggleSliderBtn:hover {
+                transform: translateY(-1px);
+                box-shadow: var(--shadow-medium);
+            }
         }
 
         /* NDVI时间轴控件 */
@@ -352,6 +358,7 @@
                 width: 100%;
                 justify-content: space-between;
                 gap: 6px;
+                flex-wrap: wrap;
             }
 
             .action-buttons .layui-btn {
@@ -386,14 +393,6 @@
                 font-size: 14px;
             }
 
-            #toggleSliderBtn {
-                top: 12px;
-                right: 12px;
-                height: 32px;
-                padding: 0 12px;
-                font-size: 12px;
-            }
-
             #ndviSliderWrapper {
                 padding: 12px 16px;
                 font-size: 13px;
@@ -410,7 +409,7 @@
             }
 
             #map {
-                height: calc(100vh - 120px);
+                height: calc(100vh - 150px); /* 调整地图高度以适应移动布局 */
             }
         }
     </style>
@@ -419,7 +418,7 @@
 <div class="layui-container">
     <div class="layui-card">
         <div class="layui-card-body">
-            <!-- 顶部导航栏（电脑端为水平布局，手机端通过媒体查询转为垂直布局） -->
+            <!-- 顶部导航栏 -->
             <div class="layui-form layui-row" style="position: sticky; top: 0; background: white; z-index: 10; border-bottom: 1px solid #eee; margin: 0;">
                 <div class="layui-col-md12" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                     <div class="search-group">
@@ -429,6 +428,7 @@
                         </button>
                     </div>
 
+                    <!-- 操作按钮组 -->
                     <div class="action-buttons">
                         <button class="layui-btn layui-btn-warm" id="queryPlot">
                             <i class="fa fa-map-marker"></i> 查询地块
@@ -439,8 +439,9 @@
                         <button class="layui-btn layui-btn-primary layui-btn-sm" id="btnFullscreenOnly">
                             <i class="fa fa-expand"></i> 全屏查看地图
                         </button>
-                        <button id="toggleSliderBtn" class="layui-btn layui-btn-normal layui-btn-sm">
-                            <i class="fa fa-calendar"></i> 切换NDVI时间轴
+                        <!-- 移动设备上的切换NDVI按钮 -->
+                        <button id="toggleSliderBtnMobile" class="layui-btn layui-btn-normal layui-btn-sm">
+                            <i class="fa fa-calendar"></i> 切换NDVI
                         </button>
                     </div>
                 </div>
@@ -515,6 +516,23 @@
             }
         }, 300);
     }
+
+    // 确保两个按钮都能切换NDVI时间轴
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggleBtnDesktop = document.getElementById('toggleSliderBtn');
+        const toggleBtnMobile = document.getElementById('toggleSliderBtnMobile');
+        const ndviSlider = document.getElementById('ndviSliderWrapper');
+
+        if (toggleBtnDesktop && toggleBtnMobile && ndviSlider) {
+            toggleBtnDesktop.addEventListener('click', function() {
+                ndviSlider.style.display = ndviSlider.style.display === 'block' ? 'none' : 'block';
+            });
+
+            toggleBtnMobile.addEventListener('click', function() {
+                ndviSlider.style.display = ndviSlider.style.display === 'block' ? 'none' : 'block';
+            });
+        }
+    });
 </script>
 
 <!-- Leaflet Draw 中文配置（覆盖默认英文） -->
