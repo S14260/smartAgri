@@ -1,4 +1,4 @@
-package com.example.smartAgr.dao;
+package com.example.smartAgr.dao.admin;
 
 import com.example.smartAgr.model.Admin;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public class AdminDaoDaoImpl implements AdminDao {
+public class AdminDaoImpl implements AdminDao {
     @Autowired
     JdbcTemplate jdbcTemplate;
 

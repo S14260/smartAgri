@@ -149,7 +149,7 @@
             console.log("收到修改地块数据：", updatedData);
 
             // 🔁 发起请求更新地块信息
-            fetch(`http://123.56.228.32:8080/plots/${updatedData.id}`, {
+            fetch(`http://localhost:8080/admin/plots/${updatedData.id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json"
@@ -182,29 +182,33 @@
 
     function query() {
         $.ajax({
-            url: '/student/queryPlot',
+            url: '/admin/plots',
             type: 'GET',
             dataType: 'json',
+            headers: {
+                'token': localStorage.getItem('token_admin')  // 和后端配置保持一致
+            },
             success: function (data) {
-                let htmlstr = "";
-                for (let i = 0; i < data.length; i++) {
-                    const plots = data[i];
-                    htmlstr += `
-                        <tr>
-                            <td>${plots.id}</td>
-                            <td>${plots.area}</td>
-                            <td>${plots.name}</td>
-                            <td>${plots.lastCrop}</td>
-                            <td>${plots.currentCrop}</td>
-                            <td>${plots.contactPerson}</td>
-                            <td>${plots.phone}</td>
-                            <td>${plots.soilType}</td>
-                            <td>${plots.irrigationType}</td>
-                            <td>${plots.landType}</td>
-                            <td>${plots.address}</td>
-                            <td><button class='layui-btn layui-btn-xs' onclick='showMap(\`${plots.coordinates}\`)'>获取地块图片</button></td>
-                        </tr>`;
-                }
+                let htmlstr = data.map(plots => `
+                <tr>
+                    <td>${plots.id}</td>
+                    <td>${plots.area}</td>
+                    <td>${plots.name}</td>
+                    <td>${plots.lastCrop}</td>
+                    <td>${plots.currentCrop}</td>
+                    <td>${plots.contactPerson}</td>
+                    <td>${plots.phone}</td>
+                    <td>${plots.soilType}</td>
+                    <td>${plots.irrigationType}</td>
+                    <td>${plots.landType}</td>
+                    <td>${plots.address || ''}</td>
+                    <td>
+                        <button class='layui-btn layui-btn-xs' onclick='showMap(\`${plots.coordinates}\`)'>
+                            获取地块图片
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
                 $("#tbody").html(htmlstr);
             },
             error: function () {
@@ -212,6 +216,7 @@
             }
         });
     }
+
 
     let map;
     let shape;

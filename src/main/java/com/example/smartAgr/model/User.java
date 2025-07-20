@@ -1,17 +1,16 @@
 package com.example.smartAgr.model;
 
-public class Admin {
+public class User {
     private Integer id;
-    private String username;//用户名
-    private String password; //密码
-    private Integer issuper; //是否为超级管理员 1是 0不是
-    private String sex; //性别
-    private Integer age; //年龄
-    private String phone; //联系方式
+    private String username; // 用户名
+    private String password; // 密码
+    private String sex;      // 性别
+    private Integer age;     // 年龄
+    private String phone;    // 联系方式
 
-    public Admin(){}
+    public User() {}
 
-    public Admin(String username, String password){
+    public User(String username, String password) {
         this.username = username;
         this.password = password;
     }
@@ -40,14 +39,6 @@ public class Admin {
         this.password = password;
     }
 
-    public Integer getIssuper() {
-        return issuper;
-    }
-
-    public void setIssuper(Integer issuper) {
-        this.issuper = issuper;
-    }
-
     public String getSex() {
         return sex;
     }
@@ -64,9 +55,11 @@ public class Admin {
         this.age = age;
     }
 
+    public String getPhone() {
+        return phone;
+    }
 
-    public String getPhone() {return phone;}
-
-    public void setPhone(String phone) {this.phone = phone;}
-
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
 }

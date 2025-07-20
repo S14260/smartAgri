@@ -461,9 +461,6 @@ table th, table td {
 .x-admin-sm .login input[type=email], .x-admin-sm select {
     font-size: 12px;
 }
-.x-admin-sm .login .message{
-    font-size: 14px;
-}
 
 .x-admin-sm .layui-table td, .x-admin-sm .layui-table th{
     font-size: 12px;

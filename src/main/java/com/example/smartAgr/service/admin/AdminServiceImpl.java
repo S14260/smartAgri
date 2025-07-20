@@ -1,6 +1,7 @@
-package com.example.smartAgr.service;
+package com.example.smartAgr.service.admin;
 
-import com.example.smartAgr.dao.AdminDao;
+import com.example.smartAgr.dao.admin.AdminDao;
+import com.example.smartAgr.dao.admin.AdminDao;
 import com.example.smartAgr.model.Admin;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -40,19 +41,19 @@ public class AdminServiceImpl implements AdminService {
     }
 
 
-        @Override
-        public boolean login(Admin admin) {
-            // 用输入信息查询数据库是否有匹配的用户
-            Admin foundAdmin = admindao.get(admin.getUsername());
-            // 判断是否有该用户
-            if (foundAdmin == null) {
-                return false;
-            }
-            // 判断密码是否正确
-            if (!foundAdmin.getPassword().equals(admin.getPassword())) {
-                return false;
-            }
-            // 返回可以登录的信息
-            return true;
+    @Override
+    public boolean login(Admin admin) {
+        // 用输入信息查询数据库是否有匹配的用户
+        Admin foundAdmin = admindao.get(admin.getUsername());
+        // 判断是否有该用户
+        if (foundAdmin == null) {
+            return false;
         }
+        // 判断密码是否正确
+        if (!foundAdmin.getPassword().equals(admin.getPassword())) {
+            return false;
+        }
+        // 返回可以登录的信息
+        return true;
+    }
 }

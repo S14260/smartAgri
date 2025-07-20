@@ -1,8 +1,8 @@
-package com.example.smartAgr.controller;
+package com.example.smartAgr.controller.admin;
 
 import com.example.smartAgr.model.Plot;
-import com.example.smartAgr.dao.PlotDao;
-import com.example.smartAgr.service.PlotService;
+import com.example.smartAgr.dao.admin.AdminPlotDao;
+import com.example.smartAgr.service.admin.AdminPlotService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,33 +12,33 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/plots")
+@RequestMapping("/admin/plots")
 @CrossOrigin
-public class PlotController {
+public class AdminPlotController {
 
     @Autowired
-    private PlotService plotService;
+    private AdminPlotService plotService;
     @Autowired
-    private PlotDao plotDao;
+    private AdminPlotDao adminPlotDao;
 
 
     @GetMapping
     public List<Plot> getAllPlots() {
-        return plotDao.findAll();
+        return adminPlotDao.findAll();
     }
 
     @PostMapping
     public Plot savePlot(@RequestBody Plot plot) {
-        return plotDao.save(plot);
+        return adminPlotDao.save(plot);
     }
 
 
     @DeleteMapping("/{id}")
     public void deletePlot(@PathVariable Long id) {
-        plotDao.deleteById(id);
+        adminPlotDao.deleteById(id);
     }
 
-    
+
     // 修改地块面积
     @PutMapping("/{id}/area")
     public Plot updatePlotArea(@PathVariable Long id, @RequestBody Map<String, Double> requestBody) {
@@ -47,22 +47,22 @@ public class PlotController {
             throw new IllegalArgumentException("面积必须大于0");
         }
 
-        Plot plot = plotDao.findById(id)
+        Plot plot = adminPlotDao.findById(id)
                 .orElseThrow(() -> new RuntimeException("地块未找到"));
 
         plot.setArea(area);
-        return plotDao.save(plot);
+        return adminPlotDao.save(plot);
     }
 
 
 
-    @PostMapping("/plots/{id}/address")
+    @PostMapping("/{id}/address")
     public ResponseEntity<?> updatePlotAddress(@PathVariable Long id, @RequestBody Map<String, String> payload) {
         String address = payload.get("address");
-        Plot plot = plotDao.findById(id).get();
+        Plot plot = adminPlotDao.findById(id).get();
         if (plot != null) {
             plot.setAddress(address);
-            plotDao.save(plot);
+            adminPlotDao.save(plot);
             return ResponseEntity.ok("地址更新成功");
         } else {
             return ResponseEntity.status(404).body("地块不存在");
@@ -71,7 +71,7 @@ public class PlotController {
 
     @PutMapping("/{id}")
     public Plot updatePlot(@PathVariable Long id, @RequestBody Plot newPlot) {
-        Plot plot = plotDao.findById(id)
+        Plot plot = adminPlotDao.findById(id)
                 .orElseThrow(() -> new RuntimeException("地块未找到"));
 
         //更新字段
@@ -88,7 +88,7 @@ public class PlotController {
         //plot.setArea(newPlot.getArea());
         //plot.setAddress(newPlot.getAddress());
 
-        return plotDao.save(plot);
+        return adminPlotDao.save(plot);
     }
 
     /**

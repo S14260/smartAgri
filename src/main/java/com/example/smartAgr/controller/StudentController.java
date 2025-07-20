@@ -47,7 +47,6 @@ public class StudentController {
     }
 
 
-    @GetMapping("/queryPlot")
-    public List<Plot> queryPlot() {return StudentService.queryPlot();}
+
 }
 

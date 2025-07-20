@@ -1,81 +1,8 @@
-<!--<!doctype html>-->
-<!--<html  class="x-admin-sm">-->
-<!--<head>-->
-<!--	<meta charset="UTF-8">-->
-<!--	<title>后台登录-X-admin2.2</title>-->
-<!--	<meta name="renderer" content="webkit|ie-comp|ie-stand">-->
-<!--    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">-->
-<!--    <meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8,target-densitydpi=low-dpi" />-->
-<!--    <meta http-equiv="Cache-Control" content="no-siteapp" />-->
-<!--    <link rel="stylesheet" href="./css/font.css">-->
-<!--    <link rel="stylesheet" href="./css/login.css">-->
-<!--	  <link rel="stylesheet" href="./css/xadmin.css">-->
-<!--    <script type="text/javascript" src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>-->
-<!--    <script src="./lib/layui/layui.js" charset="utf-8"></script>-->
-<!--    &lt;!&ndash;[if lt IE 9]>-->
-<!--      <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>-->
-<!--      <script src="https://cdn.staticfile.org/respond.js/1.4.2/respond.min.js"></script>-->
-<!--    <![endif]&ndash;&gt;-->
-<!--</head>-->
-<!--<body class="login-bg">-->
-<!--    -->
-<!--    <div class="login layui-anim layui-anim-up">-->
-<!--        <div class="message">学生宿舍管理系统</div>-->
-<!--        <div id="darkbannerwrap"></div>-->
-<!--        -->
-<!--        <form  class="layui-form" id="Form">-->
-<!--            <input name="username" placeholder="用户名"  type="text" lay-verify="required" class="layui-input" >-->
-<!--            <hr class="hr15">-->
-<!--            <input name="password" lay-verify="required" placeholder="密码"  type="password" class="layui-input">-->
-<!--            <hr class="hr15">-->
-<!--            <input value="登录" lay-submit lay-filter="login" style="width:100%;" type="button" onclick="login()">-->
-<!--            <hr class="hr20" >-->
-<!--        </form>-->
-<!--    </div>-->
-
-<!--    <script>-->
-<!--        function login(){-->
-<!--            $.ajax({-->
-<!--                url:"/login",-->
-<!--                type:"post",-->
-<!--                data: $("#Form").serialize(),-->
-<!--                success:function(data){-->
-<!--                    console.log(data)-->
-<!--                    if(data=="1"){-->
-<!--                        window.location.href = "index.html";-->
-<!--                    }-->
-<!--                },-->
-
-<!--                error:function(data){-->
-<!--                    if (data=="0"){-->
-<!--                        alert("账号密码错误！")-->
-<!--                    }-->
-<!--                    alert("账号不存在!")-->
-<!--                }-->
-
-<!--            });-->
-
-<!--        }-->
-
-<!--    </script>-->
-<!--    &lt;!&ndash; 底部结束 &ndash;&gt;-->
-<!--    <script>-->
-<!--    //百度统计可去掉-->
-<!--    var _hmt = _hmt || [];-->
-<!--    (function() {-->
-<!--      var hm = document.createElement("script");-->
-<!--      hm.src = "https://hm.baidu.com/hm.js?b393d153aeb26b46e9431fabaf0f6190";-->
-<!--      var s = document.getElementsByTagName("script")[0];-->
-<!--      s.parentNode.insertBefore(hm, s);-->
-<!--    })();-->
-<!--    </script>-->
-<!--</body>-->
-<!--</html>-->
 <!doctype html>
 <html class="x-admin-sm">
 <head>
     <meta charset="UTF-8">
-    <title>后台登录-X-admin2.2</title>
+    <title>后台登录 - 智慧农业系统</title>
     <meta name="renderer" content="webkit|ie-comp|ie-stand">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8,target-densitydpi=low-dpi" />
@@ -85,17 +12,25 @@
     <link rel="stylesheet" href="./css/xadmin.css">
     <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
     <script src="./lib/layui/layui.js" charset="utf-8"></script>
+
 </head>
 <body class="login-bg">
 <div class="login layui-anim layui-anim-up">
-    <div class="message">智慧农业管理系统</div>
-    <div id="darkbannerwrap"></div>
+    <div class="message" >智慧农业管理系统</div>
     <form class="layui-form" id="Form">
         <input name="username" placeholder="用户名" type="text" lay-verify="required" class="layui-input">
         <hr class="hr15">
-        <input name="password" lay-verify="required" placeholder="密码" type="password" class="layui-input">
+        <input name="password" placeholder="密码" type="password" lay-verify="required" class="layui-input">
         <hr class="hr15">
-        <button lay-submit lay-filter="login" style="width:100%;" class="layui-btn">登录</button>
+
+        <select name="role" lay-verify="required" class="layui-input">
+            <option value="">请选择身份</option>
+            <option value="admin">管理员</option>
+            <option value="user">普通用户</option>
+        </select>
+        <hr class="hr15">
+
+        <button lay-submit lay-filter="login" class="layui-btn" style="width:100%;">登录</button>
         <hr class="hr20">
     </form>
 </div>
@@ -105,27 +40,61 @@
         var form = layui.form;
         var layer = layui.layer;
 
-        // 监听表单提交
+        // 表单提交监听
         form.on('submit(login)', function(data){
+            var formData = $("#Form").serializeArray();
+            var formObj = {};
+            formData.forEach(function(item){
+                formObj[item.name] = item.value;
+            });
+
+            var role = formObj.role;
+            if (!role) {
+                layer.msg("请选择身份", {icon: 2});
+                return false;
+            }
+
+            var loginUrl = role === 'admin' ? '/admin/login' : '/user/login';
+
             $.ajax({
-                url: "/login",
+                url: loginUrl,
                 type: "post",
-                data: $("#Form").serialize(),
-                success: function(response){
-                    console.log("Response from server:", response); // 打印响应数据
-                    if(response == "1"){
-                        console.log("Login success, redirecting..."); // 调试信息
-                        window.location.href = "index.html"; // 跳转到首页
+                data: {
+                    username: formObj.username,
+                    password: formObj.password
+                },
+                success: function(res){
+                    console.log("后端响应：", res);
+
+                    if (res.code === 1 && res.data) {
+                        layer.msg(res.message || "登录成功", {icon: 1});
+
+                        // 分角色存储 token
+                        if (role === 'admin') {
+                            localStorage.setItem("token_admin", res.data);
+                        } else {
+                            localStorage.setItem("token_user", res.data);
+                        }
+                        localStorage.setItem("role", role);
+                        localStorage.setItem("username", formObj.username);
+
+                        setTimeout(function(){
+                            if (role === 'admin') {
+                                window.location.href = "admin-index.html";
+                            } else {
+                                window.location.href = "user-index.html";
+                            }
+                        }, 1000);
                     } else {
-                        console.log("Login failed"); // 调试信息
-                        layer.msg('账号或密码错误！', {icon: 2}); // 显示错误提示
+                        layer.msg(res.message || "账号或密码错误", {icon: 2});
                     }
                 },
-                error: function(){
-                    layer.msg('登录失败，请稍后重试！', {icon: 2});
+                error: function(err){
+                    console.error("请求异常", err);
+                    layer.msg("请求失败，请检查服务器", {icon: 2});
                 }
             });
-            return false; // 阻止表单跳转
+            return false;
         });
     });
 </script>

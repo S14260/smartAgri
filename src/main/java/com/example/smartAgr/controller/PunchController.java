@@ -6,7 +6,7 @@ import com.example.smartAgr.utils.Result;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.example.smartAgr.model.Plot;
-import com.example.smartAgr.service.PlotService;
+import com.example.smartAgr.service.admin.AdminPlotService;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +21,7 @@ import java.util.List;
 public class PunchController {
 
     @Autowired
-    private PlotService plotService;
+    private AdminPlotService plotService;
     @Autowired
     private PunchRecordMapper punchRecordMapper;
 

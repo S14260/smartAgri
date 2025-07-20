@@ -1,7 +1,7 @@
 package com.example.smartAgr.controller;
 
 import com.example.smartAgr.model.Admin;
-import com.example.smartAgr.service.AdminService;
+import com.example.smartAgr.service.admin.AdminService;
 import com.example.smartAgr.utils.PageUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;

@@ -1,6 +1,6 @@
 package com.example.smartAgr.task;
 
-import com.example.smartAgr.dao.PlotDao;
+import com.example.smartAgr.dao.admin.AdminPlotDao;
 import com.example.smartAgr.model.Plot;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
@@ -21,13 +21,13 @@ import java.util.List;
 @Component
 public class PlotAddressUpdateTask {
     @Autowired
-    private  PlotDao plotDao;
+    private AdminPlotDao adminPlotDao;
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Value("${amap.key}")
     private String amapKey;
-    public PlotAddressUpdateTask(PlotDao plotDao) {
-        this.plotDao = plotDao;
+    public PlotAddressUpdateTask(AdminPlotDao adminPlotDao) {
+        this.adminPlotDao = adminPlotDao;
     }
 
     // 每天凌晨1点执行（可按需调整）
@@ -35,7 +35,7 @@ public class PlotAddressUpdateTask {
     public void updatePlotAddresses() {
         log.info("开始执行地块地址更新任务");
 
-        List<Plot> plots = plotDao.findAll();
+        List<Plot> plots = adminPlotDao.findAll();
 
         for (Plot plot : plots) {
             try {
@@ -88,7 +88,7 @@ public class PlotAddressUpdateTask {
                     if (regeocode != null) {
                         String address = regeocode.optString("formatted_address");
                         plot.setAddress(address);
-                        plotDao.save(plot);
+                        adminPlotDao.save(plot);
                         log.info("地块 [{}] 地址更新成功: {}", plot.getName(), address);
                     } else {
                         log.warn("地块ID {}: 未返回 regeocode 字段", plot.getId());

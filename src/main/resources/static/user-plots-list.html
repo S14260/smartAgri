@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html class="x-admin-sm">
+<head>
+    <meta charset="UTF-8">
+    <title>地块列表 - 智慧农业</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport"
+          content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8,target-densitydpi=low-dpi"/>
+    <link rel="stylesheet" href="./css/font.css">
+    <link rel="stylesheet" href="./css/xadmin.css">
+    <script src="./lib/layui/layui.js" charset="utf-8"></script>
+    <script type="text/javascript" src="./js/xadmin.js"></script>
+    <script src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
+
+    <!-- Leaflet 样式和脚本 -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-image/leaflet-image.js"></script>
+
+    <style>
+        .map-dialog {
+            display: flex;
+            gap: 20px;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .map-left, .map-right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #fdfdfd;
+            border-radius: 10px;
+            padding: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        #map {
+            flex: 1;
+            min-height: 350px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        #result {
+            flex: 1;
+            min-height: 350px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #f5f7fa;
+            border-radius: 8px;
+            border: 2px dashed #d0d0d0;
+            overflow: hidden;
+        }
+
+        #result img {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 6px;
+            box-shadow: 0 0 8px rgba(0,0,0,0.05);
+        }
+
+        #result span {
+            color: #999;
+            font-size: 15px;
+        }
+
+        .capture-btn, .download-btn {
+            margin-top: 10px;
+            align-self: center;
+            background-color: #5FB878;
+            color: white;
+            transition: all 0.3s ease;
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            cursor: pointer;
+            padding: 6px 15px;
+            border: none;
+        }
+
+        .capture-btn:hover, .download-btn:hover {
+            background-color: #4aae65;
+            transform: scale(1.02);
+        }
+
+        .download-btn {
+            display: none;
+        }
+    </style>
+
+</head>
+
+<body>
+<div class="x-nav">
+    <span class="layui-breadcrumb">
+        <a href="">首页</a>
+        <a href="">地块管理</a>
+        <a><cite>地块列表</cite></a>
+    </span>
+    <a class="layui-btn layui-btn-sm" style="float:right;margin-top:3px;" onclick="location.reload()" title="刷新">
+        <i class="layui-icon layui-icon-refresh"></i>
+    </a>
+</div>
+
+<div class="layui-fluid">
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-body">
+                    <button class="layui-btn layui-btn-normal" onclick="xadmin.open('修改地块','./student-admin-update.html',800,600)">
+                        <i class="layui-icon"></i>修改地块</button>
+                    <button class="layui-btn layui-btn-danger" onclick="xadmin.open('删除地块','./student-admin-del.html',800,600)">
+                        <i class="layui-icon"></i>删除地块</button>
+
+                    <table class="layui-table">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>面积(/亩)</th>
+                            <th>名称</th>
+                            <th>上季作物</th>
+                            <th>本季作物</th>
+                            <th>联系人</th>
+                            <th>电话</th>
+                            <th>土壤类型</th>
+                            <th>灌溉条件</th>
+                            <th>土地类型</th>
+                            <th>地址</th>
+                            <th>操作</th>
+                        </tr>
+                        </thead>
+                        <tbody id="tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 监听来自 iframe 的修改地块信息
+    window.addEventListener("message", function (event) {
+        if (event.data.type === "submitPlotUpdate") {
+            const updatedData = event.data.payload;
+
+            console.log("收到修改地块数据：", updatedData);
+
+            // 🔁 发起请求更新地块信息
+            fetch(`http://localhost:8080/user/plots/${updatedData.id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "authentication": token
+                },
+                body: JSON.stringify(updatedData)
+            })
+                .then(res => {
+                    if (!res.ok) throw new Error("修改失败");
+                    layer.msg("修改成功", {icon: 1});
+                    // ✅ 更新成功后刷新页面或重新加载地块数据
+                    // location.reload(); 或者你的列表刷新方法
+                })
+                .catch(err => {
+                    console.error(err);
+                    layer.msg("修改失败，请检查后端接口", {icon: 2});
+                });
+        }
+    });
+
+</script>
+
+
+
+<script>
+    $(function () {
+        query();
+    });
+
+
+
+    function query() {
+        $.ajax({
+            url: '/user/plots',
+            type: 'GET',
+            headers: {
+                'authentication': localStorage.getItem('token_user')  // 和后端配置保持一致
+            },
+            success: function (data) {
+                let htmlstr = "";
+                for (let i = 0; i < data.length; i++) {
+                    const plots = data[i];
+                    htmlstr += `
+                    <tr>
+                        <td>${plots.id}</td>
+                        <td>${plots.area}</td>
+                        <td>${plots.name}</td>
+                        <td>${plots.lastCrop}</td>
+                        <td>${plots.currentCrop}</td>
+                        <td>${plots.contactPerson}</td>
+                        <td>${plots.phone}</td>
+                        <td>${plots.soilType}</td>
+                        <td>${plots.irrigationType}</td>
+                        <td>${plots.landType}</td>
+                        <td>${plots.address}</td>
+                        <td><button class='layui-btn layui-btn-xs' onclick='showMap(\`${plots.coordinates}\`)'>获取地块图片</button></td>
+                    </tr>`;
+                }
+                $("#tbody").html(htmlstr);
+            },
+            error: function (xhr) {
+                if (xhr.status === 401) {
+                    layer.msg('登录信息已失效，请重新登录', {icon: 5});
+                } else {
+                    layer.msg('服务器执行错误！', {icon: 2});
+                }
+            }
+        });
+    }
+
+
+    let map;
+    let shape;
+    let currentImageData = null; // 用于保存当前截图Base64
+
+    function showMap(coordStr) {
+        const coord = JSON.parse(coordStr);
+
+        layer.open({
+            type: 1,
+            area: ['1000px', '520px'],
+            title: '地图截图预览',
+            content: `
+        <div class="map-dialog" style="gap:10px;">
+            <div class="map-left">
+                <div id="map"></div>
+                <button class="layui-btn capture-btn" onclick="captureMap()">📸 生成截图</button>
+            </div>
+            <div class="map-right" style="display:flex; flex-direction:column; width: 650px;">
+                <div style="flex: 1; display: flex; gap: 10px; overflow-x: auto; align-items: center; justify-content: center; padding: 10px; background:#f5f7fa; border-radius:8px; border:2px dashed #d0d0d0;">
+                    <div style="flex-shrink: 0; width: 200px; height: 200px; display:flex; flex-direction:column; align-items:center;">
+                        <div style="flex:1; width:100%; border-radius:6px; box-shadow:0 0 8px rgba(0,0,0,0.05); overflow:hidden; background:white;" id="fullScreenshotContainer">
+                            <span style="color:#999; font-size: 14px; display:flex; height: 100%; align-items: center; justify-content: center;">完整截图</span>
+                        </div>
+                    </div>
+                    <div style="flex-shrink: 0; width: 200px; height: 200px; display:flex; flex-direction:column; align-items:center;">
+                        <div style="flex:1; width:100%; border-radius:6px; box-shadow:0 0 8px rgba(0,0,0,0.05); overflow:hidden; background:white;" id="clipScreenshotContainer">
+                            <span style="color:#999; font-size: 14px; display:flex; height: 100%; align-items: center; justify-content: center;">裁剪截图</span>
+                        </div>
+                    </div>
+                    <div style="flex-shrink: 0; width: 200px; height: 200px; display:flex; flex-direction:column; align-items:center;">
+                        <div style="flex:1; width:100%; border-radius:6px; box-shadow:0 0 8px rgba(0,0,0,0.05); overflow:hidden; background:white;" id="shapeOutlineContainer">
+                            <span style="color:#999; font-size: 14px; display:flex; height: 100%; align-items: center; justify-content: center;">轮廓图</span>
+                        </div>
+                    </div>
+                </div>
+                <button id="downloadBtn" class="layui-btn capture-btn" style="margin-top: 10px; display:none;" onclick="downloadImage()">⬇️ 下载裁剪图</button>
+            </div>
+        </div>
+    `,
+            success: function () {
+                if (map) map.remove();
+                map = L.map('map').setView([39, 117], 16);
+
+                L.tileLayer('https://t{s}.tianditu.gov.cn/DataServer?T=img_w&x={x}&y={y}&l={z}&tk=19fc987939ebbcbcb3f0954ab6cf75be', {
+                    subdomains: ['0', '1', '2', '3', '4', '5', '6', '7'],
+                    maxZoom: 18
+                }).addTo(map);
+
+                if (coord.shapeType === 'polygon') {
+                    shape = L.polygon(coord.latlngs).addTo(map);
+                    map.fitBounds(shape.getBounds());
+                } else if (coord.shapeType === 'circle') {
+                    shape = L.circle(coord.center, {radius: coord.radius}).addTo(map);
+                    map.setView([coord.center.lat, coord.center.lng], 17);
+                }
+            }
+        });
+
+    }
+
+    function captureMap() {
+        leafletImage(map, function (err, canvas) {
+            if (err) {
+                layer.msg('截图失败！', {icon: 2});
+                return;
+            }
+
+            // 1. 显示完整截图（canvas转图片）
+            const fullImg = new Image();
+            fullImg.src = canvas.toDataURL('image/png');
+            fullImg.style.width = '100%';
+            fullImg.style.height = '100%';
+
+            const fullContainer = document.getElementById('fullScreenshotContainer');
+            fullContainer.innerHTML = '';
+            fullContainer.appendChild(fullImg);
+
+            // 2. 裁剪截图逻辑（同你之前的）
+            const clipCanvas = document.createElement('canvas');
+            const ctx = clipCanvas.getContext('2d');
+            clipCanvas.width = canvas.width;
+            clipCanvas.height = canvas.height;
+
+            if (!shape) {
+                layer.msg('地块未加载', {icon: 0});
+                return;
+            }
+
+            function latLngToCanvasPoint(latlng) {
+                const point = map.latLngToContainerPoint(latlng);
+                return [point.x, point.y];
+            }
+
+            ctx.save();
+
+            if (shape instanceof L.Polygon) {
+                const latlngs = shape.getLatLngs()[0];
+                ctx.beginPath();
+                latlngs.forEach((latlng, i) => {
+                    const [x, y] = latLngToCanvasPoint(latlng);
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                });
+                ctx.closePath();
+                ctx.clip();
+            } else if (shape instanceof L.Circle) {
+                const center = latLngToCanvasPoint(shape.getLatLng());
+                const radius = map.latLngToContainerPoint(shape.getLatLng()).distanceTo(
+                    map.latLngToContainerPoint([shape.getLatLng().lat + shape.getRadius() / 111320, shape.getLatLng().lng])
+                );
+                ctx.beginPath();
+                ctx.arc(center[0], center[1], radius, 0, Math.PI * 2);
+                ctx.clip();
+            } else {
+                layer.msg('不支持的地块形状', {icon: 0});
+                ctx.restore();
+                return;
+            }
+
+            ctx.drawImage(canvas, 0, 0);
+            ctx.restore();
+
+            // 裁剪图
+            const clipImg = new Image();
+            clipImg.src = clipCanvas.toDataURL('image/png');
+            clipImg.style.width = '100%';
+            clipImg.style.height = '100%';
+
+            const clipContainer = document.getElementById('clipScreenshotContainer');
+            clipContainer.innerHTML = '';
+            clipContainer.appendChild(clipImg);
+
+            // 3. 绘制轮廓图（仅绘制shape边缘，背景透明）
+            const outlineCanvas = document.createElement('canvas');
+            outlineCanvas.width = canvas.width;
+            outlineCanvas.height = canvas.height;
+            const outlineCtx = outlineCanvas.getContext('2d');
+
+            outlineCtx.clearRect(0, 0, outlineCanvas.width, outlineCanvas.height);
+            outlineCtx.strokeStyle = 'rgba(255, 0, 0, 0.8)';
+            outlineCtx.lineWidth = 4;
+
+            outlineCtx.beginPath();
+
+            if (shape instanceof L.Polygon) {
+                const latlngs = shape.getLatLngs()[0];
+                latlngs.forEach((latlng, i) => {
+                    const [x, y] = latLngToCanvasPoint(latlng);
+                    if (i === 0) outlineCtx.moveTo(x, y);
+                    else outlineCtx.lineTo(x, y);
+                });
+                outlineCtx.closePath();
+            } else if (shape instanceof L.Circle) {
+                const center = latLngToCanvasPoint(shape.getLatLng());
+                const radius = map.latLngToContainerPoint(shape.getLatLng()).distanceTo(
+                    map.latLngToContainerPoint([shape.getLatLng().lat + shape.getRadius() / 111320, shape.getLatLng().lng])
+                );
+                outlineCtx.arc(center[0], center[1], radius, 0, Math.PI * 2);
+            }
+
+            outlineCtx.stroke();
+
+            const outlineImg = new Image();
+            outlineImg.src = outlineCanvas.toDataURL('image/png');
+            outlineImg.style.width = '100%';
+            outlineImg.style.height = '100%';
+
+            const outlineContainer = document.getElementById('shapeOutlineContainer');
+            outlineContainer.innerHTML = '';
+            outlineContainer.appendChild(outlineImg);
+
+            // 保存裁剪图用于下载
+            currentImageData = clipCanvas.toDataURL('image/png');
+
+            const downloadBtn = document.getElementById('downloadBtn');
+            if (downloadBtn) {
+                downloadBtn.style.display = 'inline-block';
+            }
+        });
+    }
+
+
+
+    function downloadImage() {
+        if (!currentImageData) {
+            layer.msg('请先生成截图！', {icon: 0});
+            return;
+        }
+        const a = document.createElement('a');
+        a.href = currentImageData;
+        a.download = 'plot-map.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+</script>
+</body>
+</html>

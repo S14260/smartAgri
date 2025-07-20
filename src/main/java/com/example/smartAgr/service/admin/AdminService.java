@@ -1,4 +1,4 @@
-package com.example.smartAgr.service;
+package com.example.smartAgr.service.admin;
 
 import com.example.smartAgr.model.Admin;
 import org.springframework.stereotype.Service;
@@ -12,4 +12,5 @@ public interface AdminService {
     public List<Admin> query() ;
     public Admin get(String username);
     boolean login(Admin admin);
+
 }

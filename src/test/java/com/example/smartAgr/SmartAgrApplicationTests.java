@@ -1,6 +1,6 @@
 package com.example.smartAgr;
 
-import com.example.smartAgr.dao.AdminDao;
+import com.example.smartAgr.dao.admin.AdminDao;
 import com.example.smartAgr.dao.StudentDao;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

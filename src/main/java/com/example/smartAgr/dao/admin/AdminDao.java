@@ -1,4 +1,4 @@
-package com.example.smartAgr.dao;
+package com.example.smartAgr.dao.admin;
 
 import com.example.smartAgr.model.Admin;
 
