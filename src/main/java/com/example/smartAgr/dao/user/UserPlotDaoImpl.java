@@ -1,6 +1,6 @@
 package com.example.smartAgr.dao.user;
 
-import com.example.smartAgr.model.Plot;
+import com.example.smartAgr.model.UserPlot;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -13,7 +13,7 @@ public class UserPlotDaoImpl {
     private JdbcTemplate jdbcTemplate;
 
 
-    public List<Plot> query(){
-        return jdbcTemplate.query("select * from plots",new BeanPropertyRowMapper<>(Plot.class));
+    public List<UserPlot> query(){
+        return jdbcTemplate.query("select * from user_plots",new BeanPropertyRowMapper<>(UserPlot.class));
     }
 }

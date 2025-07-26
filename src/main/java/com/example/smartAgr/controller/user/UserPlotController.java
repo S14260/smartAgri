@@ -1,5 +1,6 @@
 package com.example.smartAgr.controller.user;
 
+import com.example.smartAgr.dao.user.UserDao;
 import com.example.smartAgr.model.UserPlot;
 import com.example.smartAgr.dao.user.UserPlotDao;
 import com.example.smartAgr.service.user.UserPlotService;
@@ -21,6 +22,8 @@ public class UserPlotController {
     private UserPlotService userPlotService;
     @Autowired
     private UserPlotDao userPlotDao;
+    @Autowired
+    private UserDao userDao;
 
     /**
      * 获取当前用户ID（通过BaseContext）
@@ -36,11 +39,13 @@ public class UserPlotController {
     }
 
     @PostMapping
-    public UserPlot savePlot(@RequestBody UserPlot plot) {
+    public UserPlot savePlot(@RequestBody UserPlot userplot) {
         Long userId = getCurrentUserId();
         System.out.println("当前用户ID: " + userId);
-        plot.setUserId(userId);
-        return userPlotDao.save(plot);
+        userplot.setUserId(userId);
+        // 设置用户名 便于数据库保存地块
+        userplot.setUserName(userDao.getUserNameById(userId));
+        return userPlotDao.save(userplot);
     }
 
     @DeleteMapping("/{id}")
@@ -79,7 +84,7 @@ public class UserPlotController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("无权限修改该地块");
         }
 
-        plot.setName(newPlot.getName());
+        plot.setPlotName(newPlot.getPlotName());
         plot.setLastCrop(newPlot.getLastCrop());
         plot.setCurrentCrop(newPlot.getCurrentCrop());
         plot.setContactPerson(newPlot.getContactPerson());
@@ -87,10 +92,10 @@ public class UserPlotController {
         plot.setSoilType(newPlot.getSoilType());
         plot.setIrrigationType(newPlot.getIrrigationType());
         plot.setLandType(newPlot.getLandType());
-        plot.setShapeType(newPlot.getShapeType());
-        plot.setCoordinates(newPlot.getCoordinates());
-        plot.setArea(newPlot.getArea());
-        plot.setAddress(newPlot.getAddress());
+        //plot.setShapeType(newPlot.getShapeType());
+        //plot.setCoordinates(newPlot.getCoordinates());
+        //plot.setArea(newPlot.getArea());
+        //plot.setAddress(newPlot.getAddress());
 
         userPlotDao.save(plot);
         return ResponseEntity.ok(plot);

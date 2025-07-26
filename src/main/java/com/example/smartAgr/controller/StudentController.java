@@ -1,7 +1,6 @@
 package com.example.smartAgr.controller;
 
 
-import com.example.smartAgr.model.Plot;
 import com.example.smartAgr.model.Student;
 import com.example.smartAgr.utils.PageUtil;
 import com.example.smartAgr.service.StudentService;

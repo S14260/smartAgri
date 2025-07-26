@@ -1,6 +1,6 @@
 package com.example.smartAgr.dao.admin;
 
-import com.example.smartAgr.model.Plot;
+import com.example.smartAgr.model.AdminPlot;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -14,7 +14,7 @@ public class AdminPlotDaoImpl {
     private JdbcTemplate jdbcTemplate;
 
 
-    public List<Plot> query(){
-        return jdbcTemplate.query("select * from plots",new BeanPropertyRowMapper<>(Plot.class));
+    public List<AdminPlot> query(){
+        return jdbcTemplate.query("select * from admin_plots",new BeanPropertyRowMapper<>(AdminPlot.class));
     }
 }

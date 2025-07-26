@@ -1,3 +1,4 @@
+/*
 package com.example.smartAgr.task;
 
 import com.example.smartAgr.dao.admin.AdminPlotDao;
@@ -13,9 +14,11 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 
-/**
- * 定时任务类，用于定时给前端已有的地块更新地址（逆地理编码）
- */
+*/
+/*定时任务类，用于定时给前端已有的地块更新地址（逆地理编码）*//*
+
+
+
 
 @Slf4j
 @Component
@@ -107,3 +110,4 @@ public class PlotAddressUpdateTask {
         log.info("地块地址更新任务完成");
     }
 }
+*/

@@ -1,7 +1,6 @@
 package com.example.smartAgr.service;
 
 import com.example.smartAgr.dao.StudentDao;
-import com.example.smartAgr.model.Plot;
 import com.example.smartAgr.model.Student;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -45,9 +44,4 @@ public class StudentServiceImpl implements StudentService {
         return studentdao.getAllstudent(dormitory);
     }
 
-
-    @Override
-    public List<Plot> queryPlot() {
-        return studentdao.queryPlot();
-    }
 }

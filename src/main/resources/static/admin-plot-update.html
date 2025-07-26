@@ -15,7 +15,7 @@
     <div class="layui-form-item">
       <label class="layui-form-label">地块名称</label>
       <div class="layui-input-block">
-        <input type="text" name="name" lay-verify="required|nameLimit" placeholder="请输入地块名称" class="layui-input">
+        <input type="text" name="plotName" lay-verify="required|nameLimit" placeholder="请输入地块名称" class="layui-input">
       </div>
     </div>
 
@@ -117,13 +117,18 @@
 <script src="https://cdn.jsdelivr.net/npm/layui@2.7.3/dist/layui.js"></script>
 
 <script>
-  layui.use(['layer', 'form', 'laytpl'], function () {
-    const layer = layui.layer;
-    const form = layui.form;
-    const laytpl = layui.laytpl;
+      layui.use(['layer', 'form', 'laytpl'], function () {
+        const layer = layui.layer;
+        const form = layui.form;
+        const laytpl = layui.laytpl;
 
-    // 打开页面后立即弹出地块选择器
-    fetch("http://localhost:8080/plots")
+        // 打开页面后立即弹出地块选择器
+        fetch("http://123.56.228.32:8080/admin/plots", {
+          method: 'GET',
+          headers: {
+            'token': localStorage.getItem('token_admin') // token 从 localStorage 获取
+          }
+        })
             .then(res => res.json())
             .then(plots => {
               //搜索地块弹窗
@@ -165,7 +170,7 @@
                   {{# layui.each(d.plots, function(index, item){ }}
                     <li data-index="{{ index }}">
                       <i class="layui-icon layui-icon-location" style="color: #1E9FFF; margin-right: 6px;"></i>
-                      {{ item.name }}
+                      {{ item.plotName }}
                     </li>
                   {{# }); }}
                 </ul>
@@ -200,7 +205,7 @@
 
     function fillForm(data) {
       document.getElementById('plotId').value = data.id;
-      document.querySelector('input[name="name"]').value = data.name;
+      document.querySelector('input[name="plotName"]').value = data.plotName;
       document.querySelector('select[name="lastCrop"]').value = data.lastCrop;
       document.querySelector('select[name="currentCrop"]').value = data.currentCrop;
       document.querySelector('input[name="contactPerson"]').value = data.contactPerson;

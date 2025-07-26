@@ -1,7 +1,7 @@
 package com.example.smartAgr.service.admin;
 
 import com.example.smartAgr.dao.admin.AdminPlotDao;
-import com.example.smartAgr.model.Plot;
+import com.example.smartAgr.model.AdminPlot;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -13,11 +13,11 @@ public class AdminPlotService {
     @Autowired
     private AdminPlotDao adminPlotDao;
 
-    public Plot savePlot(Plot plot) {
-        return adminPlotDao.save(plot); // 保存地块
+    public AdminPlot savePlot(AdminPlot adminPlot) {
+        return adminPlotDao.save(adminPlot); // 保存地块
     }
 
-    public List<Plot> getAllPlots() {
+    public List<AdminPlot> getAllPlots() {
         return adminPlotDao.findAll(); // 获取所有地块
     }
 

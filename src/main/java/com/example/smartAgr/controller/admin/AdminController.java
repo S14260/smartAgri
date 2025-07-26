@@ -1,4 +1,4 @@
-package com.example.smartAgr.controller;
+package com.example.smartAgr.controller.admin;
 
 import com.example.smartAgr.model.Admin;
 import com.example.smartAgr.service.admin.AdminService;

@@ -5,7 +5,7 @@ import com.example.smartAgr.model.PunchRecord;
 import com.example.smartAgr.utils.Result;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.example.smartAgr.model.Plot;
+import com.example.smartAgr.model.AdminPlot;
 import com.example.smartAgr.service.admin.AdminPlotService;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +21,7 @@ import java.util.List;
 public class PunchController {
 
     @Autowired
-    private AdminPlotService plotService;
+    private AdminPlotService adminPlotService;
     @Autowired
     private PunchRecordMapper punchRecordMapper;
 
@@ -36,12 +36,12 @@ public class PunchController {
         double lng = location.lng;
         double lat = location.lat;
 
-        List<Plot> plots = plotService.getAllPlots();
-        for (Plot plot : plots) {
+        List<AdminPlot> plots = adminPlotService.getAllPlots();
+        for (AdminPlot adminPlot : plots) {
             try {
                 ObjectMapper mapper = new ObjectMapper();
-                JsonNode coordJson = mapper.readTree(plot.getCoordinates());
-                String type = plot.getShapeType();
+                JsonNode coordJson = mapper.readTree(adminPlot.getCoordinates());
+                String type = adminPlot.getShapeType();
 
                 if ("circle".equalsIgnoreCase(type)) {
                     JsonNode center = coordJson.get("center");
@@ -49,7 +49,7 @@ public class PunchController {
                     double dist = distance(lat, lng,
                             center.get("lat").asDouble(), center.get("lng").asDouble());
                     if (dist <= radius) {
-                        return Result.success("进入地块：" + plot.getName());
+                        return Result.success("进入地块：" + adminPlot.getPlotName());
                     }
                 } else if ("polygon".equalsIgnoreCase(type)) {
                     JsonNode points = coordJson.get("latlngs");
@@ -61,8 +61,8 @@ public class PunchController {
                     if (inPolygon(lat, lng, polygon)) {
                         // 命中地块，保存打卡记录
                         PunchRecord record = new PunchRecord();
-                        record.setPlotId(plot.getId());
-                        record.setPlotName(plot.getName());
+                        record.setPlotId(adminPlot.getId());
+                        record.setPlotName(adminPlot.getPlotName());
                         record.setLongitude(lng);
                         record.setLatitude(lat);
                         record.setPunchTime(LocalDateTime.now());
@@ -71,7 +71,7 @@ public class PunchController {
 
                         punchRecordMapper.insert(record);
 
-                        return Result.success("进入地块：" + plot.getName());
+                        return Result.success("进入地块：" + adminPlot.getPlotName());
                     }
                 }
             } catch (Exception e) {

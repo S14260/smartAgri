@@ -94,8 +94,11 @@
             table.render({
                 elem: '#plotsTable',
                 id: 'plotsTable',
-                url: '/plots',
+                url: '/admin/plots',
                 method: 'GET',
+                headers: {
+                    'token': localStorage.getItem('token_admin')  // 和后端配置保持一致
+                },
                 parseData: function(res) {
                     return {
                         code: 0,
@@ -107,7 +110,7 @@
                 cols: [[
                     { type: 'checkbox', fixed: 'left' },
                     { field: 'id', title: '地块ID', width: 100 },
-                    { field: 'name', title: '地块名称' },
+                    { field: 'plotName', title: '地块名称' },
                     { field: 'lastCrop', title: '前作物', width: 100 },
                     { field: 'currentCrop', title: '当前作物', width: 100 },
                     { field: 'contactPerson', title: '联系人', width: 120 }
@@ -130,7 +133,10 @@
 
             layer.confirm(`确定删除选中的 ${ids.length} 个地块吗？`, { icon: 3, title: '确认删除' }, function (index) {
                 $.ajax({
-                    url: '/plots/deleteBatch',
+                    headers: {
+                        'token': localStorage.getItem('token_admin')  // 和后端配置保持一致
+                    },
+                    url: '/admin/plots/deleteBatch',
                     type: 'DELETE',
                     contentType: 'application/json',
                     data: JSON.stringify(ids),

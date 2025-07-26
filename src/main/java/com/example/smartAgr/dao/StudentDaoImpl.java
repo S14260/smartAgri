@@ -1,6 +1,4 @@
 package com.example.smartAgr.dao;
-
-import com.example.smartAgr.model.Plot;
 import com.example.smartAgr.model.Student;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
@@ -44,8 +42,4 @@ public class StudentDaoImpl implements StudentDao {
         return jdbcTemplate.query("select * from student where dormitory=?", new BeanPropertyRowMapper<Student>(Student.class), dormitory);
     }
 
-    @Override
-    public List<Plot> queryPlot() {
-        return jdbcTemplate.query("select * from plots", new BeanPropertyRowMapper<Plot>(Plot.class));
-    }
 }

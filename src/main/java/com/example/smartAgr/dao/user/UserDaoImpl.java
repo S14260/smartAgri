@@ -1,8 +1,6 @@
 package com.example.smartAgr.dao.user;
 
-import com.example.smartAgr.model.Plot;
 import com.example.smartAgr.model.User;
-import org.apache.ibatis.annotations.Select;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -41,6 +39,15 @@ public class UserDaoImpl implements UserDao {
     public User get(String username) {
         return jdbcTemplate.queryForObject("SELECT * FROM user WHERE username=?",
                 new BeanPropertyRowMapper<>(User.class), username);
+    }
+
+    @Override
+    public String getUserNameById(Long userId) {
+        return jdbcTemplate.queryForObject(
+                "SELECT username FROM user WHERE id = ?",
+                new Object[]{userId},
+                String.class
+        );
     }
 
 }

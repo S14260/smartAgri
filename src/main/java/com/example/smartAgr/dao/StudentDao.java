@@ -1,6 +1,5 @@
 package com.example.smartAgr.dao;
 
-import com.example.smartAgr.model.Plot;
 import com.example.smartAgr.model.Student;
 
 import java.util.List;
@@ -12,6 +11,5 @@ public interface StudentDao {
     public List<Student> query() ;
     public Student get(Integer studentid);
     public List<Student> getAllstudent(String dormitory) ;
-    public List<Plot> queryPlot() ;
 }
 

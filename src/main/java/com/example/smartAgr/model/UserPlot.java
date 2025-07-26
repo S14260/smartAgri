@@ -19,7 +19,9 @@ public class UserPlot {
     @Column(name = "user_id", nullable = false)
     private Long userId;  // 所属用户ID
 
-    private String name;
+    private String userName;
+
+    private String plotName;
 
     @Column(name = "last_crop")
     private String lastCrop;

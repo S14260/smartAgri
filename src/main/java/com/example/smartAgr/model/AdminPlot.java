@@ -8,12 +8,12 @@ import javax.persistence.*;
 @Entity
 @Table(name = "admin_plots")
 @Data
-public class Plot {
+public class AdminPlot {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String name;
+    private String plotName;
     private String lastCrop;
     private String currentCrop;
     private String contactPerson;
@@ -29,5 +29,5 @@ public class Plot {
     private String address;
 
     // 如果你需要自定义构造器，可以保留，但无参构造器必须在
-    public Plot() {}
+    public AdminPlot() {}
 }

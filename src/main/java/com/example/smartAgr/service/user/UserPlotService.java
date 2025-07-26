@@ -1,7 +1,6 @@
 package com.example.smartAgr.service.user;
 
 import com.example.smartAgr.dao.user.UserPlotDao;
-import com.example.smartAgr.model.Plot;
 import com.example.smartAgr.model.UserPlot;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

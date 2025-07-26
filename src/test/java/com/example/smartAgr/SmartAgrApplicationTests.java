@@ -18,11 +18,6 @@ class SmartAgrApplicationTests {
         System.out.println(studentDao.get(2020111182).getStudentname());
         System.out.println("-------------------");
     }
-    @Test
-    void query() {
-
-        System.out.println(studentDao.queryPlot().get(2));
-    }
 }
 
 

@@ -31,7 +31,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins("http://localhost:8080") // 生产环境建议具体域名
+                .allowedOrigins("http://123.56.228.32:8080") // 生产环境建议具体域名
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("Origin", "Content-Type", "Accept", "authentication", "Authorization", "X-Requested-With")
                 .allowCredentials(true);

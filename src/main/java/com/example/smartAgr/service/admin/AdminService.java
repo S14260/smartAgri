@@ -4,7 +4,6 @@ import com.example.smartAgr.model.Admin;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-@Service
 public interface AdminService {
     public Integer addAdmin(Admin d) ;
     public Integer updateAdmin(Admin d) ;

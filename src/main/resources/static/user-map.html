@@ -480,24 +480,51 @@
 </script>
 
 <script>
-    // 全局变量
-    let map;               // 地图实例
-    let drawnItems;        // 用户绘制图层集合
-    let heatLayer;         // 热力图图层，避免重复创建
-    let currentNdviLayer = null;
-    let currentNdviTime = null;
-    const ndviCache = {};  // 缓存 { timeKey: georaster }
-    const token = localStorage.getItem('token_user'); // 存储用户登录的token
+    // ================= 全局变量 =================
+    let map;                     // 地图实例
+    let drawnItems;              // 用户绘制图层集合
+    let heatLayer;               // 热力图图层，避免重复创建
+    let currentNdviLayer = null; // 当前 NDVI 图层（这里只保存第一个，为了方便移除）
+    let currentNdviTime = null;  // 当前选中时间
+    const ndviCache = {};        // 缓存 { timeKey: georaster }
+    const token = localStorage.getItem('token_user'); // 管理员 token
 
     const ndviTifMap = {
         "2024-08-18": "http://123.56.228.32/0818_NDVI.tif",
         "2024-08-20": "http://123.56.228.32/0820_NDVI.tif",
         "2024-08-23": "http://123.56.228.32/0823_NDVI.tif",
         "2024-08-25": "http://123.56.228.32/0825_NDVI.tif"
+    };
 
-    };document.addEventListener("DOMContentLoaded", () => {
+    // 把后端原始地块数组转成 /admin/ndvicut 接口需要的格式
+    function transformPlotsForNdviCut(rawPlots, dateStr) {
+        const plots = rawPlots.map(item => {
+            let polygonObj;
+            try {
+                polygonObj = typeof item.coordinates === 'string' ? JSON.parse(item.coordinates) : item.coordinates;
+            } catch (e) {
+                console.warn(`地块 ${item.plotName || item.plotName || item.id} 的 coordinates 解析失败`, e);
+                polygonObj = null;
+            }
+            return {
+                plotId: item.id,
+                plotname: item.plotName,
+                polygon: polygonObj
+            };
+        }).filter(p => p.polygon !== null);
+
+        const username = rawPlots.length > 0 ? rawPlots[0].userName : 'null';
+
+        return {
+            date: dateStr,
+            username:username,
+            plots: plots
+        };
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
         initMap();
-        loadPlots();
+        loadPlots();  // 你自己写的初始化地块，保持不变
         setupSearch();
 
         const timeKeys = Object.keys(ndviTifMap);
@@ -511,54 +538,84 @@
             selectElement.appendChild(option);
         });
 
-        // 下拉框选择事件
-        selectElement.addEventListener("change", () => {
+        // 下拉选择日期事件：自动裁剪并加载每块地的 NDVI 图层
+        selectElement.addEventListener("change", async () => {
             const selectedTime = selectElement.value;
             if (selectedTime === currentNdviTime) return;
 
             currentNdviTime = selectedTime;
-            const tifUrl = ndviTifMap[selectedTime];
+            const dateForApi = selectedTime.replace(/-(\d{2})-(\d{2})/, "_$1$2");// "2024-08-18" -> "2024_0818"
 
-            // 显示加载提示
-            showCustomMsg("正在加载 NDVI 图层，请稍候...");
+            showCustomMsg("⏳ 正在裁剪并加载各地块 NDVI，请稍候...");
 
             // 移除旧图层
             if (currentNdviLayer) {
                 map.removeLayer(currentNdviLayer);
+                currentNdviLayer = null;
             }
 
-            // 加载或使用缓存
-            if (ndviCache[selectedTime]) {
-                const cachedRaster = ndviCache[selectedTime];
-                currentNdviLayer = new GeoRasterLayer({
-                    georaster: cachedRaster,
-                    opacity: 0.7,
-                    resolution: 256,
-                    pixelValuesToColorFn: pixelToColor
+            try {
+                // 先请求地块列表
+                const resPlots = await fetch('http://123.56.228.32:8080/user/plots', {
+                    headers: {
+                        "authentication": token
+                    }
                 });
-                currentNdviLayer.addTo(map);
-                console.log("NDVI图层已加载");
-                showCustomMsg("✅ NDVI 图层加载完成");
-            } else {
-                fetch(tifUrl)
-                    .then(res => res.arrayBuffer())
-                    .then(parseGeoraster)
-                    .then(georaster => {
-                        ndviCache[selectedTime] = georaster;
-                        currentNdviLayer = new GeoRasterLayer({
+                const rawPlots = await resPlots.json();
+
+                if (!Array.isArray(rawPlots) || rawPlots.length === 0) {
+                    showCustomMsg("⚠️ 没有地块数据，无法裁剪");
+                    return;
+                }
+
+                // 转换格式
+                const requestData = transformPlotsForNdviCut(rawPlots, dateForApi);
+
+                // 调用裁剪接口，POST传送JSON数据
+                const resCut = await fetch('http://123.56.228.32:8000/user/ndvicut', {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "authentication": token
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                const results = await resCut.json();
+                console.log("接口返回：", results);
+
+                // 先确认success字段和数组长度
+                if (!results.success || results.success.length === 0) {
+                    showCustomMsg("⚠️ 没有可用的 NDVI 裁剪结果");
+                    return;
+                }
+
+                for (const item of results.success) {
+                    try {
+                        const r = await fetch(item.url);
+                        const arrayBuffer = await r.arrayBuffer();
+                        const georaster = await parseGeoraster(arrayBuffer);
+                        const layer = new GeoRasterLayer({
                             georaster,
-                            opacity: 0.7,
+                            opacity: 1.0,
                             resolution: 256,
-                            pixelValuesToColorFn: pixelToColor
+                            pixelValuesToColorFn: pixelToColor,
+                            noDataValue: -9999, // 去掉地块周围正方形灰色数据
                         });
-                        currentNdviLayer.addTo(map);
-                        console.log("NDVI图层已加载");
-                        showCustomMsg("✅ NDVI 图层加载完成");
-                    })
-                    .catch(err => {
-                        console.error("加载 NDVI 图层失败：", err);
-                        alert("❌ NDVI 加载失败：" + err.message);
-                    });
+                        layer.addTo(map);
+
+                        if (!currentNdviLayer) currentNdviLayer = layer;
+                    } catch (err) {
+                        console.error(`加载 ${item.filename} 失败:`, err);
+                        showCustomMsg(`❌ ${item.plotname} 图层加载失败`);
+                    }
+                }
+                showCustomMsg("✅ 所有 NDVI 图层加载完成");
+
+
+
+            } catch (err) {
+                console.error("裁剪接口调用失败：", err);
+                showCustomMsg("❌ 裁剪接口调用失败：" + err.message);
             }
         });
 
@@ -574,14 +631,21 @@
                 });
             }
         });
-
     });
 
     // NDVI 像素值转颜色
     function pixelToColor(values) {
         const ndvi = values[0];
-        if (ndvi === null || isNaN(ndvi)) return null;
-        if (ndvi < 0.0) return "#636363";
+        // 过滤掉 nodata 区域
+        if (
+            ndvi === null ||
+            isNaN(ndvi) ||
+            ndvi <= 0 ||
+            ndvi < -0.2 ||  // -0.2以下基本可以认为是非植被区或背景
+            ndvi === -9999  // 某些裁剪程序默认 nodata 值
+        ) return null; // 明确返回透明
+
+        // NDVI值区间渲染
         if (ndvi < 0.1) return "#d73027";
         if (ndvi < 0.2) return "#f46d43";
         if (ndvi < 0.3) return "#fdae61";
@@ -591,7 +655,6 @@
         if (ndvi < 0.8) return "#1a9850";
         return "#006837";
     }
-
 
     /**
      * 初始化地图与绘图控件
@@ -711,7 +774,7 @@
                         plotData.address = address;
 
                         try {
-                            const res = await fetch("http://localhost:8080/user/plots", {
+                            const res = await fetch("http://123.56.228.32:8080/user/plots", {
                                 method: "POST",
                                 headers: {
                                     "Content-Type": "application/json",
@@ -760,7 +823,7 @@
             // 2. 获取真实地块数据
             let plots;
             try {
-                const res = await fetch("http://localhost:8080/user/plots", {
+                const res = await fetch("http://123.56.228.32:8080/user/plots", {
                     method: "GET",
                     headers: {
                         "authentication": token
@@ -893,7 +956,7 @@
      */
     async function loadPlots() {
         try {
-            const res = await fetch("http://localhost:8080/user/plots", {
+            const res = await fetch("http://123.56.228.32:8080/user/plots", {
                 method: "GET",
                 headers: {
                     "authentication": token
@@ -908,24 +971,29 @@
         }
     }
 
-    /**
-     * 渲染单个地块
-     */
     function displayPlot(plot) {
         const data = JSON.parse(plot.coordinates);
+        let layerOptions = {
+            color: '#3388ff',     // 边框颜色
+            weight: 2,            // 边框宽度
+            fillOpacity: 0       // 中间透明，避免遮盖 NDVI 图层
+        };
         let layer;
 
         if (data.shapeType === "circle") {
-            layer = L.circle(data.center, {radius: data.radius});
+            layer = L.circle(data.center, {
+                ...layerOptions,
+                radius: data.radius
+            });
         } else if (data.shapeType === "polygon") {
-            layer = L.polygon(data.latlngs);
+            layer = L.polygon(data.latlngs, layerOptions);
         } else {
             console.warn("未知形状类型", data.shapeType);
             return;
         }
 
         layer.addTo(map).bindPopup(`
-        <b>地块名称:</b> ${plot.name}<br>
+        <b>地块名称:</b> ${plot.plotName}<br>
         <b>上季作物:</b> ${plot.lastCrop}<br>
         <b>本季作物:</b> ${plot.currentCrop}<br>
         <b>联系人:</b> ${plot.contactPerson}<br>
@@ -948,7 +1016,7 @@
         if (!confirm("确认删除该地块？")) return;
 
         try {
-            const res = await fetch(`http://localhost:8080/user/plots/${id}`, {
+            const res = await fetch(`http://123.56.228.32:8080/user/plots/${id}`, {
                 method: "DELETE",
                 headers: {
                     "authentication": token
@@ -1027,7 +1095,7 @@
         }
 
         try {
-            const res = await fetch(`http://localhost:8080/user/plots/${id}/area`, {
+            const res = await fetch(`http://123.56.228.32:8080/user/plots/${id}/area`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -1270,7 +1338,7 @@
 
         document.getElementById('queryPlot').onclick = async function () {
             try {
-                const res = await fetch("http://localhost:8080/user/plots", {
+                const res = await fetch("http://123.56.228.32:8080/user/plots", {
                     method: "GET",
                     headers: {
                         "authentication": token
@@ -1317,7 +1385,7 @@
                   {{# layui.each(d.plots, function(index, item){ }}
                     <li data-index="{{ index }}">
                       <i class="layui-icon layui-icon-location" style="color: #1E9FFF; margin-right: 6px;"></i>
-                      {{ item.name }}
+                      {{ item.plotName }}
                     </li>
                   {{# }); }}
                 </ul>

@@ -89,6 +89,13 @@
         .download-btn {
             display: none;
         }
+        @media screen and (max-width: 768px) {
+            .layui-table th,
+            .layui-table td {
+                font-size: 12px;
+                padding: 8px;
+            }
+        }
     </style>
 
 </head>
@@ -110,35 +117,41 @@
         <div class="layui-col-md12">
             <div class="layui-card">
                 <div class="layui-card-body">
-                    <button class="layui-btn layui-btn-normal" onclick="xadmin.open('修改地块','./student-admin-update.html',800,600)">
+
+                    <button class="layui-btn layui-btn-normal" onclick="xadmin.open('修改地块','./admin-plot-update.html',800,600)">
                         <i class="layui-icon"></i>修改地块</button>
-                    <button class="layui-btn layui-btn-danger" onclick="xadmin.open('删除地块','./student-admin-del.html',800,600)">
+                    <button class="layui-btn layui-btn-danger" onclick="xadmin.open('删除地块','./admin-plot-delete.html',800,600)">
                         <i class="layui-icon"></i>删除地块</button>
 
-                    <table class="layui-table">
-                        <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>面积(/亩)</th>
-                            <th>名称</th>
-                            <th>上季作物</th>
-                            <th>本季作物</th>
-                            <th>联系人</th>
-                            <th>电话</th>
-                            <th>土壤类型</th>
-                            <th>灌溉条件</th>
-                            <th>土地类型</th>
-                            <th>地址</th>
-                            <th>操作</th>
-                        </tr>
-                        </thead>
-                        <tbody id="tbody"></tbody>
-                    </table>
+                    <!-- 横向滚动容器 -->
+                    <div style="overflow-x: auto;">
+                        <table class="layui-table" style="min-width: 1200px; table-layout: auto;">
+                            <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>面积(/亩)</th>
+                                <th>地块名称</th>
+                                <th>上季作物</th>
+                                <th>本季作物</th>
+                                <th>联系人</th>
+                                <th>电话</th>
+                                <th>土壤类型</th>
+                                <th>灌溉条件</th>
+                                <th>土地类型</th>
+                                <th>地址</th>
+                                <th>操作</th>
+                            </tr>
+                            </thead>
+                            <tbody id="tbody"></tbody>
+                        </table>
+                    </div>
+
                 </div>
             </div>
         </div>
     </div>
 </div>
+
 
 <script>
     // 监听来自 iframe 的修改地块信息
@@ -149,10 +162,11 @@
             console.log("收到修改地块数据：", updatedData);
 
             // 🔁 发起请求更新地块信息
-            fetch(`http://localhost:8080/admin/plots/${updatedData.id}`, {
+            fetch(`http://123.56.228.32:8080/admin/plots/${updatedData.id}`, {
                 method: "PUT",
                 headers: {
-                    "Content-Type": "application/json"
+                    'Content-Type': 'application/json',
+                    'token': localStorage.getItem('token_admin')  // 和后端配置保持一致
                 },
                 body: JSON.stringify(updatedData)
             })
@@ -193,7 +207,7 @@
                 <tr>
                     <td>${plots.id}</td>
                     <td>${plots.area}</td>
-                    <td>${plots.name}</td>
+                    <td>${plots.plotName}</td>
                     <td>${plots.lastCrop}</td>
                     <td>${plots.currentCrop}</td>
                     <td>${plots.contactPerson}</td>
