@@ -6,30 +6,29 @@
     <title>地块绘制</title>
 
     <!-- Leaflet 和 Draw 样式 -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw/dist/leaflet.draw.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-draw@1.0.4/dist/leaflet.draw.css"/>
 
     <!-- Layui 样式 -->
     <link rel="stylesheet" href="https://cdn.staticfile.org/layui/2.8.18/css/layui.css"/>
 
     <!-- Font Awesome -->
-    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css"/>
 
     <style>
         :root {
-            --primary-color: #1E88E5; /* 主色调：蓝色，代表专业和信任 */
-            --secondary-color: #43A047; /* 辅助色：绿色，代表土地和农业 */
-            --accent-color: #FF6D00; /* 强调色：橙色，用于交互元素 */
-            --text-primary: #333333; /* 主要文本颜色 */
-            --text-secondary: #666666; /* 次要文本颜色 */
-            --bg-light: #F5F7FA; /* 浅色背景 */
-            --bg-dark: #E4E7ED; /* 深色背景 */
-            --border-color: #EBEEF5; /* 边框颜色 */
-            --shadow-light: 0 2px 12px rgba(0, 0, 0, 0.08); /* 轻度阴影 */
-            --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.12); /* 中度阴影 */
+            --primary-color: #1E88E5;
+            --secondary-color: #43A047;
+            --accent-color: #FF6D00;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --bg-light: #F5F7FA;
+            --bg-dark: #E4E7ED;
+            --border-color: #EBEEF5;
+            --shadow-light: 0 2px 12px rgba(0, 0, 0, 0.08);
+            --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.12);
         }
 
-        /* 基础样式（电脑端默认样式） */
         html, body {
             margin: 0;
             padding: 0;
@@ -91,7 +90,6 @@
             background-color: #e9ecef;
         }
 
-        /* 顶部搜索栏样式（电脑端） */
         .search-group {
             display: flex;
             align-items: center;
@@ -131,7 +129,6 @@
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
         }
 
-        /* 操作按钮样式（电脑端） */
         .action-buttons {
             display: flex;
             align-items: center;
@@ -185,7 +182,6 @@
             border-color: var(--accent-color);
         }
 
-        /* 绘制控制区样式 */
         #drawControls {
             position: fixed;
             bottom: 24px;
@@ -221,7 +217,6 @@
             transform: translateY(-1px);
         }
 
-        /* 绘制提示样式 */
         #drawTip {
             display: none;
             position: fixed;
@@ -244,7 +239,6 @@
             color: var(--accent-color);
         }
 
-        /* 大屏幕样式 */
         @media (min-width: 769px) {
             #toggleSliderBtn {
                 display: flex;
@@ -269,7 +263,6 @@
             }
         }
 
-        /* NDVI时间轴控件 */
         #ndviSliderWrapper {
             position: fixed;
             bottom: 0;
@@ -285,7 +278,6 @@
             transition: all 0.3s ease;
         }
 
-        /* 下拉框样式 */
         #ndviTimeSelect {
             width: 200px;
             margin-left: 10px;
@@ -293,7 +285,6 @@
             line-height: 38px;
         }
 
-        /* 响应式适配 - 手机端优化（仅在屏幕宽度≤768px时生效） */
         @media (max-width: 768px) {
             .layui-form {
                 padding: 10px 12px;
@@ -368,17 +359,20 @@
             }
 
             #map {
-                height: calc(100vh - 150px); /* 调整地图高度以适应移动布局 */
+                height: calc(100vh - 150px);
             }
         }
     </style>
 </head>
+
+
 <body>
 <div class="layui-container">
     <div class="layui-card">
         <div class="layui-card-body">
             <!-- 顶部导航栏 -->
-            <div class="layui-form layui-row" style="position: sticky; top: 0; background: white; z-index: 10; border-bottom: 1px solid #eee; margin: 0;">
+            <div class="layui-form layui-row"
+                 style="position: sticky; top: 0; background: white; z-index: 10; border-bottom: 1px solid #eee; margin: 0;">
                 <div class="layui-col-md12" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                     <div class="search-group">
                         <input type="text" id="searchInput" placeholder="请输入地名" class="layui-input">
@@ -387,7 +381,6 @@
                         </button>
                     </div>
 
-                    <!-- 操作按钮组 -->
                     <div class="action-buttons">
                         <button class="layui-btn layui-btn-warm" id="queryPlot">
                             <i class="fa fa-map-marker"></i> 查询地块
@@ -398,17 +391,18 @@
                         <button class="layui-btn layui-btn-primary layui-btn-sm" id="btnFullscreenOnly">
                             <i class="fa fa-expand"></i> 全屏查看地图
                         </button>
-                        <!-- 移动设备上的切换NDVI按钮 -->
-                        <button id="toggleSliderBtnMobile" class="layui-btn layui-btn-normal layui-btn-sm">
-                            <i class="fa fa-calendar"></i> 切换NDVI
+                    </div>
+
+                    <!-- NDVI按钮放导航栏最右边，和action-buttons风格一致 -->
+                    <div class="action-buttons" style="margin-left: auto; display: flex; gap: 10px;">
+                        <button id="toggleSliderBtnMobile" class="layui-btn layui-btn-normal layui-btn-sm"><i
+                                class="fa fa-calendar"></i> 切换NDVI
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- 地图区域 -->
             <div id="map">
-                <!-- 绘制控制按钮 -->
                 <div id="drawControls">
                     <button id="btn-start" class="layui-btn layui-btn-danger">
                         <i class="fa fa-play"></i> 开始绘制
@@ -424,36 +418,39 @@
                     </button>
                 </div>
 
-                <!-- 绘制提示 -->
                 <div id="drawTip">
                     <i class="fa fa-info-circle"></i>
                     <span>已进入圈地模式，请点击“开始绘图”按钮</span>
                 </div>
 
                 <!-- NDVI 时间轴 -->
-                <div id="ndviSliderWrapper">
+                <div id="ndviSliderWrapper" style="display: flex; align-items: center; gap: 8px;">
                     <label style="margin-right: 10px; font-weight: 500;">时间：</label>
                     <select id="ndviTimeSelect" lay-verify="required" class="layui-select">
-                        <!-- 时间选项将通过JavaScript动态生成 -->
+                        <option value="" selected disabled>请选择日期</option> <!-- 默认空值 -->
                     </select>
+                    <button id="removeNdviBtn" class="layui-btn layui-btn-danger">
+                        <i class="fa fa-trash"></i> 移除NDVI
+                    </button>
                 </div>
+
+
             </div>
         </div>
     </div>
 </div>
 
 
-<!-- Leaflet 与插件 -->
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet-draw/dist/leaflet.draw.js"></script>
-<script src="https://unpkg.com/@turf/turf/turf.min.js"></script>
-<!--热力图-->
-<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
-<!--Geotiff-->
+<!-- js引用区 -->
+<!-- Leaflet 核心 -->
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+<!-- Leaflet 插件 -->
+<script src="https://cdn.jsdelivr.net/npm/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<!-- GeoRaster -->
 <script src="https://unpkg.com/georaster"></script>
 <script src="https://unpkg.com/georaster-layer-for-leaflet"></script>
-
-
 <!-- Layui -->
 <script src="https://cdn.staticfile.org/layui/2.8.18/layui.js"></script>
 
@@ -484,17 +481,12 @@
     let map;                     // 地图实例
     let drawnItems;              // 用户绘制图层集合
     let heatLayer;               // 热力图图层，避免重复创建
+    let ndviLayers = []; // 保存所有 NDVI 图层
     let currentNdviLayer = null; // 当前 NDVI 图层（这里只保存第一个，为了方便移除）
     let currentNdviTime = null;  // 当前选中时间
-    const ndviCache = {};        // 缓存 { timeKey: georaster }
     const token = localStorage.getItem('token_admin'); // 管理员 token
 
-    const ndviTifMap = {
-        "2024-08-18": "http://123.56.228.32/0818_NDVI.tif",
-        "2024-08-20": "http://123.56.228.32/0820_NDVI.tif",
-        "2024-08-23": "http://123.56.228.32/0823_NDVI.tif",
-        "2024-08-25": "http://123.56.228.32/0825_NDVI.tif"
-    };
+    const ndviTifMap = {}; // 通过 /admin/ndvilist 接口动态填充
 
     // 把后端原始地块数组转成 /admin/ndvicut 接口需要的格式
     function transformPlotsForNdviCut(rawPlots, dateStr) {
@@ -503,7 +495,7 @@
             try {
                 polygonObj = typeof item.coordinates === 'string' ? JSON.parse(item.coordinates) : item.coordinates;
             } catch (e) {
-                console.warn(`地块 ${item.plotName || item.plotName || item.id} 的 coordinates 解析失败`, e);
+                console.warn(`地块 ${item.plotName || item.id} 的 coordinates 解析失败`, e);
                 polygonObj = null;
             }
             return {
@@ -519,44 +511,74 @@
         };
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener("DOMContentLoaded", async () => {
         initMap();
         loadPlots();  // 你自己写的初始化地块，保持不变
         setupSearch();
 
-        const timeKeys = Object.keys(ndviTifMap);
         const selectElement = document.getElementById("ndviTimeSelect");
 
-        // 创建下拉选项
-        timeKeys.forEach(time => {
-            const option = document.createElement("option");
-            option.value = time;
-            option.textContent = time;
-            selectElement.appendChild(option);
-        });
+        // ================= 从后端拉取 NDVI 列表并按年份分组 =================
+        try {
+            const resNdvi = await fetch('http://123.56.228.32:8000/admin/ndvilist', {
+                headers: {"token": token}
+            });
+            const ndviList = await resNdvi.json();
 
-        // 下拉选择日期事件：自动裁剪并加载每块地的 NDVI 图层
+            if (!Array.isArray(ndviList) || ndviList.length === 0) {
+                showCustomMsg("⚠️ 后端 NDVI 列表为空");
+                return;
+            }
+
+            // 按年份分组
+            const grouped = {};
+            ndviList.forEach(item => {
+                const year = item.year;
+                if (!grouped[year]) grouped[year] = [];
+                grouped[year].push(item);
+            });
+
+            // 构建下拉框
+            Object.keys(grouped).sort().forEach(year => {
+                const optgroup = document.createElement("optgroup");
+                optgroup.label = year;
+
+                grouped[year].forEach(item => {
+                    const key = `${item.year}-${item.date.slice(0, 2)}-${item.date.slice(2, 4)}`; // "2024_0818" -> "2024-08-18"
+                    ndviTifMap[key] = item.url;
+
+                    const option = document.createElement("option");
+                    option.value = key;
+                    option.textContent = key;
+                    optgroup.appendChild(option);
+                });
+
+                selectElement.appendChild(optgroup);
+            });
+        } catch (err) {
+            console.error("获取 NDVI 列表失败：", err);
+            showCustomMsg("❌ 获取 NDVI 列表失败：" + err.message);
+        }
+
+        // ================= 下拉选择日期事件 =================
         selectElement.addEventListener("change", async () => {
             const selectedTime = selectElement.value;
             if (selectedTime === currentNdviTime) return;
 
             currentNdviTime = selectedTime;
-            const dateForApi = selectedTime.replace(/-(\d{2})-(\d{2})/, "_$1$2");// "2024-08-18" -> "2024_0818"
+            const dateForApi = selectedTime.replace(/-(\d{2})-(\d{2})/, "_$1$2"); // "2024-08-18" -> "2024_0818"
 
             showCustomMsg("⏳ 正在裁剪并加载各地块 NDVI，请稍候...");
 
-            // 移除旧图层
-            if (currentNdviLayer) {
-                map.removeLayer(currentNdviLayer);
-                currentNdviLayer = null;
-            }
+            // 移除所有已加载 NDVI 旧图层
+            ndviLayers.forEach(layer => map.removeLayer(layer));
+            ndviLayers = [];
+
 
             try {
                 // 先请求地块列表
-                const resPlots = await fetch('http://123.56.228.32:8080/admin/plots', {
-                    headers: {
-                        "token": token
-                    }
+                const resPlots = await fetch('http://localhost:8080/admin/plots', {
+                    headers: {"token": token}
                 });
                 const rawPlots = await resPlots.json();
 
@@ -577,15 +599,23 @@
                     },
                     body: JSON.stringify(requestData)
                 });
+
+                // 后端flask返回各个地块ndvi信息
                 const results = await resCut.json();
                 console.log("接口返回：", results);
 
-                // 先确认success字段和数组长度
+                // 显示错误信息（如果有）
+                if (results.errors && results.errors.length > 0) {
+                    showCustomMsg(`⚠️ 以下地块裁剪失败: ${results.errors.map(e => e.plotname).join(', ')}`);
+                }
+
+                // 如果没有成功结果，直接返回
                 if (!results.success || results.success.length === 0) {
                     showCustomMsg("⚠️ 没有可用的 NDVI 裁剪结果");
                     return;
                 }
 
+                // 渲染成功的NDVI图层
                 for (const item of results.success) {
                     try {
                         const r = await fetch(item.url);
@@ -596,11 +626,10 @@
                             opacity: 1.0,
                             resolution: 256,
                             pixelValuesToColorFn: pixelToColor,
-                            noDataValue: -9999, // 去掉地块周围正方形灰色数据
+                            noDataValue: -9999
                         });
                         layer.addTo(map);
-
-                        if (!currentNdviLayer) currentNdviLayer = layer;
+                        ndviLayers.push(layer); // 保存到数组
                     } catch (err) {
                         console.error(`加载 ${item.filename} 失败:`, err);
                         showCustomMsg(`❌ ${item.plotname} 图层加载失败`);
@@ -608,14 +637,24 @@
                 }
                 showCustomMsg("✅ 所有 NDVI 图层加载完成");
 
-
-
             } catch (err) {
                 console.error("裁剪接口调用失败：", err);
                 showCustomMsg("❌ 裁剪接口调用失败：" + err.message);
             }
         });
 
+        // 点击“移除 NDVI”按钮
+        removeNdviBtn.addEventListener("click", () => {
+            if (ndviLayers.length > 0) {
+                ndviLayers.forEach(layer => map.removeLayer(layer));
+                ndviLayers = [];
+                currentNdviTime = null;
+                selectElement.value = "";
+                showCustomMsg("🗑️ 已移除所有 NDVI 图层");
+            } else {
+                showCustomMsg("⚠️ 当前没有 NDVI 图层可移除");
+            }
+        });
 
         // 切换 NDVI 控件显示/隐藏
         ["toggleSliderBtn", "toggleSliderBtnMobile"].forEach(id => {
@@ -630,6 +669,7 @@
         });
     });
 
+
     // NDVI 像素值转颜色
     function pixelToColor(values) {
         const ndvi = values[0];
@@ -642,15 +682,20 @@
             ndvi === -9999  // 某些裁剪程序默认 nodata 值
         ) return null; // 明确返回透明
 
-        // NDVI值区间渲染
-        if (ndvi < 0.1) return "#d73027";
-        if (ndvi < 0.2) return "#f46d43";
-        if (ndvi < 0.3) return "#fdae61";
-        if (ndvi < 0.4) return "#fee08b";
-        if (ndvi < 0.5) return "#d9ef8b";
-        if (ndvi < 0.6) return "#a6d96a";
-        if (ndvi < 0.8) return "#1a9850";
-        return "#006837";
+        // 细分NDVI值区间渲染，从低植被到高植被的绿色渐变
+        if (ndvi < 0.05) return "#d73027";   // 极低频盖
+        if (ndvi < 0.1) return "#f46d43";    // 很低覆盖
+        if (ndvi < 0.15) return "#fdae61";   // 低覆盖
+        if (ndvi < 0.2) return "#fee08b";    // 较低覆盖
+        if (ndvi < 0.25) return "#ffffbf";   // 中等偏低
+        if (ndvi < 0.3) return "#d9ef8b";    // 中等
+        if (ndvi < 0.35) return "#a6d96a";   // 中等偏高
+        if (ndvi < 0.4) return "#66bd63";    // 较高覆盖
+        if (ndvi < 0.45) return "#1a9850";   // 高覆盖
+        if (ndvi < 0.55) return "#008837";   // 很高覆盖
+        if (ndvi < 0.65) return "#006837";   // 极高覆盖
+        if (ndvi < 0.75) return "#00441b";   // 茂密植被
+        return "#003300";                    // 极茂密植被
     }
 
     /**
@@ -713,12 +758,12 @@
             if (shapeType === "circle") {
                 const center = layer.getLatLng();
                 const radius = layer.getRadius();
-                coordinates = JSON.stringify({ shapeType, center, radius });
+                coordinates = JSON.stringify({shapeType, center, radius});
                 area = Math.PI * radius * radius;
                 centerForGeocode = [center.lng, center.lat];
             } else if (shapeType === "polygon") {
                 const latlngs = layer.getLatLngs()[0];
-                coordinates = JSON.stringify({ shapeType, latlngs });
+                coordinates = JSON.stringify({shapeType, latlngs});
 
                 area = L.GeometryUtil.geodesicArea(latlngs);
 
@@ -774,8 +819,8 @@
                         //TODO 修改地块还有bug，到时候统一一下管理端字段名，一起改吧
 
                         try {
-                            // 123.56.228.32:8080请求，添加token头
-                            const res = await fetch("http://123.56.228.32:8080/admin/plots", {
+                            // localhost:8080请求，添加token头
+                            const res = await fetch("http://localhost:8080/admin/plots", {
                                 method: "POST",
                                 headers: {
                                     "Content-Type": "application/json",
@@ -798,7 +843,7 @@
                             alert("保存失败，请检查后端服务是否可用！");
                         }
                     }
-                }, { once: true });
+                }, {once: true});
             });
         });
 
@@ -821,10 +866,10 @@
                 return;
             }
 
-            // 2. 获取真实地块数据（123.56.228.32:8080请求，添加token头）
+            // 2. 获取真实地块数据（localhost:8080请求，添加token头）
             let plots;
             try {
-                const res = await fetch("http://123.56.228.32:8080/admin/plots", {
+                const res = await fetch("http://localhost:8080/admin/plots", {
                     headers: {
                         "token": token
                     }
@@ -955,8 +1000,8 @@
      */
     async function loadPlots() {
         try {
-            // 123.56.228.32:8080请求，添加token头
-            const res = await fetch("http://123.56.228.32:8080/admin/plots", {
+            // localhost:8080请求，添加token头
+            const res = await fetch("http://localhost:8080/admin/plots", {
                 headers: {
                     "token": token
                 }
@@ -1019,8 +1064,8 @@
         if (!confirm("确认删除该地块？")) return;
 
         try {
-            // 123.56.228.32:8080请求，添加token头
-            const res = await fetch(`http://123.56.228.32:8080/admin/plots/${id}`, {
+            // localhost:8080请求，添加token头
+            const res = await fetch(`http://localhost:8080/admin/plots/${id}`, {
                 method: "DELETE",
                 headers: {
                     "token": token
@@ -1037,7 +1082,6 @@
             alert("删除失败，请检查后端接口或网络状态");
         }
     }
-
 
 
     /**
@@ -1100,14 +1144,14 @@
         }
 
         try {
-            // 123.56.228.32:8080请求，添加token头
-            const res = await fetch(`http://123.56.228.32:8080/admin/plots/${id}/area`, {
+            // localhost:8080请求，添加token头
+            const res = await fetch(`http://localhost:8080/admin/plots/${id}/area`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
                     "token": token
                 },
-                body: JSON.stringify({ area: parseFloat(area.toFixed(2)) }) // 保留两位小数
+                body: JSON.stringify({area: parseFloat(area.toFixed(2))}) // 保留两位小数
             });
 
             if (!res.ok) throw new Error("更新失败");
@@ -1222,7 +1266,7 @@
             currentDrawer = new L.Draw.Polygon(map, window.drawControl.options.draw.polygon);
 
             // 监听绘制完成事件
-            map.on('draw:created', function(e) {
+            map.on('draw:created', function (e) {
                 const layer = e.layer;
                 // 可以在这里处理绘制好的多边形数据
                 console.log('绘制完成:', layer.toGeoJSON());
@@ -1344,8 +1388,8 @@
 
         document.getElementById('queryPlot').onclick = async function () {
             try {
-                // 123.56.228.32:8080请求，添加token头
-                const res = await fetch("http://123.56.228.32:8080/admin/plots", {
+                // localhost:8080请求，添加token头
+                const res = await fetch("http://localhost:8080/admin/plots", {
                     headers: {
                         "token": token
                     }
@@ -1443,7 +1487,6 @@
         };
     });
 </script>
-
 
 
 <!-- Leaflet Draw 中文配置（覆盖默认英文） -->
