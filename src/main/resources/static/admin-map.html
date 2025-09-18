@@ -423,16 +423,34 @@
                     <span>已进入圈地模式，请点击“开始绘图”按钮</span>
                 </div>
 
-                <!-- NDVI 时间轴 -->
-                <div id="ndviSliderWrapper" style="display: flex; align-items: center; gap: 8px;">
-                    <label style="margin-right: 10px; font-weight: 500;">时间：</label>
-                    <select id="ndviTimeSelect" lay-verify="required" class="layui-select">
-                        <option value="" selected disabled>请选择日期</option> <!-- 默认空值 -->
-                    </select>
+                <!-- NDVI 控件 -->
+                <div id="ndviSliderWrapper"
+                     style="display: none; align-items: center; gap: 16px; flex-wrap: wrap;">
+
+                    <!-- 地区选择 -->
+                    <div style="display: flex; align-items: center; gap: 8px; margin-right: 20px;">
+                        <label style="font-weight: 500;">地区：</label>
+                        <select id="ndviRegionSelect" lay-verify="required" class="layui-select">
+                            <option value="" selected disabled>请选择地区</option>
+                        </select>
+                    </div>
+
+                    <!-- 日期选择 -->
+                    <div style="display: flex; align-items: center; gap: 8px; margin-right: 20px;">
+                        <label style="font-weight: 500;">日期：</label>
+                        <select id="ndviTimeSelect" lay-verify="required" class="layui-select">
+                            <option value="" selected disabled>请选择日期</option>
+                        </select>
+                    </div>
+
+                    <!-- 移除按钮 -->
                     <button id="removeNdviBtn" class="layui-btn layui-btn-danger">
                         <i class="fa fa-trash"></i> 移除NDVI
                     </button>
                 </div>
+
+
+
 
 
             </div>
@@ -443,7 +461,7 @@
 
 <!-- js引用区 -->
 <!-- Leaflet 核心 -->
-<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
 <!-- Leaflet 插件 -->
 <script src="https://cdn.jsdelivr.net/npm/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js"></script>
@@ -486,7 +504,6 @@
     let currentNdviTime = null;  // 当前选中时间
     const token = localStorage.getItem('token_admin'); // 管理员 token
 
-    const ndviTifMap = {}; // 通过 /admin/ndvilist 接口动态填充
 
     // 把后端原始地块数组转成 /admin/ndvicut 接口需要的格式
     function transformPlotsForNdviCut(rawPlots, dateStr) {
@@ -516,67 +533,91 @@
         loadPlots();  // 你自己写的初始化地块，保持不变
         setupSearch();
 
-        const selectElement = document.getElementById("ndviTimeSelect");
+        const regionSelect = document.getElementById("ndviRegionSelect");
+        const timeSelect = document.getElementById("ndviTimeSelect");
 
-        // ================= 从后端拉取 NDVI 列表并按年份分组 =================
-        try {
-            const resNdvi = await fetch('http://123.56.228.32:8000/admin/ndvilist', {
-                headers: {"token": token}
-            });
-            const ndviList = await resNdvi.json();
+        // 存储各地区 NDVI 列表
+        const ndviDataByRegion = {};
 
-            if (!Array.isArray(ndviList) || ndviList.length === 0) {
-                showCustomMsg("⚠️ 后端 NDVI 列表为空");
-                return;
-            }
+        // 初始化地区选项（可改成后端返回）
+        const regions = [
+            {id: "zhangbei", name: "张北"},
+            {id: "ninghe", name: "宁河"}
+        ];
+        regions.forEach(r => {
+            const opt = document.createElement("option");
+            opt.value = r.id;
+            opt.textContent = r.name;
+            regionSelect.appendChild(opt);
+        });
 
-            // 按年份分组
-            const grouped = {};
-            ndviList.forEach(item => {
-                const year = item.year;
-                if (!grouped[year]) grouped[year] = [];
-                grouped[year].push(item);
-            });
-
-            // 构建下拉框
-            Object.keys(grouped).sort().forEach(year => {
-                const optgroup = document.createElement("optgroup");
-                optgroup.label = year;
-
-                grouped[year].forEach(item => {
-                    const key = `${item.year}-${item.date.slice(0, 2)}-${item.date.slice(2, 4)}`; // "2024_0818" -> "2024-08-18"
-                    ndviTifMap[key] = item.url;
-
-                    const option = document.createElement("option");
-                    option.value = key;
-                    option.textContent = key;
-                    optgroup.appendChild(option);
-                });
-
-                selectElement.appendChild(optgroup);
-            });
-        } catch (err) {
-            console.error("获取 NDVI 列表失败：", err);
-            showCustomMsg("❌ 获取 NDVI 列表失败：" + err.message);
-        }
-
-        // ================= 下拉选择日期事件 =================
-        selectElement.addEventListener("change", async () => {
-            const selectedTime = selectElement.value;
-            if (selectedTime === currentNdviTime) return;
-
-            currentNdviTime = selectedTime;
-            const dateForApi = selectedTime.replace(/-(\d{2})-(\d{2})/, "_$1$2"); // "2024-08-18" -> "2024_0818"
-
-            showCustomMsg("⏳ 正在裁剪并加载各地块 NDVI，请稍候...");
-
-            // 移除所有已加载 NDVI 旧图层
-            ndviLayers.forEach(layer => map.removeLayer(layer));
-            ndviLayers = [];
-
+        // ================= 选择地区 -> 加载该地区 NDVI 列表 =================
+        regionSelect.addEventListener("change", async () => {
+            const region = regionSelect.value;
+            timeSelect.innerHTML = `<option value="" selected disabled>请选择日期</option>`;
+            currentNdviTime = null;
 
             try {
-                // 先请求地块列表
+                const res = await fetch(`http://123.56.228.32:8000/admin/ndvilist?region=${region}`, {
+                    headers: {"token": token}
+                });
+                const ndviList = await res.json();
+                ndviDataByRegion[region] = ndviList;
+
+                if (!Array.isArray(ndviList) || ndviList.length === 0) {
+                    showCustomMsg(`⚠️ ${region} 暂无 NDVI 数据`);
+                    return;
+                }
+
+                // 按年份分组
+                const grouped = {};
+                ndviList.forEach(item => {
+                    const year = item.year;
+                    if (!grouped[year]) grouped[year] = [];
+                    grouped[year].push(item);
+                });
+
+                // 填充日期下拉框
+                Object.keys(grouped).sort().forEach(year => {
+                    const optgroup = document.createElement("optgroup");
+                    optgroup.label = year;
+
+                    grouped[year].forEach(item => {
+                        const key = `${item.year}-${item.date.slice(0, 2)}-${item.date.slice(2, 4)}`;
+                        const option = document.createElement("option");
+                        option.value = key;
+                        option.textContent = key;
+                        optgroup.appendChild(option);
+                    });
+
+                    timeSelect.appendChild(optgroup);
+                });
+
+                showCustomMsg(`✅ 已加载 ${region} 的 NDVI 日期`);
+            } catch (err) {
+                console.error("获取地区 NDVI 列表失败：", err);
+                showCustomMsg("❌ 获取地区 NDVI 列表失败：" + err.message);
+            }
+        });
+
+        // ================= 选择日期 -> 调用裁剪接口 =================
+        timeSelect.addEventListener("change", async () => {
+            const region = regionSelect.value;
+            const selectedTime = timeSelect.value;
+            if (!region || !selectedTime) return;
+
+            if (selectedTime === currentNdviTime) return;
+            currentNdviTime = selectedTime;
+
+            const dateForApi = selectedTime.replace(/-(\d{2})-(\d{2})/, "_$1$2");
+            showCustomMsg("⏳ 正在裁剪并加载各地块 NDVI，请稍候...");
+
+            // 先移除旧图层，再添加
+            ndviLayers.forEach(l => map.removeLayer(l));
+            ndviLayers = [];
+
+            try {
+                // 拉取地块列表
                 const resPlots = await fetch('http://localhost:8080/admin/plots', {
                     headers: {"token": token}
                 });
@@ -589,8 +630,9 @@
 
                 // 转换格式
                 const requestData = transformPlotsForNdviCut(rawPlots, dateForApi);
+                requestData.region = region;  // 新增：传地区给后端
 
-                // 调用裁剪接口，POST传送JSON数据
+                // 调用裁剪接口
                 const resCut = await fetch('http://123.56.228.32:8000/admin/ndvicut', {
                     method: "POST",
                     headers: {
@@ -599,23 +641,15 @@
                     },
                     body: JSON.stringify(requestData)
                 });
-
-                // 后端flask返回各个地块ndvi信息
                 const results = await resCut.json();
                 console.log("接口返回：", results);
 
-                // 显示错误信息（如果有）
-                if (results.errors && results.errors.length > 0) {
-                    showCustomMsg(`⚠️ 以下地块裁剪失败: ${results.errors.map(e => e.plotname).join(', ')}`);
-                }
-
-                // 如果没有成功结果，直接返回
                 if (!results.success || results.success.length === 0) {
                     showCustomMsg("⚠️ 没有可用的 NDVI 裁剪结果");
                     return;
                 }
 
-                // 渲染成功的NDVI图层
+                // 渲染 NDVI 图层
                 for (const item of results.success) {
                     try {
                         const r = await fetch(item.url);
@@ -628,6 +662,8 @@
                             pixelValuesToColorFn: pixelToColor,
                             noDataValue: -9999
                         });
+
+                        //添加新图层
                         layer.addTo(map);
                         ndviLayers.push(layer); // 保存到数组
                     } catch (err) {
@@ -649,7 +685,7 @@
                 ndviLayers.forEach(layer => map.removeLayer(layer));
                 ndviLayers = [];
                 currentNdviTime = null;
-                selectElement.value = "";
+                timeSelect.value = "";
                 showCustomMsg("🗑️ 已移除所有 NDVI 图层");
             } else {
                 showCustomMsg("⚠️ 当前没有 NDVI 图层可移除");
@@ -663,40 +699,38 @@
                 btn.addEventListener("click", () => {
                     const wrapper = document.getElementById("ndviSliderWrapper");
                     const isHidden = getComputedStyle(wrapper).display === "none";
-                    wrapper.style.display = isHidden ? "block" : "none";
+                    wrapper.style.display = isHidden ? "flex" : "none";
                 });
             }
         });
     });
 
-
-    // NDVI 像素值转颜色
+    // ================= 像素值转颜色函数 =================
     function pixelToColor(values) {
         const ndvi = values[0];
-        // 过滤掉 nodata 区域
         if (
             ndvi === null ||
             isNaN(ndvi) ||
             ndvi <= 0 ||
-            ndvi < -0.2 ||  // -0.2以下基本可以认为是非植被区或背景
-            ndvi === -9999  // 某些裁剪程序默认 nodata 值
-        ) return null; // 明确返回透明
+            ndvi < -0.2 ||
+            ndvi === -9999
+        ) return null;
 
-        // 细分NDVI值区间渲染，从低植被到高植被的绿色渐变
-        if (ndvi < 0.05) return "#d73027";   // 极低频盖
-        if (ndvi < 0.1) return "#f46d43";    // 很低覆盖
-        if (ndvi < 0.15) return "#fdae61";   // 低覆盖
-        if (ndvi < 0.2) return "#fee08b";    // 较低覆盖
-        if (ndvi < 0.25) return "#ffffbf";   // 中等偏低
-        if (ndvi < 0.3) return "#d9ef8b";    // 中等
-        if (ndvi < 0.35) return "#a6d96a";   // 中等偏高
-        if (ndvi < 0.4) return "#66bd63";    // 较高覆盖
-        if (ndvi < 0.45) return "#1a9850";   // 高覆盖
-        if (ndvi < 0.55) return "#008837";   // 很高覆盖
-        if (ndvi < 0.65) return "#006837";   // 极高覆盖
-        if (ndvi < 0.75) return "#00441b";   // 茂密植被
-        return "#003300";                    // 极茂密植被
+        if (ndvi < 0.05) return "#d73027";
+        if (ndvi < 0.1) return "#f46d43";
+        if (ndvi < 0.15) return "#fdae61";
+        if (ndvi < 0.2) return "#fee08b";
+        if (ndvi < 0.25) return "#ffffbf";
+        if (ndvi < 0.3) return "#d9ef8b";
+        if (ndvi < 0.35) return "#a6d96a";
+        if (ndvi < 0.4) return "#66bd63";
+        if (ndvi < 0.45) return "#1a9850";
+        if (ndvi < 0.55) return "#008837";
+        if (ndvi < 0.65) return "#006837";
+        if (ndvi < 0.75) return "#00441b";
+        return "#003300";
     }
+
 
     /**
      * 初始化地图与绘图控件
