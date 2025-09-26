@@ -6,14 +6,12 @@
     <title>地块绘制</title>
 
     <!-- Leaflet 和 Draw 样式 -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-draw@1.0.4/dist/leaflet.draw.css"/>
-
+    <link rel="stylesheet" href="lib/css/leaflet.css"/>
+    <link rel="stylesheet" href="lib/css/leaflet.draw.css"/>
     <!-- Layui 样式 -->
-    <link rel="stylesheet" href="https://cdn.staticfile.org/layui/2.8.18/css/layui.css"/>
-
+    <link rel="stylesheet" href="lib/css/layui.css"/>
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css"/>
+    <link rel="stylesheet" href="lib/css/font-awesome.min.css"/>
 
     <style>
         :root {
@@ -460,17 +458,13 @@
 
 
 <!-- js引用区 -->
-<!-- Leaflet 核心 -->
-<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
-<!-- Leaflet 插件 -->
-<script src="https://cdn.jsdelivr.net/npm/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
-<!-- GeoRaster -->
-<script src="https://unpkg.com/georaster"></script>
-<script src="https://unpkg.com/georaster-layer-for-leaflet"></script>
-<!-- Layui -->
-<script src="https://cdn.staticfile.org/layui/2.8.18/layui.js"></script>
+<script src="./lib/leaflet/leaflet.js"></script>
+<script src="./lib/leaflet/leaflet.draw.js"></script>
+<script src="./lib/leaflet/leaflet-heat.js"></script>
+<script src="./lib/turf/turf.min.js"></script>
+<!--<script src="./lib/georaster/georaster.min.js"></script>
+<script src="./lib/georaster/georaster-layer-for-leaflet.min.js"></script>-->
+<script src="./lib/layui/layui.js"></script>
 
 
 <!-- 自定义逻辑 -->
@@ -601,23 +595,29 @@
         });
 
         // ================= 选择日期 -> 调用裁剪接口 =================
+        // 选择日期 -> 调用裁剪接口
         timeSelect.addEventListener("change", async () => {
             const region = regionSelect.value;
             const selectedTime = timeSelect.value;
             if (!region || !selectedTime) return;
-
             if (selectedTime === currentNdviTime) return;
             currentNdviTime = selectedTime;
 
-            const dateForApi = selectedTime.replace(/-(\d{2})-(\d{2})/, "_$1$2");
-            showCustomMsg("⏳ 正在裁剪并加载各地块 NDVI，请稍候...");
+            const dateForApi = selectedTime.replace(/-(\d{2})-(\d{2})/, "_$1$2"); // "2024-08-18" -> "2024_0818"
+            showCustomMsg("⏳ 正在裁剪并加载 NDVI...");
 
-            // 先移除旧图层，再添加
-            ndviLayers.forEach(l => map.removeLayer(l));
-            ndviLayers = [];
+            // 移除旧图层
+            if (ndviLayers.length > 0) {
+                ndviLayers.forEach(layer => map.removeLayer(layer));
+                ndviLayers = [];
+            }
+
+            map.invalidateSize();
+
+            console.log("[DEBUG] 选择日期：", selectedTime, "转换为 API 日期：", dateForApi);
 
             try {
-                // 拉取地块列表
+                // 获取地块信息
                 const resPlots = await fetch('http://localhost:8080/admin/plots', {
                     headers: {"token": token}
                 });
@@ -628,9 +628,8 @@
                     return;
                 }
 
-                // 转换格式
                 const requestData = transformPlotsForNdviCut(rawPlots, dateForApi);
-                requestData.region = region;  // 新增：传地区给后端
+                requestData.region = region;
 
                 // 调用裁剪接口
                 const resCut = await fetch('http://123.56.228.32:8000/admin/ndvicut', {
@@ -641,6 +640,7 @@
                     },
                     body: JSON.stringify(requestData)
                 });
+
                 const results = await resCut.json();
                 console.log("接口返回：", results);
 
@@ -649,29 +649,26 @@
                     return;
                 }
 
-                // 渲染 NDVI 图层
+                // 渲染成功的NDVI图层
                 for (const item of results.success) {
                     try {
-                        const r = await fetch(item.url);
-                        const arrayBuffer = await r.arrayBuffer();
-                        const georaster = await parseGeoraster(arrayBuffer);
-                        const layer = new GeoRasterLayer({
-                            georaster,
-                            opacity: 1.0,
-                            resolution: 256,
-                            pixelValuesToColorFn: pixelToColor,
-                            noDataValue: -9999
-                        });
+                        console.log(`[DEBUG] 加载图层: ${item.png_filename}, URL: ${item.png_url}`);
 
-                        //添加新图层
+                        // 创建 Leaflet ImageOverlay
+                        const layer = L.imageOverlay(item.png_url, item.bounds, {opacity: 1.0});
                         layer.addTo(map);
-                        ndviLayers.push(layer); // 保存到数组
+
+                        // 保存到 ndviLayers
+                        ndviLayers.push(layer);
+
                     } catch (err) {
-                        console.error(`加载 ${item.filename} 失败:`, err);
+                        console.error(`加载 ${item.png_filename} 失败:`, err);
                         showCustomMsg(`❌ ${item.plotname} 图层加载失败`);
                     }
                 }
+
                 showCustomMsg("✅ 所有 NDVI 图层加载完成");
+                console.log("[DEBUG] 当前地图上的NDVI图层数量：", ndviLayers.length);
 
             } catch (err) {
                 console.error("裁剪接口调用失败：", err);
@@ -679,7 +676,8 @@
             }
         });
 
-        // 点击“移除 NDVI”按钮
+
+        // 移除 NDVI
         removeNdviBtn.addEventListener("click", () => {
             if (ndviLayers.length > 0) {
                 ndviLayers.forEach(layer => map.removeLayer(layer));
@@ -687,6 +685,8 @@
                 currentNdviTime = null;
                 timeSelect.value = "";
                 showCustomMsg("🗑️ 已移除所有 NDVI 图层");
+                // 调试输出当前地图的图层
+                console.log("[DEBUG] 当前地图上的所有图层：", map._layers);
             } else {
                 showCustomMsg("⚠️ 当前没有 NDVI 图层可移除");
             }
@@ -698,15 +698,14 @@
             if (btn) {
                 btn.addEventListener("click", () => {
                     const wrapper = document.getElementById("ndviSliderWrapper");
-                    const isHidden = getComputedStyle(wrapper).display === "none";
-                    wrapper.style.display = isHidden ? "flex" : "none";
+                    wrapper.style.display = (getComputedStyle(wrapper).display === "none") ? "flex" : "none";
                 });
             }
         });
     });
 
     // ================= 像素值转颜色函数 =================
-    function pixelToColor(values) {
+    /*function pixelToColor(values) {
         const ndvi = values[0];
         if (
             ndvi === null ||
@@ -729,7 +728,7 @@
         if (ndvi < 0.65) return "#006837";
         if (ndvi < 0.75) return "#00441b";
         return "#003300";
-    }
+    }*/
 
 
     /**
@@ -989,7 +988,7 @@
                         0.8: 'yellow',
                         1.0: 'red'
                     }
-                }).addTo(map);
+                });
 
                 overlayMaps["热力图"] = heatLayer;
 
