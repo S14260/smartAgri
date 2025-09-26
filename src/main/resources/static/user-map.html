@@ -401,8 +401,8 @@
 <script src="./lib/leaflet/leaflet.draw.js"></script>
 <script src="./lib/leaflet/leaflet-heat.js"></script>
 <script src="./lib/turf/turf.min.js"></script>
-<script src="./lib/georaster/georaster.min.js"></script>
-<script src="./lib/georaster/georaster-layer-for-leaflet.min.js"></script>
+<!--<script src="./lib/georaster/georaster.min.js"></script>
+<script src="./lib/georaster/georaster-layer-for-leaflet.min.js"></script>-->
 <script src="./lib/layui/layui.js"></script>
 
 
@@ -505,22 +505,21 @@
             if (selectedTime === currentNdviTime) return;
             currentNdviTime = selectedTime;
 
-
             const dateForApi = selectedTime.replace(/-(\d{2})-(\d{2})/, "_$1$2"); // "2024-08-18" -> "2024_0818"
             showCustomMsg("⏳ 正在裁剪并加载 NDVI...");
 
-            // 先移除旧图层，再添加
+            // 移除旧图层
             if (ndviLayers.length > 0) {
-                ndviLayers.forEach(layer => map.removeLayer(layer));  // 移除旧图层
-                ndviLayers = [];  // 清空图层数组
+                ndviLayers.forEach(layer => map.removeLayer(layer));
+                ndviLayers = [];
             }
 
-            // 强制刷新地图
             map.invalidateSize();
 
             console.log("[DEBUG] 选择日期：", selectedTime, "转换为 API 日期：", dateForApi);
 
             try {
+                // 获取地块信息
                 const resPlots = await fetch('http://localhost:8080/user/plots', {
                     headers: {"authentication": token}
                 });
@@ -532,8 +531,9 @@
                 }
 
                 const requestData = transformPlotsForNdviCut(rawPlots, dateForApi);
-                requestData.region = region; // 携带地区参数
+                requestData.region = region;
 
+                // 调用裁剪接口
                 const resCut = await fetch('http://123.56.228.32:8000/user/ndvicut', {
                     method: "POST",
                     headers: {
@@ -542,6 +542,7 @@
                     },
                     body: JSON.stringify(requestData)
                 });
+
                 const results = await resCut.json();
                 console.log("接口返回：", results);
 
@@ -553,36 +554,23 @@
                 // 渲染成功的NDVI图层
                 for (const item of results.success) {
                     try {
-                        console.log(`[DEBUG] 加载图层: ${item.filename}, URL: ${item.url}`);
-                        const r = await fetch(item.url);
-                        const arrayBuffer = await r.arrayBuffer();
-                        const georaster = await parseGeoraster(arrayBuffer);
-                        console.log("GeoRaster: ", georaster);  // 检查 GeoRaster 是否解析成功
+                        console.log(`[DEBUG] 加载图层: ${item.png_filename}, URL: ${item.png_url}`);
 
-                        // 创建新的 GeoRasterLayer
-                        currentNdviLayer = new GeoRasterLayer({
-                            georaster,
-                            opacity: 1.0,
-                            resolution: 256,
-                            pixelValuesToColorFn: pixelToColor,
-                            noDataValue: -9999,  // 去掉地块周围正方形灰色数据
-                        });
-                        // 将图层添加到地图并保存到数组
-                        //currentNdviLayer.addTo(map);
+                        // 创建 Leaflet ImageOverlay
+                        const layer = L.imageOverlay(item.png_url, item.bounds, {opacity: 1.0});
+                        layer.addTo(map);
 
-                        // 添加到图层数组
-                        ndviLayers.push(currentNdviLayer);
+                        // 保存到 ndviLayers
+                        ndviLayers.push(layer);
 
                     } catch (err) {
-                        console.error(`加载 ${item.filename} 失败:`, err);
+                        console.error(`加载 ${item.png_filename} 失败:`, err);
                         showCustomMsg(`❌ ${item.plotname} 图层加载失败`);
                     }
                 }
-                ndviLayers.forEach(layer => layer.addTo(map)); // 一次性添加所有图层
+
                 showCustomMsg("✅ 所有 NDVI 图层加载完成");
-                // 调试输出当前地图的图层
                 console.log("[DEBUG] 当前地图上的NDVI图层数量：", ndviLayers.length);
-                console.log("[DEBUG] 当前地图上的所有图层：", map._layers);
 
             } catch (err) {
                 console.error("裁剪接口调用失败：", err);
@@ -619,7 +607,7 @@
     });
 
     // 像素值转颜色函数
-    function pixelToColor(values) {
+    /*function pixelToColor(values) {
         const ndvi = values[0];
         if (ndvi === null || isNaN(ndvi) || ndvi <= 0 || ndvi < -0.2 || ndvi === -9999) return null;
         if (ndvi < 0.05) return "#d73027";
@@ -635,7 +623,7 @@
         if (ndvi < 0.65) return "#006837";
         if (ndvi < 0.75) return "#00441b";
         return "#003300";
-    }
+    }*/
 
     /**
      * 初始化地图与绘图控件
@@ -892,7 +880,7 @@
                         0.8: 'yellow',
                         1.0: 'red'
                     }
-                }).addTo(map);
+                });
 
                 overlayMaps["热力图"] = heatLayer;
 

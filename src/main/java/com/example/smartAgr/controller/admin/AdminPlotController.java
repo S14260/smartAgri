@@ -17,13 +17,14 @@ import java.util.Map;
 public class AdminPlotController {
 
     @Autowired
-    private AdminPlotService plotService;
+    private AdminPlotService adminPlotService;
     @Autowired
     private AdminPlotDao adminPlotDao;
 
 
     @GetMapping
     public List<AdminPlot> getAllPlots() {
+
         return adminPlotDao.findAll();
     }
 
@@ -99,7 +100,7 @@ public class AdminPlotController {
     @DeleteMapping("/deleteBatch")
     public ResponseEntity<?> deleteBatch(@RequestBody List<Long> ids) {
         try {
-            plotService.deletePlotsByIds(ids);
+            adminPlotService.deletePlotsByIds(ids);
             return ResponseEntity.ok("删除成功");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("删除失败");
