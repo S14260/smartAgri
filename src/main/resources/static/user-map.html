@@ -415,6 +415,7 @@
     var currentNdviLayer = null; // 当前 NDVI 图层（这里只保存第一个，为了方便移除）
     const token = localStorage.getItem('token_user');
     const ndviDataByRegion = {}; // 按地区存放 NDVI 列表
+    let timeSelect = null; //全局化，用于开始圈地按钮
 
     // 把后端原始地块数组转成 /user/ndvicut 接口需要的格式
     function transformPlotsForNdviCut(rawPlots, dateStr) {
@@ -439,7 +440,7 @@
         setupSearch();
 
         const regionSelect = document.getElementById("ndviRegionSelect");
-        const timeSelect = document.getElementById("ndviTimeSelect");
+        timeSelect = document.getElementById("ndviTimeSelect");
 
         // 初始化地区选项（可以改成后端返回）
         const regions = [
@@ -1174,15 +1175,38 @@
             console.log("🟡 已隐藏 NDVI 控件");
         }
 
+        // 移除 NDVI 图层
+        if (ndviLayers.length > 0) {
+            ndviLayers.forEach(layer => map.removeLayer(layer));
+            ndviLayers = [];
+            currentNdviTime = null;
+
+            // 确保 timeSelect 已定义后再操作
+            if (timeSelect) {
+                timeSelect.value = "";
+            }
+
+            showCustomMsg("🗑️ 已移除所有 NDVI 图层");
+            // 调试输出当前地图的图层
+            console.log("[DEBUG] 当前地图上的所有图层：", map._layers);
+        } else {
+            showCustomMsg("⚠️ 当前没有 NDVI 图层可移除");
+        }
+
         // 若当前已有绘制工具，先禁用
         if (currentDrawer) {
             currentDrawer.disable();
             currentDrawer = null;
         }
 
-        // 进入绘图模式
-        await enterDrawMode();
+        // 确保地图完全刷新后再进入绘图模式
+        setTimeout(async () => {
+            // 进入绘图模式
+            await enterDrawMode();
+        }, 0);  // 使用 setTimeout 延迟执行，确保之前的操作完全完成
     });
+
+
 
 
     // 点击“开始绘图”按钮：启用绘图工具
