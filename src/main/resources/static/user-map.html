@@ -343,7 +343,7 @@
                     <!-- NDVI按钮放最右 -->
                     <div class="action-buttons" style="margin-left: auto; display: flex; gap: 10px;">
                         <button id="toggleSliderBtnMobile" class="layui-btn layui-btn-normal layui-btn-sm"><i
-                                class="fa fa-calendar"></i> 切换NDVI
+                                class="fa fa-calendar"></i> 加载遥感数据
                         </button>
                     </div>
                 </div>
@@ -444,7 +444,8 @@
         // 初始化地区选项（可以改成后端返回）
         const regions = [
             {id: "zhangbei", name: "张北"},
-            {id: "ninghe", name: "宁河"}
+            {id: "ninghe", name: "宁河"},
+            {id: "guyuan", name: "沽源"},
         ];
         regions.forEach(r => {
             const opt = document.createElement("option");
@@ -520,7 +521,7 @@
 
             try {
                 // 获取地块信息
-                const resPlots = await fetch('http://localhost:8080/user/plots', {
+                const resPlots = await fetch('http://123.56.228.32:8080/user/plots', {
                     headers: {"authentication": token}
                 });
                 const rawPlots = await resPlots.json();
@@ -743,7 +744,7 @@
                         plotData.address = address;
 
                         try {
-                            const res = await fetch("http://localhost:8080/user/plots", {
+                            const res = await fetch("http://123.56.228.32:8080/user/plots", {
                                 method: "POST",
                                 headers: {
                                     "Content-Type": "application/json",
@@ -792,7 +793,7 @@
             // 2. 获取真实地块数据
             let plots;
             try {
-                const res = await fetch("http://localhost:8080/user/plots", {
+                const res = await fetch("http://123.56.228.32:8080/user/plots", {
                     method: "GET",
                     headers: {
                         "authentication": token
@@ -925,7 +926,7 @@
      */
     async function loadPlots() {
         try {
-            const res = await fetch("http://localhost:8080/user/plots", {
+            const res = await fetch("http://123.56.228.32:8080/user/plots", {
                 method: "GET",
                 headers: {
                     "authentication": token
@@ -985,7 +986,7 @@
         if (!confirm("确认删除该地块？")) return;
 
         try {
-            const res = await fetch(`http://localhost:8080/user/plots/${id}`, {
+            const res = await fetch(`http://123.56.228.32:8080/user/plots/${id}`, {
                 method: "DELETE",
                 headers: {
                     "authentication": token
@@ -1063,7 +1064,7 @@
         }
 
         try {
-            const res = await fetch(`http://localhost:8080/user/plots/${id}/area`, {
+            const res = await fetch(`http://123.56.228.32:8080/user/plots/${id}/area`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -1165,12 +1166,24 @@
     // 点击“开始圈地”按钮（进入全屏并启动绘图）
     startDrawBtn.addEventListener('click', async (e) => {
         e.stopPropagation();
+
+        // 隐藏 NDVI 控件（加载遥感图像的弹出控件）
+        const ndviWrapper = document.getElementById("ndviSliderWrapper");
+        if (ndviWrapper) {
+            ndviWrapper.style.display = "none";
+            console.log("🟡 已隐藏 NDVI 控件");
+        }
+
+        // 若当前已有绘制工具，先禁用
         if (currentDrawer) {
             currentDrawer.disable();
             currentDrawer = null;
         }
+
+        // 进入绘图模式
         await enterDrawMode();
     });
+
 
     // 点击“开始绘图”按钮：启用绘图工具
     document.getElementById('btn-start').addEventListener('click', (e) => {
@@ -1306,7 +1319,7 @@
 
         document.getElementById('queryPlot').onclick = async function () {
             try {
-                const res = await fetch("http://localhost:8080/user/plots", {
+                const res = await fetch("http://123.56.228.32:8080/user/plots", {
                     method: "GET",
                     headers: {
                         "authentication": token

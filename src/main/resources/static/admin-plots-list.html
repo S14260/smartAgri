@@ -11,12 +11,12 @@
     <link rel="stylesheet" href="./css/xadmin.css">
     <script src="./lib/layui/layui.js" charset="utf-8"></script>
     <script type="text/javascript" src="./js/xadmin.js"></script>
-    <script src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
+    <script src="./js/jquery.min.js"></script>
 
     <!-- Leaflet 样式和脚本 -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"/>
-    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-image/leaflet-image.js"></script>
+    <link rel="stylesheet" href="./lib/css/leaflet.css"/>
+    <script src="./lib/leaflet/leaflet.js"></script>
+    <script src="./lib/leaflet/leaflet-image.js"></script>
 
     <style>
         .map-dialog {
@@ -162,7 +162,7 @@
             console.log("收到修改地块数据：", updatedData);
 
             // 🔁 发起请求更新地块信息
-            fetch(`http://localhost:8080/admin/plots/${updatedData.id}`, {
+            fetch(`http://123.56.228.32:8080/admin/plots/${updatedData.id}`, {
                 method: "PUT",
                 headers: {
                     'Content-Type': 'application/json',
