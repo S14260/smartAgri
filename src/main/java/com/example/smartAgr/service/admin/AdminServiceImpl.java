@@ -28,6 +28,7 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public Integer deleteAdmin(Integer id) {
         return admindao.deleteAdmin(id);
+
     }
 
     @Override

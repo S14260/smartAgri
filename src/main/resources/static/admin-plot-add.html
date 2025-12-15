@@ -157,6 +157,14 @@
       };
 
       // 发送给父页面（iframe 模式下是 parent，而不是 opener）
+      // if (window.parent !== window) {
+      //   window.parent.postMessage({
+      //     type: "submitPlot",
+      //     payload
+      //   }, "*");
+      // } else {
+      //   alert("无法回传数据，请从地图页面弹出该窗口！");
+      // }
       if (window.parent !== window) {
         window.parent.postMessage({
           type: "submitPlot",

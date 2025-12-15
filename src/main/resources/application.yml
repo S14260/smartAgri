@@ -1,9 +1,12 @@
 spring:
+#  jpa:
+#    database-platform: org.hibernate.dialect.MySQL8Dialect
   datasource:
     username: mydb
     password: R6w3tW25j2etFzpi
     url: jdbc:mysql://localhost:3306/mydb?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&useSSL=false&serverTimezone=GMT
     driver-class-name: com.mysql.cj.jdbc.Driver
+
   devtools:
     restart:
       # 设置不参与热部署的文件或文件夹
