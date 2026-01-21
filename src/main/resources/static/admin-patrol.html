@@ -1,0 +1,1766 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>巡田规划系统</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.staticfile.org/layui/2.8.18/css/layui.css"/>
+    <link rel="stylesheet" href="lib/css/leaflet.css"/>
+    <link rel="stylesheet" href="lib/css/font-awesome.min.css"/>
+    <style>
+        :root {
+            --primary-color: #1E88E5;
+            --secondary-color: #43A047;
+            --accent-color: #FF6D00;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --text-placeholder: #909399;
+            --bg-light: #F5F7FA;
+            --bg-dark: #E4E7ED;
+            --border-color: #EBEEF5;
+            --border-hover: #c0c4cc;
+            --shadow-light: 0 2px 12px rgba(0, 0, 0, 0.08);
+            --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.12);
+            --shadow-heavy: 0 6px 20px rgba(0, 0, 0, 0.15);
+            --success-color: #67C23A;
+            --warning-color: #E6A23C;
+            --danger-color: #F56C6C;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background-color: var(--bg-light);
+            overflow: hidden;
+            font-family: "PingFang SC", "Helvetica Neue", Helvetica, Arial, sans-serif;
+            color: var(--text-primary);
+        }
+
+        body > .layui-container {
+            width: 100vw;
+            max-width: 100vw;
+            padding: 0;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+
+        .layui-card {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            border: none;
+            box-shadow: none;
+        }
+
+        .layui-form {
+            flex: 0 0 auto;
+            padding: 16px 24px;
+            background: white;
+            border-bottom: 1px solid var(--border-color);
+            z-index: 10;
+            box-shadow: var(--shadow-light);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .layui-card-body {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        #map {
+            flex: 1 1 auto;
+            width: 100%;
+            height: calc(100vh - 72px);
+            min-height: 0;
+            min-width: 0;
+            position: relative;
+            z-index: 1;
+            background-color: #e9ecef;
+        }
+
+        .search-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            max-width: 500px;
+        }
+
+        .search-group .layui-input {
+            height: 40px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            padding: 0 14px;
+            font-size: 14px;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .search-group .layui-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(30, 136, 229, 0.2);
+            outline: none;
+        }
+
+        .search-group .layui-btn {
+            height: 40px;
+            line-height: 40px;
+            padding: 0 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .search-group .layui-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .action-buttons {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .action-buttons .layui-btn {
+            height: 40px;
+            line-height: 40px;
+            padding: 0 18px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .action-buttons .layui-btn i {
+            font-size: 16px;
+        }
+
+        .action-buttons .layui-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .action-buttons .layui-btn-primary {
+            border-color: #DCDFE6;
+            color: var(--text-primary);
+        }
+
+        .action-buttons .layui-btn-primary:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .action-buttons .layui-btn-normal {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .action-buttons .layui-btn-warm {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .action-buttons .layui-btn-red {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+
+        #pathParamsWrapper {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            border-radius: 10px;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            z-index: 9999;
+            box-shadow: var(--shadow-medium);
+            flex-wrap: wrap;
+        }
+
+        .param-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .param-item label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .param-item .layui-select, .param-item .layui-input {
+            height: 36px;
+            line-height: 36px;
+            border-radius: 6px;
+            min-width: 120px;
+        }
+
+        #drawTip {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--text-primary);
+            padding: 18px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            z-index: 9999;
+            box-shadow: var(--shadow-medium);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        #drawTip i {
+            font-size: 20px;
+            color: var(--accent-color);
+        }
+
+        @media (min-width: 769px) {
+            #toggleSliderBtn {
+                display: flex;
+                position: fixed;
+                top: 24px;
+                right: 24px;
+                z-index: 10000;
+                box-shadow: var(--shadow-light);
+                border-radius: 6px;
+                height: 40px;
+                line-height: 40px;
+                padding: 0 18px;
+                font-size: 14px;
+                font-weight: 500;
+                gap: 6px;
+                transition: all 0.2s;
+            }
+
+            #toggleSliderBtn:hover {
+                transform: translateY(-1px);
+                box-shadow: var(--shadow-medium);
+            }
+        }
+
+        #ndviSliderWrapper {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: white;
+            border-top: 1px solid var(--border-color);
+            padding: 20px 32px;
+            display: none;
+            z-index: 9999;
+            font-size: 15px;
+            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        #ndviTimeSelect {
+            width: 200px;
+            margin-left: 10px;
+            height: 38px;
+            line-height: 38px;
+        }
+
+        /* ========== 核心优化：复选框组样式 ========== */
+        .abnormal-detect-modal {
+            padding: 24px;
+            font-family: "PingFang SC", "Helvetica Neue", sans-serif;
+        }
+        .modal-header {
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .modal-header h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .modal-header h3 i {
+            color: var(--primary-color);
+            font-size: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        /* 必选提示 */
+        .required-tip {
+            color: var(--danger-color);
+            font-size: 12px;
+            margin-left: 4px;
+        }
+        /* 加载提示 */
+        .loading-tip {
+            color: var(--primary-color);
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        /* 禁用样式 */
+        .form-disabled {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        /* 复选框组容器 */
+        .checkbox-group {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            max-height: 150px;
+            overflow-y: auto;
+            background-color: var(--bg-light);
+        }
+        /* 复选框分组标题 */
+        .checkbox-group-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--primary-color);
+            margin: 8px 0 4px 0;
+            padding-left: 4px;
+        }
+        /* 单个复选框项 */
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .checkbox-item:hover {
+            background-color: rgba(30, 136, 229, 0.1);
+        }
+        /* 全选按钮 */
+        .check-all-btn {
+            font-size: 12px;
+            color: var(--primary-color);
+            cursor: pointer;
+            margin-bottom: 8px;
+            display: inline-block;
+        }
+        .check-all-btn:hover {
+            text-decoration: underline;
+        }
+        /* 弹窗按钮 */
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        .modal-footer .layui-btn {
+            padding: 0 24px;
+            height: 42px;
+            line-height: 42px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .modal-footer .layui-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-light);
+        }
+        .modal-footer .layui-btn-primary {
+            border-color: var(--border-color);
+            background: white;
+        }
+        .modal-footer .layui-btn-normal {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        .modal-footer .layui-btn-disabled {
+            background-color: #ccc !important;
+            border-color: #ccc !important;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        /* 时间范围选择样式 */
+        .date-range-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .date-range-group .layui-input {
+            width: 140px;
+        }
+        /* 异常图片预览样式 */
+        .anomaly-img-preview {
+            max-width: 100%;
+            max-height: 600px;
+            border-radius: 8px;
+        }
+        .plot-anomaly-item {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+        }
+        .plot-anomaly-item:hover {
+            background-color: var(--bg-light);
+        }
+        .plot-anomaly-item:last-child {
+            border-bottom: none;
+        }
+
+        @media (max-width: 768px) {
+            .layui-form {
+                padding: 10px 12px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .search-group {
+                width: 100%;
+                gap: 8px;
+            }
+
+            .search-group .layui-input {
+                height: 32px;
+                padding: 0 10px;
+                font-size: 12px;
+            }
+
+            .search-group .layui-btn {
+                height: 32px;
+                padding: 0 12px;
+                font-size: 12px;
+            }
+
+            .action-buttons {
+                width: 100%;
+                justify-content: space-between;
+                gap: 6px;
+                flex-wrap: wrap;
+            }
+
+            .action-buttons .layui-btn {
+                height: 32px;
+                padding: 0 10px;
+                font-size: 12px;
+                gap: 4px;
+            }
+
+            .action-buttons .layui-btn i {
+                font-size: 12px;
+            }
+
+            #pathParamsWrapper {
+                bottom: 16px;
+                padding: 10px 16px;
+                gap: 8px;
+            }
+
+            .param-item {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            #drawTip {
+                padding: 12px 18px;
+                font-size: 13px;
+            }
+
+            #drawTip i {
+                font-size: 14px;
+            }
+
+            #ndviSliderWrapper {
+                padding: 12px 16px;
+                font-size: 13px;
+            }
+
+            #ndviTimeSelect {
+                width: 150px;
+            }
+
+            #map {
+                height: calc(100vh - 150px);
+            }
+
+            /* 移动端弹窗适配 */
+            .abnormal-detect-modal {
+                padding: 16px;
+            }
+            .modal-header h3 {
+                font-size: 16px;
+            }
+            .modal-footer {
+                flex-direction: column-reverse;
+            }
+            .modal-footer .layui-btn {
+                width: 100%;
+            }
+            .checkbox-group {
+                max-height: 120px;
+            }
+            .date-range-group {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            .date-range-group .layui-input {
+                width: 100%;
+            }
+        }
+        /* ====== 地块复选框布局增强（不影响逻辑） ====== */
+        #plotCheckboxContainer.multi-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            column-gap: 16px;
+            row-gap: 6px;
+
+            max-height: 220px;   /* 超出滚动 */
+            overflow-y: auto;
+            padding-right: 6px;
+        }
+
+        #plotCheckboxContainer .checkbox-item {
+            white-space: nowrap;
+        }
+
+    </style>
+</head>
+<body>
+<div class="layui-container">
+    <div class="layui-card">
+        <div class="layui-card-body">
+            <div class="layui-form layui-row"
+                 style="position: sticky; top: 0; background: white; z-index: 10; border-bottom: 1px solid #eee; margin: 0;">
+                <div class="layui-col-md12" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    <div class="search-group">
+                        <input type="text" id="searchInput" placeholder="请输入地名" class="layui-input">
+                        <button class="layui-btn layui-btn-normal" id="searchBtn">
+                            <i class="fa fa-search"></i> 搜索
+                        </button>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="layui-btn layui-btn-warm" id="queryPlot">
+                            <i class="fa fa-map-marker"></i> 查询地块
+                        </button>
+                        <button class="layui-btn layui-btn-normal" id="loadAbnormalPoints">
+                            <i class="fa fa-exclamation-triangle"></i> 加载异常点
+                        </button>
+                        <button class="layui-btn layui-btn-red" id="generatePath">
+                            <i class="fa fa-route"></i> 生成巡田路径
+                        </button>
+                        <button class="layui-btn layui-btn-primary" id="exportPath">
+                            <i class="fa fa-download"></i> 导出路径
+                        </button>
+                        <button class="layui-btn layui-btn-primary layui-btn-sm" id="btnFullscreenOnly">
+                            <i class="fa fa-expand"></i> 全屏查看地图
+                        </button>
+                    </div>
+
+                    <div class="action-buttons" style="margin-left: auto; display: flex; gap: 10px;">
+                        <button id="toggleSliderBtnMobile" class="layui-btn layui-btn-normal layui-btn-sm"><i
+                                class="fa fa-calendar"></i> 加载遥感数据
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="map">
+                <div id="pathParamsWrapper">
+                    <div class="param-item">
+                        <label>巡田模式：</label>
+                        <select id="patrolMode" class="layui-select">
+                            <option value="full_coverage">全覆盖巡田</option>
+                            <option value="abnormal_priority">异常点优先</option>
+                        </select>
+                    </div>
+                    <div class="param-item">
+                        <label>路线类型：</label>
+                        <select id="routeType" class="layui-select">
+                            <option value="shortest">最短路径</option>
+                            <option value="optimal">最优效率</option>
+                        </select>
+                    </div>
+                    <div class="param-item">
+                        <label>巡田速度：</label>
+                        <input type="number" id="patrolSpeed" class="layui-input" value="5" min="1" max="10" placeholder="km/h">
+                    </div>
+                </div>
+
+                <div id="ndviSliderWrapper"
+                     style="display: none; align-items: center; gap: 16px; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-right: 20px;">
+                        <label style="font-weight: 500;">地区：</label>
+                        <select id="ndviRegionSelect" lay-verify="required" class="layui-select">
+                            <option value="" selected disabled>请选择地区</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-right: 20px;">
+                        <label style="font-weight: 500;">日期：</label>
+                        <select id="ndviTimeSelect" lay-verify="required" class="layui-select">
+                            <option value="" selected disabled>请选择日期</option>
+                        </select>
+                    </div>
+                    <button id="removeNdviBtn" class="layui-btn layui-btn-danger">
+                        <i class="fa fa-trash"></i> 移除NDVI
+                    </button>
+                </div>
+
+                <div id="drawTip">
+                    <i class="fa fa-info-circle"></i>
+                    <span id="tipContent">巡田规划系统已就绪</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="./lib/leaflet/leaflet.js"></script>
+<script src="./lib/leaflet/leaflet-heat.js"></script>
+<script src="./lib/turf/turf.min.js"></script>
+<script src="./lib/layui/layui.js"></script>
+
+<script>
+    window.addEventListener('resize', () => {
+        if (window.map && typeof window.map.invalidateSize === "function") {
+            window.map.invalidateSize();
+        }
+    });
+
+    window.onload = () => {
+        setTimeout(() => {
+            if (window.map && typeof window.map.invalidateSize === "function") {
+                window.map.invalidateSize();
+            }
+        }, 300);
+    }
+
+    // 全局变量
+    let map;                     // 地图实例
+    let ndviLayers = [];         // 保存所有 NDVI 图层
+    let currentNdviLayer = null; // 当前 NDVI 图层
+    let currentNdviTime = null;  // 当前选中时间
+    const token = localStorage.getItem('token_admin'); // 管理员 token
+    let timeSelect = null;       // 全局化时间选择器
+    let abnormalPointsLayer = null; // 异常点图层
+    let patrolPathLayer = null;  // 巡田路径图层
+    let plotList = []; // 存储所有地块数据
+    let anomalyResultPath = ''; // 异常检测结果文件夹路径
+    // 地区列表和缓存
+    const regionList = [
+        {id: "zhangbei", name: "张北"},
+        {id: "ninghe", name: "宁河"},
+        {id: "guyuan", name: "沽源"},
+    ];
+    const regionPlotCache = {}; // 地区-地块缓存
+    const regionNdviTimeCache = {}; // 地区-NDVI时间缓存
+    // NDVI文件夹映射
+    const ndviFolderMap = {
+        "沽源": "./static/ndvi_clips/guyuan/admin",
+        "张北": "./static/ndvi_clips/zhangbei/admin",
+        "宁河": "./static/ndvi_clips/ninghe/admin"
+    };
+
+    document.addEventListener("DOMContentLoaded", async () => {
+        initMap();
+        loadPlots();  // 加载所有地块
+        setupSearch();
+
+        const regionSelect = document.getElementById("ndviRegionSelect");
+        timeSelect = document.getElementById("ndviTimeSelect");
+
+        // 初始化遥感数据的地区选项
+        regionList.forEach(r => {
+            const opt = document.createElement("option");
+            opt.value = r.id;
+            opt.textContent = r.name;
+            regionSelect.appendChild(opt);
+        });
+
+        // NDVI相关逻辑（保留）
+        regionSelect.addEventListener("change", async () => {
+            const region = regionSelect.value;
+            timeSelect.innerHTML = `<option value="" selected disabled>请选择日期</option>`;
+            currentNdviTime = null;
+
+            try {
+                const res = await fetch(`http://123.56.228.32:8000/admin/ndvilist?region=${region}`, {
+                    headers: {"token": token}
+                });
+                const ndviList = await res.json();
+                regionNdviTimeCache[region] = ndviList; // 缓存NDVI时间
+
+                if (!Array.isArray(ndviList) || ndviList.length === 0) {
+                    showCustomMsg(`⚠️ ${region} 暂无 NDVI 数据`);
+                    return;
+                }
+
+                const grouped = {};
+                ndviList.forEach(item => {
+                    const year = item.year;
+                    if (!grouped[year]) grouped[year] = [];
+                    grouped[year].push(item);
+                });
+
+                Object.keys(grouped).sort().forEach(year => {
+                    const optgroup = document.createElement("optgroup");
+                    optgroup.label = year;
+
+                    grouped[year].forEach(item => {
+                        const key = `${item.year}-${item.date.slice(0, 2)}-${item.date.slice(2, 4)}`;
+                        const option = document.createElement("option");
+                        option.value = key;
+                        option.textContent = key;
+                        optgroup.appendChild(option);
+                    });
+
+                    timeSelect.appendChild(optgroup);
+                });
+
+                showCustomMsg(`✅ 已加载 ${region} 的 NDVI 日期`);
+            } catch (err) {
+                console.error("获取地区 NDVI 列表失败：", err);
+                showCustomMsg("❌ 获取地区 NDVI 列表失败：" + err.message);
+            }
+        });
+
+        // 选择日期 -> 调用裁剪接口
+        timeSelect.addEventListener("change", async () => {
+            const region = regionSelect.value;
+            const selectedTime = timeSelect.value;
+            if (!region || !selectedTime) return;
+            if (selectedTime === currentNdviTime) return;
+            currentNdviTime = selectedTime;
+
+            const dateForApi = selectedTime.replace(/-(\d{2})-(\d{2})/, "_$1$2");
+            showCustomMsg("⏳ 正在裁剪并加载 NDVI...");
+
+            if (ndviLayers.length > 0) {
+                ndviLayers.forEach(layer => map.removeLayer(layer));
+                ndviLayers = [];
+            }
+
+            map.invalidateSize();
+
+            try {
+                const resPlots = await fetch('http://123.56.228.32:8080/admin/plots', {
+                    headers: {"token": token}
+                });
+                const rawPlots = await resPlots.json();
+
+                if (!Array.isArray(rawPlots) || rawPlots.length === 0) {
+                    showCustomMsg("⚠️ 没有地块数据，无法裁剪");
+                    return;
+                }
+
+                const requestData = transformPlotsForNdviCut(rawPlots, dateForApi);
+                requestData.region = region;
+
+                const resCut = await fetch('http://123.56.228.32:8000/admin/ndvicut', {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "token": token
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                const results = await resCut.json();
+
+                if (!results.success || results.success.length === 0) {
+                    showCustomMsg("⚠️ 没有可用的 NDVI 裁剪结果");
+                    return;
+                }
+
+                for (const item of results.success) {
+                    try {
+                        const layer = L.imageOverlay(item.png_url, item.bounds, {opacity: 1.0});
+                        layer.addTo(map);
+                        ndviLayers.push(layer);
+                    } catch (err) {
+                        console.error(`加载 ${item.png_filename} 失败:`, err);
+                        showCustomMsg(`❌ ${item.plotname} 图层加载失败`);
+                    }
+                }
+
+                showCustomMsg("✅ 所有 NDVI 图层加载完成");
+            } catch (err) {
+                console.error("裁剪接口调用失败：", err);
+                showCustomMsg("❌ 裁剪接口调用失败：" + err.message);
+            }
+        });
+
+        // 移除 NDVI
+        removeNdviBtn.addEventListener("click", () => {
+            if (ndviLayers.length > 0) {
+                ndviLayers.forEach(layer => map.removeLayer(layer));
+                ndviLayers = [];
+                currentNdviTime = null;
+                timeSelect.value = "";
+                showCustomMsg("🗑️ 已移除所有 NDVI 图层");
+            } else {
+                showCustomMsg("⚠️ 当前没有 NDVI 图层可移除");
+            }
+        });
+
+        // 切换 NDVI 控件显示/隐藏
+        ["toggleSliderBtn", "toggleSliderBtnMobile"].forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                btn.addEventListener("click", () => {
+                    const wrapper = document.getElementById("ndviSliderWrapper");
+                    wrapper.style.display = (getComputedStyle(wrapper).display === "none") ? "flex" : "none";
+                });
+            }
+        });
+
+        // ================= 核心修改：对接xuntian/run接口的异常检测逻辑 =================
+        document.getElementById('loadAbnormalPoints').addEventListener('click', function() {
+            layui.use(['layer', 'form', 'laydate'], function() {
+                const layer = layui.layer;
+                const form = layui.form;
+                const laydate = layui.laydate;
+
+                // 弹窗HTML（增加时间范围选择）
+                const formHtml = `
+                    <div class="abnormal-detect-modal">
+                        <div class="modal-header">
+                            <h3><i class="fa fa-exclamation-triangle"></i> 异常检测参数选择</h3>
+                        </div>
+                        <!-- 1. 选择地区 -->
+                        <div class="form-group">
+                            <label for="detectRegionSelect">选择地区：<span class="required-tip">*</span></label>
+                            <select id="detectRegionSelect" lay-verify="required" class="layui-select">
+                                    <option value="" selected disabled>请选择地区</option>
+                                            ${regionList.map(r =>
+                                    `<option value="${r.name}">${r.name}</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                        <!-- 2. 时间范围选择 -->
+                        <div class="form-group">
+                            <label>检测时间范围：<span class="required-tip">*</span></label>
+                            <div class="date-range-group">
+                                <input type="text" id="startDate" placeholder="开始日期" class="layui-input" readonly>
+                                <span>至</span>
+                                <input type="text" id="endDate" placeholder="结束日期" class="layui-input" readonly>
+                            </div>
+                        </div>
+                        <!-- 3. 选择地块（复选框组） -->
+                        <div class="form-group" id="plotCheckGroup">
+                            <label>选择地块（至少勾选1个）：<span class="required-tip">*</span>
+                                <span id="plotLoadingTip" class="loading-tip" style="display: none;">
+                                    <i class="fa fa-spinner fa-spin"></i> 加载中...
+                                </span>
+                            </label>
+                            <div class="check-all-btn" id="plotCheckAll" style="display: none;">全选/反选</div>
+                            <form class="layui-form" lay-filter="plotForm">
+                                <div id="plotCheckboxContainer" class="checkbox-group form-disabled">
+                                    <div style="text-align:center;color:var(--text-placeholder);font-size:13px;">
+                                        请先选择地区
+                                    </div>
+                                </div>
+                            </form>
+
+                        </div>
+                        <div class="modal-footer">
+                            <button class="layui-btn layui-btn-primary" id="cancelDetectBtn">取消</button>
+                            <button class="layui-btn layui-btn-normal" id="confirmDetectBtn" disabled>开始异常检测</button>
+                        </div>
+                    </div>
+                `;
+
+                // 打开弹窗
+                const modalIndex = layer.open({
+                    type: 1,
+                    title: false,
+                    area: ['580px', '480px'],
+                    content: formHtml,
+                    shade: 0.3,
+                    shadeClose: false,
+                    border: [1, 0.8, '#E4E7ED'],
+                    anim: 1,
+                    success: function(layero, index) {
+                        // 获取弹窗内DOM
+                        const detectRegionSelect = layero.find('#detectRegionSelect')[0];
+                        const startDate = layero.find('#startDate')[0];
+                        const endDate = layero.find('#endDate')[0];
+                        const plotLoadingTip = layero.find('#plotLoadingTip')[0];
+                        const plotCheckboxContainer = layero.find('#plotCheckboxContainer')[0];
+                        const plotCheckAll = layero.find('#plotCheckAll')[0];
+                        const confirmDetectBtn = layero.find('#confirmDetectBtn')[0];
+
+                        // 初始化日期选择器
+                        laydate.render({
+                            elem: startDate,
+                            type: 'date',
+                            value: '2025-06-01',
+                            done: function(value) {
+                                updateConfirmBtnStatus();
+                            }
+                        });
+                        laydate.render({
+                            elem: endDate,
+                            type: 'date',
+                            value: '2025-10-01',
+                            done: function(value) {
+                                updateConfirmBtnStatus();
+                            }
+                        });
+
+                        // 渲染初始表单
+                        form.render('checkbox');
+
+                        // ========== 地区选择联动逻辑 ==========
+                        detectRegionSelect.addEventListener('change', async function() {
+                            const selectedRegion = this.value;
+                            if (!selectedRegion) return;
+
+                            // 重置地块复选框
+                            plotCheckboxContainer.innerHTML = `
+                                <div style="text-align:center;color:var(--text-placeholder);font-size:13px;">
+                                    加载中...
+                                </div>
+                            `;
+                            plotLoadingTip.style.display = 'inline-block';
+                            plotCheckboxContainer.classList.add('form-disabled');
+                            plotCheckAll.style.display = 'none';
+                            confirmDetectBtn.disabled = true;
+                            confirmDetectBtn.classList.add('layui-btn-disabled');
+
+                            try {
+                                // 加载地块数据
+                                const plots = await getRegionPlots(selectedRegion);
+
+                                // ========== 生成地块复选框 ==========
+                                if (plots.length === 0) {
+                                    plotCheckboxContainer.innerHTML = `
+                                        <div style="text-align:center;color:var(--danger-color);font-size:13px;">
+                                            该地区无地块数据
+                                        </div>
+                                    `;
+                                    plotCheckboxContainer.classList.add('form-disabled');
+                                    plotCheckAll.style.display = 'none';
+                                } else {
+                                    // 生成地块复选框
+                                    let plotHtml = '';
+                                    plots.forEach(plot => {
+                                        const plotId = plot.id;
+                                        const plotName = plot.plotName || '未命名地块';
+
+                                        plotHtml += `
+                                        <div class="checkbox-item">
+                                            <input type="checkbox"
+                                                   name="plotIds"
+                                                   value="${plotId}"
+                                                   lay-skin="primary"
+                                                   lay-filter="plotIds"
+                                                   title="${plotName}">
+                                        </div>
+                                    `;
+                                    });
+
+                                    plotCheckboxContainer.innerHTML = plotHtml;
+                                    plotCheckboxContainer.classList.remove('form-disabled');
+                                    plotCheckAll.style.display = 'inline-block';
+
+                                    // ===== 新增：超过 N 个 → 两列 + 滚动（不动逻辑）=====
+                                    const CHECKBOX_COLUMN_THRESHOLD = 6; // 你想几列触发自己改
+                                    if (plots.length > CHECKBOX_COLUMN_THRESHOLD) {
+                                        plotCheckboxContainer.classList.add('multi-column');
+                                    } else {
+                                        plotCheckboxContainer.classList.remove('multi-column');
+                                    }
+
+                                    // 关键：让 Layui 接管 checkbox
+                                    form.render('checkbox');
+                                }
+
+                                // 隐藏加载提示
+                                plotLoadingTip.style.display = 'none';
+
+                            } catch (err) {
+                                console.error("加载数据失败：", err);
+                                plotCheckboxContainer.innerHTML = `<div style="text-align: center; color: var(--danger-color); font-size: 13px;">地块加载失败</div>`;
+                                plotLoadingTip.style.display = 'none';
+                                layer.msg('加载失败：' + err.message, {icon: 2});
+                            }
+                        });
+
+                        // ========== 全选/反选逻辑 ==========
+                        // 地块全选
+                        plotCheckAll.addEventListener('click', function() {
+                            const checkboxes = plotCheckboxContainer.querySelectorAll('input[name="plotIds"]');
+                            let isAllChecked = true;
+                            checkboxes.forEach(cb => {
+                                if (!cb.checked) isAllChecked = false;
+                            });
+                            checkboxes.forEach(cb => {
+                                cb.checked = !isAllChecked;
+                            });
+                            form.render('checkbox');
+                            updateConfirmBtnStatus();
+                        });
+
+                        // ========== 复选框勾选事件监听 ==========
+                        form.on('checkbox(plotIds)', function() {
+                            updateConfirmBtnStatus();
+                        });
+
+                        // ========== 校验并更新确认按钮状态 ==========
+                        function updateConfirmBtnStatus() {
+                            // 获取勾选的地块和时间
+                            const selectedPlots = layero.find('input[name="plotIds"]:checked').length;
+                            const hasStartDate = startDate.value.trim() !== '';
+                            const hasEndDate = endDate.value.trim() !== '';
+
+                            // 校验规则：地块≥1，开始/结束日期都有值
+                            if (selectedPlots >= 1 && hasStartDate && hasEndDate) {
+                                confirmDetectBtn.disabled = false;
+                                confirmDetectBtn.classList.remove('layui-btn-disabled');
+                            } else {
+                                confirmDetectBtn.disabled = true;
+                                confirmDetectBtn.classList.add('layui-btn-disabled');
+                            }
+                        }
+
+                        // ========== 按钮事件 ==========
+                        // 取消按钮
+                        layero.find('#cancelDetectBtn').click(function() {
+                            layer.close(index);
+                        });
+
+                        // 确认按钮 - 核心：调用xuntian/run接口
+                        layero.find('#confirmDetectBtn').click(async function() {
+                            if (this.disabled) return;
+                            this.disabled = true;
+
+                            // 收集勾选的参数
+                            const selectedRegion = detectRegionSelect.value;
+                            const selectedPlotIds = [];
+                            layero.find('input[name="plotIds"]:checked').each(function() {
+                                selectedPlotIds.push(this.value);
+                            });
+                            const startDateVal = startDate.value;
+                            const endDateVal = endDate.value;
+
+                            // 最终校验
+                            if (selectedPlotIds.length < 1) {
+                                layer.msg('必须选择至少1个地块', {icon: 2});
+                                this.disabled = false;
+                                return;
+                            }
+                            if (!startDateVal || !endDateVal) {
+                                layer.msg('必须选择完整的时间范围', {icon: 2});
+                                this.disabled = false;
+                                return;
+                            }
+
+                            // 获取选中地块的详细信息
+                            const selectedPlots = await getRegionPlots(selectedRegion);
+                            const targetPlots = selectedPlots.filter(plot =>
+                                selectedPlotIds.includes(String(plot.id))
+                            );
+
+
+                            // 组装后端要求的 JSON 格式（id_名称）
+                            const requestData = targetPlots.map(plot => ({
+                                plot_id: `${plot.id}_${plot.plotName}`,
+                                start_date: startDateVal,
+                                end_date: endDateVal,
+                                ndvi_folder: ndviFolderMap[selectedRegion] || "./static/ndvi_clips/guyuan/admin"
+                            }));
+
+                            // 关闭弹窗，执行检测
+                            const regionName = selectedRegion;
+                            const tipText = `⏳ 正在对【${regionName}】的 ${selectedPlotIds.length} 个地块执行异常检测...`;
+                            showCustomMsg(tipText, 5000);
+                            layer.close(index);
+
+                            try {
+                                // 移除旧异常点图层
+                                if (abnormalPointsLayer) map.removeLayer(abnormalPointsLayer);
+
+                                // ========== 调用 xuntian/run：只负责启动 ==========
+                                const res = await fetch('http://123.56.228.32:8000/xuntian/run', {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                        "token": token || ""
+                                    },
+                                    body: JSON.stringify(requestData)
+                                });
+
+                                if (!res.ok) {
+                                    throw new Error(`接口调用失败，状态码：${res.status}`);
+                                }
+
+                                const responseData = await res.json();
+                                const timestamp = responseData.timestamp;
+
+                                if (!timestamp) {
+                                    throw new Error("后端未返回任务时间戳");
+                                }
+
+                                showCustomMsg("⏳ 异常检测进行中，请稍候...", 3000);
+
+                                const pollInterval = 3000;
+                                let pollTimer = null;
+
+                                pollTimer = setInterval(async () => {
+                                    try {
+                                        const statusRes = await fetch(
+                                            `http://123.56.228.32:8000/xuntian/status?timestamp=${timestamp}`,
+                                            { headers: { "token": token || "" } }
+                                        );
+
+                                        if (!statusRes.ok) return;
+
+                                        const statusData = await statusRes.json();
+
+                                        if (statusData.status === "completed") {
+                                            clearInterval(pollTimer);
+
+                                            const anomalyResultPath = statusData.result_url;
+                                            if (!anomalyResultPath) {
+                                                showCustomMsg("⚠️ 已完成但未返回结果路径", 4000);
+                                                return;
+                                            }
+
+                                            // ======== 真正加载结果（只在这里） ========
+                                            const reportRes = await fetch(
+                                                //✅直接由 Flask 的 static 机制返回文件
+                                                `${anomalyResultPath}/巡田最终工单_${timestamp}.json`,
+                                                { headers: { "token": token || "" } }
+                                            );
+                                            const anomalyReport = await reportRes.json();
+
+                                            await renderAnomalyResults(anomalyReport, anomalyResultPath);
+
+                                            showCustomMsg(
+                                                `✅ 异常检测完成，共识别 ${abnormalPointsLayer.getLayers().length} 个异常点`,
+                                                4000
+                                            );
+
+                                            showAnomalyResultModal(anomalyReport, anomalyResultPath);
+                                        }
+                                    } catch (e) {
+                                        console.warn("轮询中异常：", e);
+                                    }
+                                }, pollInterval);
+                            } catch (err) {
+                                console.error("异常检测失败：", err);
+                                showCustomMsg("❌ 异常检测失败：" + err.message, 5000);
+                            } finally {
+                                this.disabled = false;
+                            }
+                        });
+                    }
+                });
+            });
+        });
+
+        // 生成巡田路径（保留，适配新的异常点图层）
+        document.getElementById('generatePath').addEventListener('click', async () => {
+            if (!abnormalPointsLayer || abnormalPointsLayer.getLayers().length === 0) {
+                showCustomMsg("⚠️ 请先加载异常点数据");
+                return;
+            }
+
+            showCustomMsg("⏳ 正在生成巡田路径...");
+
+            if (patrolPathLayer) {
+                map.removeLayer(patrolPathLayer);
+            }
+
+            try {
+                const patrolMode = document.getElementById('patrolMode').value;
+                const routeType = document.getElementById('routeType').value;
+                const patrolSpeed = document.getElementById('patrolSpeed').value;
+
+                const res = await fetch('http://123.56.228.32:8080/admin/generatePatrolPath', {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "token": token
+                    },
+                    body: JSON.stringify({
+                        patrolMode,
+                        routeType,
+                        patrolSpeed,
+                        abnormalPoints: Array.from(abnormalPointsLayer.getLayers()).map(marker => ({
+                            lat: marker.getLatLng().lat,
+                            lng: marker.getLatLng().lng,
+                            plotId: marker.options.plotId || '',
+                            anomalyType: marker.options.anomalyType || '未知'
+                        }))
+                    })
+                });
+
+                const pathData = await res.json();
+
+                if (!pathData || !pathData.coordinates) {
+                    showCustomMsg("⚠️ 路径生成失败");
+                    return;
+                }
+
+                patrolPathLayer = L.polyline(pathData.coordinates, {
+                    color: '#1E88E5',
+                    weight: 4,
+                    opacity: 0.8,
+                    dashArray: '5, 10'
+                }).bindPopup(`
+                    <div style="font-size: 13px; line-height: 1.6;">
+                        <b>巡田模式:</b> ${patrolMode === 'full_coverage' ? '全覆盖巡田' : '异常点优先'}<br>
+                        <b>路线类型:</b> ${routeType === 'shortest' ? '最短路径' : '最优效率'}<br>
+                        <b>巡田速度:</b> ${patrolSpeed} km/h<br>
+                        <b>路径长度:</b> ${(pathData.length / 1000).toFixed(2)} km<br>
+                        <b>预计耗时:</b> ${(pathData.length / 1000 / patrolSpeed).toFixed(2)} 小时
+                    </div>
+                `);
+
+                patrolPathLayer.addTo(map);
+                map.fitBounds(patrolPathLayer.getBounds().pad(0.1));
+                showCustomMsg("✅ 巡田路径生成完成");
+            } catch (err) {
+                console.error("生成路径失败：", err);
+                showCustomMsg("❌ 生成路径失败：" + err.message);
+            }
+        });
+
+        // 导出路径（保留）
+        document.getElementById('exportPath').addEventListener('click', async () => {
+            if (!patrolPathLayer) {
+                showCustomMsg("⚠️ 请先生成巡田路径");
+                return;
+            }
+
+            showCustomMsg("⏳ 正在导出路径数据...");
+
+            try {
+                const pathCoordinates = patrolPathLayer.getLatLngs().map(latlng => ({
+                    lat: latlng.lat,
+                    lng: latlng.lng
+                }));
+
+                const exportData = {
+                    patrolMode: document.getElementById('patrolMode').value,
+                    routeType: document.getElementById('routeType').value,
+                    patrolSpeed: document.getElementById('patrolSpeed').value,
+                    coordinates: pathCoordinates,
+                    length: patrolPathLayer.getLength(),
+                    exportTime: new Date().toLocaleString()
+                };
+
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], {type: 'application/json'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `巡田路径_${new Date().getTime()}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+
+                showCustomMsg("✅ 路径数据导出成功");
+            } catch (err) {
+                console.error("导出路径失败：", err);
+                showCustomMsg("❌ 导出路径失败：" + err.message);
+            }
+        });
+
+        // 全屏查看地图（保留）
+        document.getElementById("btnFullscreenOnly").addEventListener("click", async () => {
+            const mapContainer = document.getElementById("map");
+            try {
+                if (mapContainer.requestFullscreen) {
+                    await mapContainer.requestFullscreen();
+                } else if (mapContainer.webkitRequestFullscreen) {
+                    await mapContainer.webkitRequestFullscreen();
+                } else if (mapContainer.msRequestFullscreen) {
+                    await mapContainer.msRequestFullscreen();
+                }
+
+                setTimeout(() => {
+                    map.invalidateSize();
+                }, 300);
+            } catch (err) {
+                console.error("❌ 无法进入全屏：", err);
+                alert("浏览器不支持或用户取消了全屏操作");
+            }
+        });
+
+        document.addEventListener("fullscreenchange", () => {
+            if (!document.fullscreenElement) {
+                setTimeout(() => {
+                    map.invalidateSize();
+                }, 300);
+            }
+        });
+    });
+
+    // ================= 新增核心函数：渲染异常检测结果 =================
+    async function renderAnomalyResults(anomalyReport, resultPath) {
+        abnormalPointsLayer = L.featureGroup();
+
+        // 解析异常工单数据，渲染异常点
+        if (Array.isArray(anomalyReport)) {
+            for (const plotItem of anomalyReport) {
+                const plotId = plotItem.plot_id;
+                const anomalies = plotItem.anomalies || [];
+
+                // 遍历该地块的所有异常点
+                for (const anomaly of anomalies) {
+                    // 根据异常等级设置标记颜色
+                    let markerColor = 'red'; // 高
+                    if (anomaly.level === '低') markerColor = 'blue';
+                    if (anomaly.level === '中') markerColor = 'orange';
+
+                    // 创建异常点标记
+                    const marker = L.marker([anomaly.lat, anomaly.lng], {
+                        icon: L.divIcon({
+                            className: 'custom-div-icon',
+                            html: `<div style="background-color: ${markerColor}; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>`,
+                            iconSize: [14, 14],
+                            iconAnchor: [7, 7]
+                        }),
+                        plotId: plotId,
+                        anomalyType: anomaly.type || '未知'
+                    }).bindPopup(`
+                        <div style="font-size: 13px; line-height: 1.6;">
+                            <b>地块名称:</b> ${plotId}</b><br>
+                            <b>检测时间:</b> ${anomaly.date || '未知'}</b><br>
+                            <b>异常类型:</b> ${anomaly.type || '未知'}</b><br>
+                            <b>异常等级:</b> <span style="color: ${markerColor};">${anomaly.level || '未知'}</span></b><br>
+                            <b>NDVI值:</b> ${anomaly.ndvi_value || '未知'}</b><br>
+                            <b>描述:</b> ${anomaly.desc || '无异常描述'}</b>
+                            ${anomaly.img_path ? `<br><button class="layui-btn layui-btn-xs layui-btn-normal" onclick="viewAnomalyImage('${resultPath}/visualReports/${anomaly.img_path}')">查看异常图</button>` : ''}
+                        </div>
+                    `);
+
+                    abnormalPointsLayer.addLayer(marker);
+                }
+            }
+        }
+
+        // 将异常点图层添加到地图并适配视野
+        abnormalPointsLayer.addTo(map);
+        if (abnormalPointsLayer.getLayers().length > 0) {
+            map.fitBounds(abnormalPointsLayer.getBounds().pad(0.15));
+        }
+    }
+
+    // ================= 新增核心函数：显示异常结果弹窗 =================
+    function showAnomalyResultModal(anomalyReport, resultPath) {
+        layui.use('layer', function() {
+            const layer = layui.layer;
+
+            // 构建弹窗内容
+            let modalContent = `
+                <div style="padding: 20px; max-height: 600px; overflow-y: auto;">
+                    <h4 style="margin: 0 0 16px 0; color: var(--primary-color);">
+                        <i class="fa fa-bar-chart"></i> 异常检测结果
+                    </h4>
+            `;
+
+            // 遍历每个地块的异常结果
+            if (Array.isArray(anomalyReport)) {
+                for (const plotItem of anomalyReport) {
+                    const plotId = plotItem.plot_id;
+                    const anomalies = plotItem.anomalies || [];
+                    const imgPrefix = plotId.split('_')[0]; // 提取72/73等前缀
+
+                    // 查找该地块的异常可视化图片
+                    const imgDate = plotItem.anomaly_date || '2025-06-07';
+                    const imgName = `subregion_anomaly_map_${imgPrefix}_${imgDate.replace(/-/g, '')}.png`;
+                    const imgPath = `${resultPath}/visualReports/${imgName}`;
+
+                    modalContent += `
+                        <div class="plot-anomaly-item">
+                            <h5 style="margin: 0 0 8px 0;">${plotId}</h5>
+                            <p style="margin: 0 0 8px 0; font-size: 13px; color: var(--text-secondary);">
+                                检测时间范围: ${plotItem.start_date} 至 ${plotItem.end_date}<br>
+                                异常点数量: <span style="color: var(--danger-color); font-weight: bold;">${anomalies.length}</span>
+                            </p>
+                            <button class="layui-btn layui-btn-xs layui-btn-normal" onclick="viewAnomalyImage('${imgPath}', '${plotId}')">
+                                <i class="fa fa-image"></i> 查看异常可视化图
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+
+            modalContent += `</div>`;
+
+            // 打开结果弹窗
+            layer.open({
+                type: 1,
+                title: '异常检测结果详情',
+                area: ['600px', '700px'],
+                content: modalContent,
+                shade: 0.3,
+                btn: ['关闭'],
+                btnAlign: 'r'
+            });
+        });
+    }
+
+    // ================= 新增全局函数：查看异常图片 =================
+    window.viewAnomalyImage = function(imgPath, plotName = '异常图') {
+        layui.use('layer', function() {
+            const layer = layui.layer;
+
+            layer.open({
+                type: 1,
+                title: `${plotName} - 异常可视化图`,
+                area: ['80%', '80%'],
+                content: `<div style="text-align: center; padding: 20px;">
+                    <img src="${imgPath}" class="anomaly-img-preview" alt="${plotName}异常图">
+                </div>`,
+                shade: 0.5,
+                btn: ['关闭'],
+                btnAlign: 'r'
+            });
+        });
+    }
+
+    // ================= 工具函数 =================
+    /**
+     * 加载并渲染后端地块
+     */
+    async function loadPlots() {
+        try {
+            // http://123.56.228.32:8080请求，添加token头
+            const res = await fetch("http://123.56.228.32:8080/admin/plots", {
+                headers: {
+                    "token": token
+                }
+            });
+            if (!res.ok) throw new Error("请求失败");
+            const plots = await res.json();
+            plots.forEach(displayPlot);
+        } catch (err) {
+            console.error("地块加载失败：", err);
+            alert("加载失败，请检查服务是否运行");
+        }
+    }
+
+
+    // 获取地区地块
+    async function getRegionPlots(region) {
+        if (regionPlotCache[region]?.length) return regionPlotCache[region];
+        try {
+            const res = await fetch(`http://123.56.228.32:8080/admin/plots?region=${region}`, {headers: {"token": token}});
+            const plots = await res.json();
+            regionPlotCache[region] = plots;
+            return plots;
+        } catch (err) {
+            console.error(`获取${region}地块失败：`, err);
+            return [];
+        }
+    }
+
+
+
+    // 转换地块数据格式
+    function transformPlotsForNdviCut(rawPlots, dateStr) {
+        const plots = rawPlots.map(item => {
+            let polygonObj;
+            try {
+                polygonObj = typeof item.coordinates === 'string' ? JSON.parse(item.coordinates) : item.coordinates;
+            } catch (e) {
+                console.warn(`地块 ${item.plotName} 坐标解析失败`, e);
+                polygonObj = null;
+            }
+            return {
+                plotId: item.id,
+                plotname: item.plotName,
+                polygon: polygonObj
+            };
+        }).filter(p => p.polygon);
+
+        return {date: dateStr, plots};
+    }
+
+    // 初始化地图
+    function initMap() {
+        const imgLayer = L.tileLayer("http://t0.tianditu.gov.cn/img_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=img&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=19fc987939ebbcbcb3f0954ab6cf75be", {
+            attribution: "天地图影像"
+        });
+        const vecLayer = L.tileLayer("http://t0.tianditu.gov.cn/vec_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=vec&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=19fc987939ebbcbcb3f0954ab6cf75be", {
+            attribution: "天地图矢量"
+        });
+        const labelLayer = L.tileLayer("http://t0.tianditu.gov.cn/cia_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=cia&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=19fc987939ebbcbcb3f0954ab6cf75be", {
+            attribution: "注记"
+        });
+
+        map = L.map("map", {
+            center: [39.065, 117.105],
+            zoom: 16,
+            layers: [imgLayer, labelLayer]
+        });
+
+        getCurrentLocation()
+            .then(coords => map.setView([coords.latitude, coords.longitude], 16))
+            .catch(err => console.warn("定位失败", err));
+
+        L.control.layers({
+            "天地图影像": imgLayer,
+            "天地图矢量": vecLayer
+        }, {"注记": labelLayer}).addTo(map);
+    }
+
+    // 获取当前定位
+    function getCurrentLocation() {
+        return new Promise((resolve, reject) => {
+            if (!navigator.geolocation) reject(new Error('浏览器不支持定位'));
+            navigator.geolocation.getCurrentPosition(
+                pos => resolve(pos.coords),
+                err => reject(err),
+                {enableHighAccuracy: true, timeout: 5000, maximumAge: 0}
+            );
+        });
+    }
+
+    /**
+     * 渲染单个地块
+     */
+    function displayPlot(plot) {
+        const data = JSON.parse(plot.coordinates);
+        let layerOptions = {
+            color: '#3388ff',     // 边框颜色
+            weight: 2,            // 边框宽度
+            fillOpacity: 0       // 中间透明，避免遮盖 NDVI 图层
+        };
+        let layer;
+
+        if (data.shapeType === "circle") {
+            layer = L.circle(data.center, {
+                ...layerOptions,
+                radius: data.radius
+            });
+        } else if (data.shapeType === "polygon") {
+            layer = L.polygon(data.latlngs, layerOptions);
+        } else {
+            console.warn("未知形状类型", data.shapeType);
+            return;
+        }
+
+        layer.addTo(map).bindPopup(`
+        <b>地块名称:</b> ${plot.plotName}<br>
+        <b>上季作物:</b> ${plot.lastCrop}<br>
+        <b>本季作物:</b> ${plot.currentCrop}<br>
+        <b>联系人:</b> ${plot.contactPerson}<br>
+        <b>联系电话:</b> ${plot.phone}<br>
+        <b>土壤类型:</b> ${plot.soilType}<br>
+        <b>灌溉条件:</b> ${plot.irrigationType}<br>
+        <b>土地类型:</b> ${plot.landType}<br>
+        <b>面积:</b> ${plot.area} 亩<br>
+        <button onclick="updateArea(${plot.id})">修改面积</button>
+        <button onclick="deletePlot(${plot.id})">删除</button>
+    `);
+
+        return layer;
+    }
+
+    /**
+     * 搜索地址并跳转地图位置
+     */
+    function setupSearch() {
+        const btn = document.getElementById("searchBtn");
+        const input = document.getElementById("searchInput");
+
+        const doSearch = async () => {
+            const keyword = input.value.trim();
+            if (!keyword) {
+                layer.msg("请输入关键字", {icon: 0});
+                return;
+            }
+
+            const url = `https://api.tianditu.gov.cn/geocoder?ds={"keyWord":"${keyword}"}&tk=19fc987939ebbcbcb3f0954ab6cf75be`;
+
+            try {
+                // 天地图API（非http://123.56.228.32请求，不加token）
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data?.location) {
+                    const {lon, lat} = data.location;
+                    const latlng = [lat, lon];
+                    map.setView(latlng, 14);
+                    L.marker(latlng).addTo(map).bindPopup(`搜索结果：${keyword}`).openPopup();
+                    layer.msg("定位成功", {icon: 1});
+                } else {
+                    layer.alert("未找到该位置", {icon: 2});
+                }
+            } catch (err) {
+                console.error("搜索失败：", err);
+                layer.alert("搜索失败，请检查网络或天地图服务", {icon: 2});
+            }
+        };
+
+        btn.addEventListener("click", doSearch);
+        input.addEventListener("keypress", e => {
+            if (e.key === "Enter") doSearch();
+        });
+    }
+
+
+    // 显示提示信息
+    function showCustomMsg(text, duration = 3000) {
+        const tip = document.getElementById('drawTip');
+        const tipContent = document.getElementById('tipContent');
+        if (!tip || !tipContent) return;
+
+        tipContent.innerText = text;
+        tip.style.display = 'block';
+        tip.style.opacity = '0';
+        setTimeout(() => tip.style.opacity = '1', 10);
+        setTimeout(() => {
+            tip.style.opacity = '0';
+            setTimeout(() => tip.style.display = 'none', 300);
+        }, duration);
+    }
+
+    // 查询地块功能（layui）
+    layui.use(['layer', 'laytpl'], function () {
+        const layer = layui.layer;
+        const laytpl = layui.laytpl;
+
+        document.getElementById('queryPlot').onclick = async function () {
+            try {
+                // http://123.56.228.32:8080请求，添加token头
+                const res = await fetch("http://123.56.228.32:8080/admin/plots", {
+                    headers: {
+                        "token": token
+                    }
+                });
+                if (!res.ok) throw new Error("获取地块数据失败");
+                const plots = await res.json();
+
+                const tpl = `
+              <style>
+                #plotSearchInput {
+                    flex: 1;
+                    padding: 8px 12px;
+                    border: 1px solid #ccc;
+                    border-radius: 4px;
+                    font-size: 14px;
+                }
+                #plotList {
+                    max-height: 320px;
+                    overflow-y: auto;
+                    list-style: none;
+                    padding: 0;
+                    margin: 0;
+                }
+                #plotList li {
+                    background: #f8f8f8;
+                    padding: 12px 16px;
+                    margin-bottom: 8px;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                    transition: background-color 0.2s ease;
+                }
+                #plotList li:hover {
+                    background-color: #e6f7ff;
+                }
+              </style>
+              <div style="padding: 16px; font-family: Arial, sans-serif;">
+                <div style="display: flex; align-items: center; margin-bottom: 12px;">
+                  <i class="layui-icon layui-icon-search" style="margin-right: 8px; font-size: 18px; color: #5FB878;"></i>
+                  <input id="plotSearchInput" type="text" placeholder="请输入地块名称进行搜索" />
+                </div>
+                <ul id="plotList">
+                  {{# layui.each(d.plots, function(index, item){ }}
+                    <li data-index="{{ index }}">
+                      <i class="layui-icon layui-icon-location" style="color: #1E9FFF; margin-right: 6px;"></i>
+                      {{ item.plotName }}
+                    </li>
+                  {{# }); }}
+                </ul>
+              </div>
+            `;
+
+                laytpl(tpl).render({plots}, function (html) {
+                    layer.open({
+                        type: 1,
+                        title: '查询地块',
+                        area: ['400px', '400px'],
+                        content: html,
+                        success: function () {
+                            const input = document.getElementById('plotSearchInput');
+                            const list = document.getElementById('plotList');
+
+                            input.oninput = function () {
+                                const keyword = this.value.toLowerCase();
+                                list.querySelectorAll('li').forEach(li => {
+                                    const name = li.textContent.toLowerCase();
+                                    li.style.display = name.includes(keyword) ? 'block' : 'none';
+                                });
+                            };
+
+                            list.querySelectorAll('li').forEach(li => {
+                                li.onclick = function () {
+                                    const index = parseInt(this.getAttribute('data-index'));
+                                    const plot = plots[index];
+
+                                    const layerObj = displayPlot(plot);
+
+                                    if (layerObj.getBounds) {
+                                        map.fitBounds(layerObj.getBounds());
+                                    } else if (layerObj.getLatLng) {
+                                        map.setView(layerObj.getLatLng(), 16);
+                                    }
+
+                                    layerObj.openPopup();
+                                    layer.closeAll();
+                                };
+                            });
+                        }
+                    });
+                });
+            } catch (err) {
+                console.error(err);
+                layer.msg("获取地块数据失败，请检查后端服务", {icon: 2});
+            }
+        };
+    });
+</script>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://cdn.staticfile.org/layui/2.8.18/layui.js"></script>
+</body>
+</html>

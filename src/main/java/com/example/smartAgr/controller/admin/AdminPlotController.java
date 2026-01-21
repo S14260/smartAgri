@@ -28,6 +28,16 @@ public class AdminPlotController {
         return adminPlotDao.findAll();
     }
 
+    /**
+     * 根据地区获取地块
+     * /admin/plots?region=xxx
+     */
+    @GetMapping(params = "region")
+    public List<AdminPlot> getPlotsByRegion(@RequestParam("region") String region) {
+        return adminPlotDao.findByRegion(region);
+    }
+
+
     @PostMapping
     public AdminPlot savePlot(@RequestBody AdminPlot adminPlot) {
         return adminPlotDao.save(adminPlot);
