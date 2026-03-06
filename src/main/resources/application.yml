@@ -3,7 +3,7 @@ spring:
 #    database-platform: org.hibernate.dialect.MySQL8Dialect
   datasource:
     username: mydb
-    password: yNdhf5S5BNkAN6St
+    password: R6w3tW25j2etFzpi
     url: jdbc:mysql://localhost:3306/mydb?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&useSSL=false&serverTimezone=GMT
     driver-class-name: com.mysql.cj.jdbc.Driver
 
@@ -30,8 +30,3 @@ jwt:
   user-ttl: 7200000
   # 设置前端传递过来的令牌名称
   user-token-name: authentication
-
-llm:
-  api-key: "sk-2f9d0b63be8b4b428f3b04c2d61a7211"
-  base-url: "https://api.deepseek.com"
-  model: "deepseek-chat"
