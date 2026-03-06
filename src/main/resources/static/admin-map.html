@@ -163,7 +163,6 @@
     let timeSelect = null; //全局化，用于开始圈地按钮
     let allPolygons = []; // AI 检测的多边形
     const simplifyRange = document.getElementById("simplifyRange");
-
     // 把后端原始地块数组转成 /admin/ndvicut 接口需要的格式
     function transformPlotsForNdviCut(rawPlots, dateStr) {
         const plots = rawPlots.map(item => {
@@ -218,7 +217,7 @@
             currentNdviTime = null;
 
             try {
-                const res = await fetch(`http://123.56.228.32:8000/admin/ndvilist?region=${region}`, {
+                const res = await fetch(`http://123.56.228.32:8080/admin/ndvilist?region=${region}`, {
                     headers: {"token": token}
                 });
                 const ndviList = await res.json();
@@ -298,7 +297,7 @@
                 requestData.region = region;
 
                 // 调用裁剪接口
-                const resCut = await fetch('http://123.56.228.32:8000/admin/ndvicut', {
+                const resCut = await fetch('http://123.56.228.32:8080/admin/ndvicut', {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
