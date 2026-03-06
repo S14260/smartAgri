@@ -4,560 +4,12 @@
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>巡田规划系统</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-    <link rel="stylesheet" href="https://cdn.staticfile.org/layui/2.8.18/css/layui.css"/>
+    <link rel="stylesheet" href="lib/css/leaflet.css"/>
+    <link rel="stylesheet" href="lib/css/layui.css"/>
     <link rel="stylesheet" href="lib/css/leaflet.css"/>
     <link rel="stylesheet" href="lib/css/font-awesome.min.css"/>
-    <style>
-        :root {
-            --primary-color: #1E88E5;
-            --secondary-color: #43A047;
-            --accent-color: #FF6D00;
-            --text-primary: #333333;
-            --text-secondary: #666666;
-            --text-placeholder: #909399;
-            --bg-light: #F5F7FA;
-            --bg-dark: #E4E7ED;
-            --border-color: #EBEEF5;
-            --border-hover: #c0c4cc;
-            --shadow-light: 0 2px 12px rgba(0, 0, 0, 0.08);
-            --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.12);
-            --shadow-heavy: 0 6px 20px rgba(0, 0, 0, 0.15);
-            --success-color: #67C23A;
-            --warning-color: #E6A23C;
-            --danger-color: #F56C6C;
-        }
 
-        html, body {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            background-color: var(--bg-light);
-            overflow: hidden;
-            font-family: "PingFang SC", "Helvetica Neue", Helvetica, Arial, sans-serif;
-            color: var(--text-primary);
-        }
-
-        body > .layui-container {
-            width: 100vw;
-            max-width: 100vw;
-            padding: 0;
-            margin: 0;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            background: white;
-        }
-
-        .layui-card {
-            flex: 1 1 auto;
-            display: flex;
-            flex-direction: column;
-            margin: 0;
-            border: none;
-            box-shadow: none;
-        }
-
-        .layui-form {
-            flex: 0 0 auto;
-            padding: 16px 24px;
-            background: white;
-            border-bottom: 1px solid var(--border-color);
-            z-index: 10;
-            box-shadow: var(--shadow-light);
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .layui-card-body {
-            flex: 1 1 auto;
-            display: flex;
-            flex-direction: column;
-            padding: 0;
-            overflow: hidden;
-        }
-
-        #map {
-            flex: 1 1 auto;
-            width: 100%;
-            height: calc(100vh - 72px);
-            min-height: 0;
-            min-width: 0;
-            position: relative;
-            z-index: 1;
-            background-color: #e9ecef;
-        }
-
-        .search-group {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex: 1;
-            max-width: 500px;
-        }
-
-        .search-group .layui-input {
-            height: 40px;
-            border-radius: 6px;
-            border: 1px solid var(--border-color);
-            padding: 0 14px;
-            font-size: 14px;
-            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-
-        .search-group .layui-input:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 2px rgba(30, 136, 229, 0.2);
-            outline: none;
-        }
-
-        .search-group .layui-btn {
-            height: 40px;
-            line-height: 40px;
-            padding: 0 20px;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .search-group .layui-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .action-buttons {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .action-buttons .layui-btn {
-            height: 40px;
-            line-height: 40px;
-            padding: 0 18px;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s;
-        }
-
-        .action-buttons .layui-btn i {
-            font-size: 16px;
-        }
-
-        .action-buttons .layui-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .action-buttons .layui-btn-primary {
-            border-color: #DCDFE6;
-            color: var(--text-primary);
-        }
-
-        .action-buttons .layui-btn-primary:hover {
-            border-color: var(--primary-color);
-            color: var(--primary-color);
-        }
-
-        .action-buttons .layui-btn-normal {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-
-        .action-buttons .layui-btn-warm {
-            background-color: var(--secondary-color);
-            border-color: var(--secondary-color);
-        }
-
-        .action-buttons .layui-btn-red {
-            background-color: var(--accent-color);
-            border-color: var(--accent-color);
-        }
-
-        #pathParamsWrapper {
-            position: fixed;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: white;
-            border-radius: 10px;
-            padding: 16px 24px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 16px;
-            z-index: 9999;
-            box-shadow: var(--shadow-medium);
-            flex-wrap: wrap;
-        }
-
-        .param-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .param-item label {
-            font-size: 14px;
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-
-        .param-item .layui-select, .param-item .layui-input {
-            height: 36px;
-            line-height: 36px;
-            border-radius: 6px;
-            min-width: 120px;
-        }
-
-        #drawTip {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(255, 255, 255, 0.95);
-            color: var(--text-primary);
-            padding: 18px 32px;
-            border-radius: 12px;
-            font-size: 16px;
-            z-index: 9999;
-            box-shadow: var(--shadow-medium);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        #drawTip i {
-            font-size: 20px;
-            color: var(--accent-color);
-        }
-
-        @media (min-width: 769px) {
-            #toggleSliderBtn {
-                display: flex;
-                position: fixed;
-                top: 24px;
-                right: 24px;
-                z-index: 10000;
-                box-shadow: var(--shadow-light);
-                border-radius: 6px;
-                height: 40px;
-                line-height: 40px;
-                padding: 0 18px;
-                font-size: 14px;
-                font-weight: 500;
-                gap: 6px;
-                transition: all 0.2s;
-            }
-
-            #toggleSliderBtn:hover {
-                transform: translateY(-1px);
-                box-shadow: var(--shadow-medium);
-            }
-        }
-
-        #ndviSliderWrapper {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: white;
-            border-top: 1px solid var(--border-color);
-            padding: 20px 32px;
-            display: none;
-            z-index: 9999;
-            font-size: 15px;
-            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s ease;
-        }
-
-        #ndviTimeSelect {
-            width: 200px;
-            margin-left: 10px;
-            height: 38px;
-            line-height: 38px;
-        }
-
-        /* ========== 核心优化：复选框组样式 ========== */
-        .abnormal-detect-modal {
-            padding: 24px;
-            font-family: "PingFang SC", "Helvetica Neue", sans-serif;
-        }
-        .modal-header {
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .modal-header h3 {
-            margin: 0;
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .modal-header h3 i {
-            color: var(--primary-color);
-            font-size: 20px;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-        /* 必选提示 */
-        .required-tip {
-            color: var(--danger-color);
-            font-size: 12px;
-            margin-left: 4px;
-        }
-        /* 加载提示 */
-        .loading-tip {
-            color: var(--primary-color);
-            font-size: 12px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        /* 禁用样式 */
-        .form-disabled {
-            opacity: 0.6;
-            pointer-events: none;
-        }
-        /* 复选框组容器 */
-        .checkbox-group {
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 12px;
-            max-height: 150px;
-            overflow-y: auto;
-            background-color: var(--bg-light);
-        }
-        /* 复选框分组标题 */
-        .checkbox-group-title {
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--primary-color);
-            margin: 8px 0 4px 0;
-            padding-left: 4px;
-        }
-        /* 单个复选框项 */
-        .checkbox-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 4px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 13px;
-        }
-        .checkbox-item:hover {
-            background-color: rgba(30, 136, 229, 0.1);
-        }
-        /* 全选按钮 */
-        .check-all-btn {
-            font-size: 12px;
-            color: var(--primary-color);
-            cursor: pointer;
-            margin-bottom: 8px;
-            display: inline-block;
-        }
-        .check-all-btn:hover {
-            text-decoration: underline;
-        }
-        /* 弹窗按钮 */
-        .modal-footer {
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-            margin-top: 24px;
-        }
-        .modal-footer .layui-btn {
-            padding: 0 24px;
-            height: 42px;
-            line-height: 42px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-        .modal-footer .layui-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-light);
-        }
-        .modal-footer .layui-btn-primary {
-            border-color: var(--border-color);
-            background: white;
-        }
-        .modal-footer .layui-btn-normal {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-        .modal-footer .layui-btn-disabled {
-            background-color: #ccc !important;
-            border-color: #ccc !important;
-            cursor: not-allowed;
-            transform: none !important;
-            box-shadow: none !important;
-        }
-        /* 时间范围选择样式 */
-        .date-range-group {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-        }
-        .date-range-group .layui-input {
-            width: 140px;
-        }
-        /* 异常图片预览样式 */
-        .anomaly-img-preview {
-            max-width: 100%;
-            max-height: 600px;
-            border-radius: 8px;
-        }
-        .plot-anomaly-item {
-            padding: 12px;
-            border-bottom: 1px solid var(--border-color);
-            cursor: pointer;
-        }
-        .plot-anomaly-item:hover {
-            background-color: var(--bg-light);
-        }
-        .plot-anomaly-item:last-child {
-            border-bottom: none;
-        }
-
-        @media (max-width: 768px) {
-            .layui-form {
-                padding: 10px 12px;
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 8px;
-            }
-
-            .search-group {
-                width: 100%;
-                gap: 8px;
-            }
-
-            .search-group .layui-input {
-                height: 32px;
-                padding: 0 10px;
-                font-size: 12px;
-            }
-
-            .search-group .layui-btn {
-                height: 32px;
-                padding: 0 12px;
-                font-size: 12px;
-            }
-
-            .action-buttons {
-                width: 100%;
-                justify-content: space-between;
-                gap: 6px;
-                flex-wrap: wrap;
-            }
-
-            .action-buttons .layui-btn {
-                height: 32px;
-                padding: 0 10px;
-                font-size: 12px;
-                gap: 4px;
-            }
-
-            .action-buttons .layui-btn i {
-                font-size: 12px;
-            }
-
-            #pathParamsWrapper {
-                bottom: 16px;
-                padding: 10px 16px;
-                gap: 8px;
-            }
-
-            .param-item {
-                width: 100%;
-                justify-content: space-between;
-            }
-
-            #drawTip {
-                padding: 12px 18px;
-                font-size: 13px;
-            }
-
-            #drawTip i {
-                font-size: 14px;
-            }
-
-            #ndviSliderWrapper {
-                padding: 12px 16px;
-                font-size: 13px;
-            }
-
-            #ndviTimeSelect {
-                width: 150px;
-            }
-
-            #map {
-                height: calc(100vh - 150px);
-            }
-
-            /* 移动端弹窗适配 */
-            .abnormal-detect-modal {
-                padding: 16px;
-            }
-            .modal-header h3 {
-                font-size: 16px;
-            }
-            .modal-footer {
-                flex-direction: column-reverse;
-            }
-            .modal-footer .layui-btn {
-                width: 100%;
-            }
-            .checkbox-group {
-                max-height: 120px;
-            }
-            .date-range-group {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 8px;
-            }
-            .date-range-group .layui-input {
-                width: 100%;
-            }
-        }
-        /* ====== 地块复选框布局增强（不影响逻辑） ====== */
-        #plotCheckboxContainer.multi-column {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            column-gap: 16px;
-            row-gap: 6px;
-
-            max-height: 220px;   /* 超出滚动 */
-            overflow-y: auto;
-            padding-right: 6px;
-        }
-
-        #plotCheckboxContainer .checkbox-item {
-            white-space: nowrap;
-        }
-
-    </style>
+    <link rel="stylesheet" href="css/admin-patrol.css"/>
 </head>
 <body>
 <div class="layui-container">
@@ -578,7 +30,10 @@
                             <i class="fa fa-map-marker"></i> 查询地块
                         </button>
                         <button class="layui-btn layui-btn-normal" id="loadAbnormalPoints">
-                            <i class="fa fa-exclamation-triangle"></i> 加载异常点
+                            <i class="fa fa-exclamation-triangle"></i> 开始异常检测
+                        </button>
+                        <button class="layui-btn layui-btn-white" id="historyReportBtn">
+                            <i class="fa fa-route"></i> 查看历史工单
                         </button>
                         <button class="layui-btn layui-btn-red" id="generatePath">
                             <i class="fa fa-route"></i> 生成巡田路径
@@ -600,27 +55,6 @@
             </div>
 
             <div id="map">
-                <div id="pathParamsWrapper">
-                    <div class="param-item">
-                        <label>巡田模式：</label>
-                        <select id="patrolMode" class="layui-select">
-                            <option value="full_coverage">全覆盖巡田</option>
-                            <option value="abnormal_priority">异常点优先</option>
-                        </select>
-                    </div>
-                    <div class="param-item">
-                        <label>路线类型：</label>
-                        <select id="routeType" class="layui-select">
-                            <option value="shortest">最短路径</option>
-                            <option value="optimal">最优效率</option>
-                        </select>
-                    </div>
-                    <div class="param-item">
-                        <label>巡田速度：</label>
-                        <input type="number" id="patrolSpeed" class="layui-input" value="5" min="1" max="10" placeholder="km/h">
-                    </div>
-                </div>
-
                 <div id="ndviSliderWrapper"
                      style="display: none; align-items: center; gap: 16px; flex-wrap: wrap;">
                     <div style="display: flex; align-items: center; gap: 8px; margin-right: 20px;">
@@ -653,6 +87,8 @@
 <script src="./lib/leaflet/leaflet-heat.js"></script>
 <script src="./lib/turf/turf.min.js"></script>
 <script src="./lib/layui/layui.js"></script>
+<!-- 引入ECharts -->
+<script src="./lib/echarts.min.js"></script>
 
 <script>
     window.addEventListener('resize', () => {
@@ -680,6 +116,11 @@
     let patrolPathLayer = null;  // 巡田路径图层
     let plotList = []; // 存储所有地块数据
     let anomalyResultPath = ''; // 异常检测结果文件夹路径
+    let currentHistoryReport = null;   // 当前选中的历史工单完整结果
+    let currentHistoryPoints = [];     // 当前工单的异常点（只留坐标用）
+    let patrolPointLayer = null; // 用来放编号点
+
+
     // 地区列表和缓存
     const regionList = [
         {id: "zhangbei", name: "张北"},
@@ -1194,110 +635,222 @@
             });
         });
 
-        // 生成巡田路径（保留，适配新的异常点图层）
-        document.getElementById('generatePath').addEventListener('click', async () => {
-            if (!abnormalPointsLayer || abnormalPointsLayer.getLayers().length === 0) {
-                showCustomMsg("⚠️ 请先加载异常点数据");
-                return;
-            }
-
-            showCustomMsg("⏳ 正在生成巡田路径...");
-
-            if (patrolPathLayer) {
-                map.removeLayer(patrolPathLayer);
-            }
-
+        // ================= 查看历史巡田工单 =================
+        document.getElementById('historyReportBtn').addEventListener('click', async () => {
             try {
-                const patrolMode = document.getElementById('patrolMode').value;
-                const routeType = document.getElementById('routeType').value;
-                const patrolSpeed = document.getElementById('patrolSpeed').value;
+                const res = await fetch('http://123.56.228.32:8000/xuntian/reports');
+                if (!res.ok) throw new Error('接口请求失败');
 
-                const res = await fetch('http://123.56.228.32:8080/admin/generatePatrolPath', {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "token": token
-                    },
-                    body: JSON.stringify({
-                        patrolMode,
-                        routeType,
-                        patrolSpeed,
-                        abnormalPoints: Array.from(abnormalPointsLayer.getLayers()).map(marker => ({
-                            lat: marker.getLatLng().lat,
-                            lng: marker.getLatLng().lng,
-                            plotId: marker.options.plotId || '',
-                            anomalyType: marker.options.anomalyType || '未知'
-                        }))
-                    })
-                });
+                const reportList = await res.json();
 
-                const pathData = await res.json();
+                openHistoryReportLayer(reportList);
 
-                if (!pathData || !pathData.coordinates) {
-                    showCustomMsg("⚠️ 路径生成失败");
-                    return;
-                }
-
-                patrolPathLayer = L.polyline(pathData.coordinates, {
-                    color: '#1E88E5',
-                    weight: 4,
-                    opacity: 0.8,
-                    dashArray: '5, 10'
-                }).bindPopup(`
-                    <div style="font-size: 13px; line-height: 1.6;">
-                        <b>巡田模式:</b> ${patrolMode === 'full_coverage' ? '全覆盖巡田' : '异常点优先'}<br>
-                        <b>路线类型:</b> ${routeType === 'shortest' ? '最短路径' : '最优效率'}<br>
-                        <b>巡田速度:</b> ${patrolSpeed} km/h<br>
-                        <b>路径长度:</b> ${(pathData.length / 1000).toFixed(2)} km<br>
-                        <b>预计耗时:</b> ${(pathData.length / 1000 / patrolSpeed).toFixed(2)} 小时
-                    </div>
-                `);
-
-                patrolPathLayer.addTo(map);
-                map.fitBounds(patrolPathLayer.getBounds().pad(0.1));
-                showCustomMsg("✅ 巡田路径生成完成");
             } catch (err) {
-                console.error("生成路径失败：", err);
-                showCustomMsg("❌ 生成路径失败：" + err.message);
+                console.error(err);
+                layui.layer.msg('获取历史工单失败', { icon: 2 });
             }
         });
 
-        // 导出路径（保留）
+        // 生成巡田路径（重构：调用后端接口）
+        document.getElementById('generatePath').addEventListener('click', async () => {
+
+            // ================= 1. 前置校验 =================
+            if (typeof currentHistoryReport === 'undefined' || !currentHistoryReport) {
+                showCustomMsg("⚠️ 请先选择并加载一个历史巡田工单");
+                return;
+            }
+            if (typeof currentHistoryPoints === 'undefined' || currentHistoryPoints.length === 0) {
+                showCustomMsg("⚠️ 该工单无有效异常点，无法生成路径");
+                return;
+            }
+            if (currentHistoryPoints.length < 2) {
+                showCustomMsg("⚠️ 异常点数量不足（至少需要2个），无法生成路径");
+                return;
+            }
+
+            // ================= 2. 计算 report_path =================
+            let report_path = '';
+            if (currentHistoryReport?.report_info?.report_json_path) {
+                report_path = currentHistoryReport.report_info.report_json_path;
+                const basePath = window.currentReportBasePath || '';
+                const timeMatch = basePath.match(/reports_(\d{8}_\d{6})/);
+                if (timeMatch && timeMatch[1]) {
+                    report_path = report_path.replace(
+                        /巡田最终工单_\d+\.json/,
+                        `巡田最终工单_${timeMatch[1]}.json`
+                    );
+                }
+            } else if (window.currentReportBasePath) {
+                const timeMatch = window.currentReportBasePath.match(/reports_(\d{8}_\d{6})/);
+                const targetTime = timeMatch
+                    ? timeMatch[1]
+                    : new Date().toISOString().replace(/[-:\.T]/g, '').slice(0, 14);
+                report_path = `${window.currentReportBasePath}/巡田最终工单_${targetTime}.json`;
+            } else {
+                showCustomMsg("⚠️ 无法获取工单文件路径，请重新加载工单");
+                return;
+            }
+
+            // ================= 3. UI 状态 =================
+            showCustomMsg("⏳ 正在调用后端算法生成巡田路径...");
+            const btn = document.getElementById('generatePath');
+            const originText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> 生成中...';
+            btn.disabled = true;
+
+            try {
+                // ================= 4. 调用后端接口 =================
+                const res = await fetch('http://123.56.228.32:8000/xuntian/patrol/plan', {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "token": token || ""
+                    },
+                    body: JSON.stringify({
+                        report_path,
+                        enable_2opt: true
+                    })
+                });
+
+                const responseData = await res.json();
+                if (!res.ok || responseData.status !== "success") {
+                    throw new Error(responseData.message || "路径规划失败");
+                }
+
+                // ================= 5. 清理旧图层 =================
+                if (patrolPathLayer) map.removeLayer(patrolPathLayer);
+                if (patrolPointLayer) map.removeLayer(patrolPointLayer);
+
+                // ================= 6. 读取 GeoJSON =================
+                const geojsonUrl = responseData.data.geojson;
+                const routeGeoJSON = await (await fetch(geojsonUrl)).json();
+
+                // ================= 7. 结果弹窗 HTML =================
+                const plotCount = responseData.data.plot_count || 0;
+                const pointCount = responseData.data.point_count || 0;
+                const routeLength = (responseData.data.route_length_m / 1000).toFixed(2);
+                const visualizationUrl = encodeURI(responseData.data.visualization);
+                const geojsonPath = encodeURI(geojsonUrl);
+
+                // ======== 生成路径弹窗 HTML ========
+                const popupHtml =
+                    '<div style="font-size:13px;line-height:1.8;">' +
+                    '<b>巡田路径规划结果</b><br>' +
+                    '<b>地块数量：</b>' + plotCount + '<br>' +
+                    '<b>异常点数：</b>' + pointCount + '<br>' +
+                    '<b>路径总长：</b>' + routeLength + ' 公里<br>' +
+                    '<b>优化算法：</b>2-opt<br>' +
+                    '<button class="layui-btn layui-btn-xs layui-btn-normal" ' +
+                    'onclick="viewPathVisual(\'' + visualizationUrl + '\')">查看路径图</button>&nbsp;' +
+                    '<button class="layui-btn layui-btn-xs layui-btn-primary" ' +
+                    'onclick="downloadPathGeoJSON(\'' + geojsonPath + '\')">下载 GeoJSON</button>&nbsp;' +
+                    '<button class="layui-btn layui-btn-xs layui-btn-warm" ' +
+                    'onclick="showEvaluationModal(\'' + encodeURIComponent(responseData.data.evaluation) + '\')">查看评估结果</button>' +
+                    '</div>';
+
+
+                // ================= 8. 渲染路径（点击可弹窗） =================
+                patrolPathLayer = L.geoJSON(routeGeoJSON, {
+                    style: {
+                        color: '#1E88E5',
+                        weight: 4,
+                        opacity: 0.85,
+                        dashArray: '6,8'
+                    }
+                }).bindPopup(popupHtml).addTo(map);
+
+                map.fitBounds(patrolPathLayer.getBounds().pad(0.15));
+
+                // ================= 9. 自动弹一次（生成完成提示） =================
+                L.popup({ autoClose: false, closeOnClick: false })
+                    .setLatLng(patrolPathLayer.getBounds().getCenter())
+                    .setContent(popupHtml)
+                    .openOn(map);
+
+                // ================= 10. 起点 / 终点 =================
+                patrolPointLayer = L.layerGroup().addTo(map);
+
+                const coords = routeGeoJSON.features[0].geometry.coordinates;
+
+                // 只处理起点和终点
+                const pointsToShow = [0, coords.length - 1];
+
+                pointsToShow.forEach(idx => {
+                    const c = coords[idx];
+                    const latlng = [c[1], c[0]];
+
+                    const isStart = idx === 0;
+                    const label = isStart ? '起' : '终';
+                    const bg = isStart ? '#2ECC71' : '#E74C3C';
+
+                    const marker = L.marker(latlng, {
+                        icon: L.divIcon({
+                            className: 'patrol-order-marker',
+                            html: `<div style="
+                                    background:${bg};
+                                    color:#fff;
+                                    width:26px;
+                                    height:26px;
+                                    border-radius:50%;
+                                    text-align:center;
+                                    line-height:26px;
+                                    font-size:13px;
+                                    font-weight:bold;
+                                    border:2px solid #fff;
+                                    box-shadow:0 0 6px rgba(0,0,0,0.4);
+                                ">${label}</div>`
+                        })
+                    });
+
+                    marker.bindTooltip(isStart ? '路径起点' : '路径终点', { direction: 'top' });
+                    patrolPointLayer.addLayer(marker);
+                });
+                // ================= 11. 成功提示 =================
+                showCustomMsg(`✅ 巡田路径生成完成（${routeLength} 公里）`, 5000);
+
+            } catch (err) {
+                console.error(err);
+                showCustomMsg(`❌ 路径生成失败：${err.message}`, 5000);
+            } finally {
+                btn.innerHTML = originText;
+                btn.disabled = false;
+            }
+        });
+
+        // 导出巡田路径（GeoJSON）
         document.getElementById('exportPath').addEventListener('click', async () => {
+
             if (!patrolPathLayer) {
                 showCustomMsg("⚠️ 请先生成巡田路径");
                 return;
             }
 
-            showCustomMsg("⏳ 正在导出路径数据...");
-
             try {
-                const pathCoordinates = patrolPathLayer.getLatLngs().map(latlng => ({
-                    lat: latlng.lat,
-                    lng: latlng.lng
-                }));
+                const geojson = patrolPathLayer.toGeoJSON();
 
                 const exportData = {
-                    patrolMode: document.getElementById('patrolMode').value,
-                    routeType: document.getElementById('routeType').value,
-                    patrolSpeed: document.getElementById('patrolSpeed').value,
-                    coordinates: pathCoordinates,
-                    length: patrolPathLayer.getLength(),
-                    exportTime: new Date().toLocaleString()
+                    type: "巡田路径规划结果",
+                    exportTime: new Date().toLocaleString(),
+                    data: geojson
                 };
 
-                const blob = new Blob([JSON.stringify(exportData, null, 2)], {type: 'application/json'});
+                const blob = new Blob(
+                    [JSON.stringify(exportData, null, 2)],
+                    { type: "application/json" }
+                );
+
                 const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
+                const a = document.createElement("a");
                 a.href = url;
-                a.download = `巡田路径_${new Date().getTime()}.json`;
+                a.download = `巡田路径_${Date.now()}.geojson`;
                 a.click();
                 URL.revokeObjectURL(url);
 
-                showCustomMsg("✅ 路径数据导出成功");
+                showCustomMsg("✅ 巡田路径 GeoJSON 导出成功");
+
             } catch (err) {
-                console.error("导出路径失败：", err);
-                showCustomMsg("❌ 导出路径失败：" + err.message);
+                console.error("导出失败：", err);
+                showCustomMsg("❌ 导出失败：" + err.message);
             }
         });
 
@@ -1331,113 +884,364 @@
         });
     });
 
-    // ================= 新增核心函数：渲染异常检测结果 =================
+    // ########################################### 异常可视化相关 ########################################
+    // 渲染异常检测结果
+    // 渲染异常检测结果（修复底图消失问题）---添加异常点
     async function renderAnomalyResults(anomalyReport, resultPath) {
+        // 1. 清空旧异常图层（保留底图）
+        if (abnormalPointsLayer) {
+            abnormalPointsLayer.clearLayers();
+            map.removeLayer(abnormalPointsLayer);
+        }
         abnormalPointsLayer = L.featureGroup();
 
-        // 解析异常工单数据，渲染异常点
-        if (Array.isArray(anomalyReport)) {
-            for (const plotItem of anomalyReport) {
-                const plotId = plotItem.plot_id;
-                const anomalies = plotItem.anomalies || [];
+        const anomalySubregions = anomalyReport.anomaly_subregions || [];
+        if (!Array.isArray(anomalySubregions) || anomalySubregions.length === 0) {
+            showCustomMsg("⚠️ 暂无异常子区域数据", 3000);
+            return;
+        }
 
-                // 遍历该地块的所有异常点
-                for (const anomaly of anomalies) {
-                    // 根据异常等级设置标记颜色
-                    let markerColor = 'red'; // 高
-                    if (anomaly.level === '低') markerColor = 'blue';
-                    if (anomaly.level === '中') markerColor = 'orange';
+        // 2. 遍历创建标记（先不添加到地图）
+        const markers = [];
+        anomalySubregions.forEach(item => {
+            const lat = item.centroid?.[0];
+            const lng = item.centroid?.[1];
+            if (!lat || !lng) return;
 
-                    // 创建异常点标记
-                    const marker = L.marker([anomaly.lat, anomaly.lng], {
-                        icon: L.divIcon({
-                            className: 'custom-div-icon',
-                            html: `<div style="background-color: ${markerColor}; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>`,
-                            iconSize: [14, 14],
-                            iconAnchor: [7, 7]
-                        }),
-                        plotId: plotId,
-                        anomalyType: anomaly.type || '未知'
-                    }).bindPopup(`
-                        <div style="font-size: 13px; line-height: 1.6;">
-                            <b>地块名称:</b> ${plotId}</b><br>
-                            <b>检测时间:</b> ${anomaly.date || '未知'}</b><br>
-                            <b>异常类型:</b> ${anomaly.type || '未知'}</b><br>
-                            <b>异常等级:</b> <span style="color: ${markerColor};">${anomaly.level || '未知'}</span></b><br>
-                            <b>NDVI值:</b> ${anomaly.ndvi_value || '未知'}</b><br>
-                            <b>描述:</b> ${anomaly.desc || '无异常描述'}</b>
-                            ${anomaly.img_path ? `<br><button class="layui-btn layui-btn-xs layui-btn-normal" onclick="viewAnomalyImage('${resultPath}/visualReports/${anomaly.img_path}')">查看异常图</button>` : ''}
-                        </div>
-                    `);
+            let markerColor = '#F56C6C';
+            if (item.ndvi_grade_label === '中度干旱') markerColor = '#E6A23C';
+            if (item.ndvi_grade_label === '轻度干旱（预警）') markerColor = '#409EFF';
+            if (item.ndvi_grade_label === '病虫害/长势异常') markerColor = '#9C27B0';
+            if (item.ndvi_grade_label === '已收割/无植被') markerColor = '#67C23A';
+            if (item.anomaly_category === '积水/水渍') markerColor = '#8ea4a4';
 
-                    abnormalPointsLayer.addLayer(marker);
-                }
+            const marker = L.marker([lat, lng], {
+                icon: L.divIcon({
+                    className: 'custom-div-icon',
+                    html: `
+                    <div style="
+                        background-color:${markerColor};
+                        width:14px;
+                        height:14px;
+                        border-radius:50%;
+                        border:2px solid white;
+                        box-shadow:0 2px 4px rgba(0,0,0,0.2);
+                    "></div>
+                `,
+                    iconSize: [14, 14],
+                    iconAnchor: [7, 7]
+                }),
+                plotId: item.plot_id,
+                anomalyType: item.anomaly_category || '未知',
+                ndviGrade: item.ndvi_grade_label || '未知'
+            }).bindPopup(`
+            <div style="font-size:13px;line-height:1.6;">
+                <b>地块名称:</b> ${item.plot_name || '未知'}<br>
+                <b>子区域ID:</b> ${item.subregion_id || ''}<br>
+                <b>检测日期:</b> ${item.date || '未知'}<br>
+                <b>异常等级:</b>
+                <span style="color:${markerColor};">
+                    ${item.ndvi_grade_label || '未知'}
+                </span><br>
+                <b>异常类型:</b> ${item.anomaly_category || '未知'}<br>
+                <b>NDVI均值:</b> ${item.mean_ndvi || 0}<br>
+                <b>面积:</b> ${(item.area_m2 / 666.67).toFixed(2)} 亩<br>
+                <b>优先级:</b> ${item.priority || 0}
+                ${
+                item.plot_id && item.date
+                    ? `<br>
+                           <button class="layui-btn layui-btn-xs layui-btn-normal"
+                               onclick="viewAnomalyImage(
+                                   '${resultPath}/visualReports/subregion_anomaly_map_${item.plot_id}_${item.date}.png',
+                                   '${item.plot_name || ''}'
+                               )">
+                               查看异常图
+                           </button>`
+                    : ''
             }
+            </div>
+
+        `);
+            markers.push(marker);
+        });
+
+        // 3. 批量添加标记到图层，再添加到地图
+        abnormalPointsLayer = L.featureGroup(markers).addTo(map);
+
+        // 4. 渐进式定位到异常点（核心修复：避免瞬间跳转）
+        if (markers.length > 0) {
+            // 先获取异常点的边界范围
+            const bounds = abnormalPointsLayer.getBounds();
+            // 分步缩放：先缩放到低级别，再逐步放大，给瓦片加载时间
+            map.setView(bounds.getCenter(), 10, {animate: false}); // 第一步：定位到中心点（低缩放级）
+            setTimeout(() => {
+                map.fitBounds(bounds.pad(0.15), {
+                    animate: false, // 关闭动画
+                    maxZoom: 17     // 限制最大缩放级别，避免瓦片加载失败
+                });
+                // 强制刷新底图瓦片
+                map.eachLayer(layer => {
+                    if (layer instanceof L.TileLayer) { // 只刷新瓦片图层（底图）
+                        layer.redraw();
+                    }
+                });
+            }, 300); // 延迟300ms，给底图加载时间
         }
 
-        // 将异常点图层添加到地图并适配视野
-        abnormalPointsLayer.addTo(map);
-        if (abnormalPointsLayer.getLayers().length > 0) {
-            map.fitBounds(abnormalPointsLayer.getBounds().pad(0.15));
-        }
+        // 5. 强制刷新地图尺寸和瓦片
+        setTimeout(() => {
+            map.invalidateSize({reset: true}); // reset: true 强制重置尺寸
+            // 再次刷新底图瓦片（双重保险）
+            map.eachLayer(layer => {
+                if (layer instanceof L.TileLayer) {
+                    layer.redraw();
+                }
+            });
+        }, 500);
+
+        showCustomMsg(`✅ 异常检测完成，共识别 ${anomalySubregions.length} 个异常子区域`, 4000);
     }
-
-    // ================= 新增核心函数：显示异常结果弹窗 =================
+    // 异常统计结果弹窗
+    // 重构：显示巡田工单结果弹窗（含统计、图表、列表、地图联动）
     function showAnomalyResultModal(anomalyReport, resultPath) {
         layui.use('layer', function() {
             const layer = layui.layer;
 
-            // 构建弹窗内容
+            // 路径转换：后端本地路径 → 前端可访问URL（关键！需替换你的域名/端口）
+            const staticBaseUrl = 'http://123.56.228.32:8000/static'; // 后端静态资源访问地址
+            const reportInfo = anomalyReport.report_info || {};
+            const visualReportUrl = reportInfo.visual_report_dir
+                ? reportInfo.visual_report_dir.replace('/www/wwwroot/api/static', staticBaseUrl)
+                : '';
+            const geojsonUrl = reportInfo.geojson_dir
+                ? reportInfo.geojson_dir.replace('/www/wwwroot/api/static', staticBaseUrl)
+                : '';
+
+            // 构建弹窗主体HTML
             let modalContent = `
-                <div style="padding: 20px; max-height: 600px; overflow-y: auto;">
-                    <h4 style="margin: 0 0 16px 0; color: var(--primary-color);">
-                        <i class="fa fa-bar-chart"></i> 异常检测结果
-                    </h4>
-            `;
+            <div style="padding: 20px; height: 700px; display: flex; flex-direction: column; gap: 16px; overflow: hidden;">
+                <!-- 1. 概览卡片区域 -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; flex-shrink: 0;">
+                    <div style="background: #e8f4f8; padding: 12px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 12px; color: #666; margin-bottom: 4px;">总异常数</div>
+                        <div style="font-size: 24px; font-weight: bold; color: #F56C6C;">${anomalyReport.total_anomaly_count || 0}</div>
+                    </div>
+                    <div style="background: #f0f8fb; padding: 12px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 12px; color: #666; margin-bottom: 4px;">生成时间</div>
+                        <div style="font-size: 14px; color: #333;">${reportInfo.generate_time || '-'}</div>
+                    </div>
+                    <div style="background: #f5fafe; padding: 12px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 12px; color: #666; margin-bottom: 4px;">总地块数</div>
+                        <div style="font-size: 20px; font-weight: bold; color: #1E88E5;">${reportInfo.total_plots || 0}</div>
+                    </div>
+                    <div style="background: #fdf2f8; padding: 12px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 12px; color: #666; margin-bottom: 4px;">总子区域数</div>
+                        <div style="font-size: 20px; font-weight: bold; color: #9C27B0;">${reportInfo.total_subregions || 0}</div>
+                    </div>
+                </div>
 
-            // 遍历每个地块的异常结果
-            if (Array.isArray(anomalyReport)) {
-                for (const plotItem of anomalyReport) {
-                    const plotId = plotItem.plot_id;
-                    const anomalies = plotItem.anomalies || [];
-                    const imgPrefix = plotId.split('_')[0]; // 提取72/73等前缀
+                <!-- 2. 异常等级统计图表 -->
+                <div style="height: 200px; flex-shrink: 0; border: 1px solid #EBEEF5; border-radius: 8px; padding: 8px;">
+                    <div id="anomalyStatsChart" style="width: 100%; height: 100%;"></div>
+                </div>
 
-                    // 查找该地块的异常可视化图片
-                    const imgDate = plotItem.anomaly_date || '2025-06-07';
-                    const imgName = `subregion_anomaly_map_${imgPrefix}_${imgDate.replace(/-/g, '')}.png`;
-                    const imgPath = `${resultPath}/visualReports/${imgName}`;
+                <!-- 3. 异常子区域筛选 + 列表 -->
+                <div style="flex: 1; display: flex; flex-direction: column; gap: 8px; overflow: hidden;">
+                    <div style="display: flex; gap: 8px; flex-shrink: 0;">
+                        <input type="text" id="anomalySearchInput" placeholder="搜索地块/异常类型" style="flex: 1; padding: 8px; border: 1px solid #EBEEF5; border-radius: 6px; font-size: 13px;">
+                        <select id="anomalyTypeFilter" style="padding: 8px; border: 1px solid #EBEEF5; border-radius: 6px; font-size: 13px;">
+                            <option value="">全部异常类型</option>
+                            ${[...new Set((anomalyReport.anomaly_subregions || []).map(item => item.anomaly_category).filter(Boolean))].map(type =>
+                `<option value="${type}">${type}</option>`
+            ).join('')}
+                        </select>
+                    </div>
+                    <div id="anomalySubregionList" style="flex: 1; overflow-y: auto; border: 1px solid #EBEEF5; border-radius: 8px; padding: 8px;">
+                        ${(anomalyReport.anomaly_subregions || []).map((item, index) => `
+                            <div class="anomaly-subregion-item" data-index="${index}"
+                                                                data-type="${item.anomaly_category || ''}"
+                                                                data-plot="${item.plot_name || ''}"
+                                                                style="padding: 12px; margin-bottom: 8px; border-radius: 6px; background: #F5F7FA; cursor: pointer; transition: background 0.2s;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                    <span style="font-weight: 500; color: #333;">${item.plot_name || '未知地块'} (子区域${item.subregion_id})</span>
+                                    <span style="padding: 2px 8px; border-radius: 4px; font-size: 12px;
+                                        ${item.ndvi_grade_label === '重度干旱' ? 'background: #FDE2E2; color: #F56C6C;' :
+                item.ndvi_grade_label === '中度干旱' ? 'background: #FEF3C7; color: #E6A23C;' :
+                    'background: #E1F5FE; color: #409EFF;'}">
+                                        ${item.ndvi_grade_label || '未知等级'}
+                                    </span>
+                                </div>
+                                <div style="font-size: 12px; color: #666; line-height: 1.5;">
+                                    <div>异常类型：${item.anomaly_category || '未知'}</div>
+                                    <div>NDVI均值：${item.mean_ndvi || 0} | 面积：${(item.area_m2 / 666.67).toFixed(2)}亩 | 优先级：${item.priority || 0}</div>
+                                    <div style="margin-top: 4px;">
+                                        <button class="layui-btn layui-btn-xs layui-btn-normal view-img-btn" data-img-path="${visualReportUrl}/subregion_anomaly_map_${item.plot_id}_${item.date}.png">
+                                            查看可视化图
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                        ${(anomalyReport.anomaly_subregions || []).length === 0 ?
+                '<div style="text-align: center; color: #909399; padding: 20px;">暂无异常子区域数据</div>' : ''}
+                    </div>
+                </div>
+            </div>
+        `;
 
-                    modalContent += `
-                        <div class="plot-anomaly-item">
-                            <h5 style="margin: 0 0 8px 0;">${plotId}</h5>
-                            <p style="margin: 0 0 8px 0; font-size: 13px; color: var(--text-secondary);">
-                                检测时间范围: ${plotItem.start_date} 至 ${plotItem.end_date}<br>
-                                异常点数量: <span style="color: var(--danger-color); font-weight: bold;">${anomalies.length}</span>
-                            </p>
-                            <button class="layui-btn layui-btn-xs layui-btn-normal" onclick="viewAnomalyImage('${imgPath}', '${plotId}')">
-                                <i class="fa fa-image"></i> 查看异常可视化图
-                            </button>
-                        </div>
-                    `;
-                }
-            }
-
-            modalContent += `</div>`;
-
-            // 打开结果弹窗
-            layer.open({
+            // 打开弹窗
+            const modalIndex = layer.open({
                 type: 1,
-                title: '异常检测结果详情',
-                area: ['600px', '700px'],
+                title: '巡田最终工单详情',
+                area: ['90%', '80%'], // 大屏占比更高，小屏自适应
                 content: modalContent,
                 shade: 0.3,
-                btn: ['关闭'],
-                btnAlign: 'r'
+                maxmin: true,      // ⭐ 开启 最大化 / 还原
+                resize: true,      // ⭐ 允许拉伸
+                btn: ['导出工单JSON', '关闭'],
+                btnAlign: 'r',
+                yes: function() {
+                    // 导出工单JSON
+                    const blob = new Blob([JSON.stringify(anomalyReport, null, 2)], {type: 'application/json'});
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `巡田工单_${reportInfo.generate_time ? reportInfo.generate_time.replace(/\s|:/g, '_') : new Date().getTime()}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                }
             });
+
+            // 弹窗加载完成后初始化图表和交互
+            setTimeout(() => {
+                // ========== 1. 初始化异常等级统计图表 ==========
+                const chartDom = document.getElementById('anomalyStatsChart');
+                const myChart = echarts.init(chartDom);
+                const stats = anomalyReport.ndvi_grade_stats || {};
+                const chartData = [
+                    { name: '重度干旱', value: stats['重度干旱'] || 0 },
+                    { name: '中度干旱', value: stats['中度干旱'] || 0 },
+                    { name: '轻度干旱（预警）', value: stats['轻度干旱（预警）'] || 0 },
+                    { name: '病虫害/长势异常', value: stats['病虫害/长势异常'] || 0 },
+                    { name: '积水/水渍', value: stats['积水/水渍'] || 0 },
+                    { name: '已收割/无植被', value: stats['已收割/无植被'] || 0 }
+                ].filter(item => item.value > 0);
+
+                const option = {
+                    tooltip: { trigger: 'item' },
+                    legend: {
+                        orient: 'vertical',
+                        right: 30,
+                        top: 'middle',
+                        textStyle: { fontSize: 12 }
+                    },
+                    series: [
+                        {
+                            name: '异常等级分布',
+                            type: 'pie',
+                            radius: ['40%', '70%'],
+                            data: chartData,
+                            label: {
+                                fontSize: 12,
+                                formatter: '{b}: {c} ({d}%)'
+                            },
+                            itemStyle: {
+                                color: function(params) {
+                                    const colorMap = {
+                                        '重度干旱': '#F56C6C',
+                                        '中度干旱': '#E6A23C',
+                                        '轻度干旱（预警）': '#409EFF',
+                                        '病虫害/长势异常': '#9C27B0',
+                                        '已收割/无植被': '#67C23A',
+                                        '积水/水渍': '#8ea4a4'
+
+                                    };
+                                    return colorMap[params.name] || '#888';
+                                }
+                            }
+                        }
+                    ]
+                };
+                myChart.setOption(option);
+                window.addEventListener('resize', () => myChart.resize());
+
+                // ========== 2. 列表筛选功能 ==========
+                const searchInput = document.getElementById('anomalySearchInput');
+                const typeFilter = document.getElementById('anomalyTypeFilter');
+                const listItems = document.querySelectorAll('.anomaly-subregion-item');
+
+                function filterList() {
+                    const searchKey = searchInput.value.toLowerCase().trim();
+                    const filterType = typeFilter.value;
+
+                    listItems.forEach(item => {
+                        const plotName = (item.dataset.plot || '').toLowerCase();
+                        const anomalyType = item.dataset.type || '';
+
+                        const matchSearch =
+                            !searchKey ||
+                            plotName.includes(searchKey) ||
+                            anomalyType.toLowerCase().includes(searchKey);
+
+                        const matchType =
+                            !filterType || anomalyType === filterType;
+
+                        item.style.display = (matchSearch && matchType) ? 'block' : 'none';
+                    });
+                }
+
+                searchInput.addEventListener('input', filterList);
+                typeFilter.addEventListener('change', filterList);
+
+                // ========== 3. 列表项点击 → 地图定位 ==========
+                listItems.forEach(item => {
+                    const index = item.getAttribute('data-index');
+                    const subregion = anomalyReport.anomaly_subregions[index];
+                    item.addEventListener('click', () => {
+                        // 定位到子区域中心点
+                        const lat = subregion.centroid[0]; // 注意：JSON里是[lat, lon]
+                        const lng = subregion.centroid[1];
+                        map.setView([lat, lng], 17); // 放大级别17，更精准
+
+                        // 高亮显示该子区域（如果有GeoJSON可加载，这里先加标记）
+                        const marker = L.marker([lat, lng], {
+                            icon: L.divIcon({
+                                className: 'custom-div-icon',
+                                html: `<div style="background-color: #F56C6C; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>`,
+                                iconSize: [16, 16],
+                                iconAnchor: [8, 8]
+                            })
+                        }).bindPopup(`
+                        <div style="font-size: 13px; line-height: 1.6;">
+                            <b>地块名称:</b> ${subregion.plot_name || '未知'}</b><br>
+                            <b>子区域ID:</b> ${subregion.subregion_id || ''}</b><br>
+                            <b>异常等级:</b> <span style="color: ${subregion.ndvi_grade_label === '重度干旱' ? '#F56C6C' : '#E6A23C'};">${subregion.ndvi_grade_label || ''}</span></b><br>
+                            <b>异常类型:</b> ${subregion.anomaly_category || ''}</b><br>
+                            <b>NDVI均值:</b> ${subregion.mean_ndvi || 0}</b><br>
+                            <b>面积:</b> ${(subregion.area_m2 / 666.67).toFixed(2)} 亩</b><br>
+                            <b>优先级:</b> ${subregion.priority || 0}</b>
+                        </div>
+                    `).addTo(map).openPopup();
+
+                        // 3秒后自动移除临时标记（避免地图标记过多）
+                        setTimeout(() => {
+                            map.removeLayer(marker);
+                        }, 3000);
+                    });
+                });
+
+                // ========== 4. 查看可视化图片按钮 ==========
+                document.querySelectorAll('.view-img-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation(); // 阻止触发列表项的地图定位
+                        const imgPath = btn.getAttribute('data-img-path');
+                        viewAnomalyImage(imgPath, `${btn.closest('.anomaly-subregion-item').querySelector('span:first-child').textContent} 可视化图`);
+                    });
+                });
+            }, 300);
         });
     }
-
-    // ================= 新增全局函数：查看异常图片 =================
+    // 查看异常图片
     window.viewAnomalyImage = function(imgPath, plotName = '异常图') {
         layui.use('layer', function() {
             const layer = layui.layer;
@@ -1455,6 +1259,171 @@
             });
         });
     }
+
+    // ########################################## 历史工单相关 ############################################
+    // 历史工单弹窗
+    function openHistoryReportLayer(reportList) {
+        let tableHtml = `
+        <table class="layui-table" lay-skin="line">
+            <thead>
+                <tr>
+                    <th>生成时间</th>
+                    <th>异常数量</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+        reportList.forEach(r => {
+            tableHtml += `
+            <tr>
+                <td>${r.generate_time}</td>
+                <td>${r.total_anomaly_count}</td>
+                <td>
+                    <button class="layui-btn layui-btn-xs layui-btn-normal"
+                        onclick="viewReportDetail('${r.report_url}', '${r.base_path}')">
+                        查看
+                    </button>
+                </td>
+            </tr>
+        `;
+        });
+
+        tableHtml += `
+            </tbody>
+        </table>
+    `;
+
+        layui.layer.open({
+            type: 1,
+            title: '历史巡田工单',
+            area: ['600px', '400px'],
+            shadeClose: true,
+            maxmin: true,
+            content: `<div style="padding:15px">${tableHtml}</div>`
+        });
+    }
+    // 复用巡田工单结果弹窗 + 地图渲染
+    // 挂载到window全局，确保onclick能调用
+    // 补充：在 viewReportDetail 中缓存 basePath 到全局
+    window.viewReportDetail = async function(reportUrl, basePath) {
+        try {
+            layui.layer.load(1, { shade: 0.3 });
+
+            const res = await fetch(
+                `http://123.56.228.32:8000/xuntian/report/detail?path=${encodeURIComponent(reportUrl)}`
+            );
+
+            if (!res.ok) throw new Error('工单文件读取失败');
+
+            const anomalyReport = await res.json();
+            layui.layer.closeAll('loading');
+
+            // 缓存 basePath 到全局，供路径规划使用
+            window.currentReportBasePath = basePath;
+
+            // 修复数据源：从 anomaly_subregions 读取异常点
+            currentHistoryReport = anomalyReport;
+            const anomalySubregions = anomalyReport.anomaly_subregions || [];
+
+            currentHistoryPoints = anomalySubregions
+                .filter(r => Array.isArray(r.centroid) && r.centroid.length === 2)
+                .map(r => ({
+                    lat: r.centroid[0],
+                    lng: r.centroid[1],
+                    plotId: r.plot_id,
+                    plotName: r.plot_name,
+                    anomalyType: r.anomaly_category,
+                    priority: r.priority,
+                    date: r.date
+                }));
+
+            console.log('✅ 历史工单异常点已缓存：', currentHistoryPoints.length);
+
+            if (currentHistoryPoints.length === 0) {
+                layui.layer.msg('该历史工单无有效异常点', {icon: 0});
+            }
+
+            renderAnomalyResults(anomalyReport, basePath);
+            showAnomalyResultModal(anomalyReport, basePath);
+
+        } catch (err) {
+            console.error('加载历史工单失败：', err);
+            layui.layer.closeAll('loading');
+            layui.layer.msg('加载历史工单失败：' + err.message, { icon: 2 });
+        }
+    }
+
+
+    // ########################################## 路径规划相关 ############################################
+    // 查看路径可视化图
+    function viewPathVisual(visualizationUrl) {
+        // 弹窗宽高可调，比如 700x500
+        layer.open({
+            type: 1,
+            title: '路径可视化图',
+            area: ['700px', '500px'],
+            content: `<div style="width:100%;height:100%;display:flex;justify-content:center;align-items:center;">
+                      <img src="${visualizationUrl}"
+                           style="max-width:100%;max-height:100%;object-fit:contain;border-radius:4px;">
+                  </div>`
+        });
+    }
+    // 下载路径 GeoJSON
+    window.downloadPathGeoJSON = async function(geojsonUrl) {
+        try {
+            const res = await fetch(geojsonUrl, { headers: { "token": token || "" } });
+            const geojsonData = await res.json();
+            const blob = new Blob([JSON.stringify(geojsonData, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `巡田路径规划_${Date.now()}.geojson`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showCustomMsg("✅ 路径 GeoJSON 下载成功", 3000);
+        } catch (err) {
+            console.error("下载 GeoJSON 失败：", err);
+            showCustomMsg("❌ 下载路径失败：" + err.message, 3000);
+        }
+    };
+    // 路径评估弹窗函数
+    function showEvaluationModal(evaluationUrlEncoded) {
+        const evaluationUrl = decodeURIComponent(evaluationUrlEncoded);
+        fetch(evaluationUrl)
+            .then(res => res.json())
+            .then(data => {
+                const content = '<pre style="max-height:300px;overflow:auto;background:#f5f5f5;padding:10px;border-radius:4px;">' +
+                    JSON.stringify(data, null, 2) +
+                    '</pre>' +
+                    '<button class="layui-btn layui-btn-xs layui-btn-primary" ' +
+                    'onclick="downloadEvaluation(JSON.stringify(' + JSON.stringify(data) + '), \'patrol_evaluation.json\')">' +
+                    '导出 JSON</button>';
+
+                layer.open({
+                    type: 1,
+                    title: '巡田路径评估结果',
+                    area: ['500px', '400px'],
+                    content: content
+                });
+            })
+            .catch(err => {
+                console.error('获取评估结果失败：', err);
+                showCustomMsg('❌ 获取评估结果失败', 3000);
+            });
+    }
+    // 下载路径评估JSON
+    function downloadEvaluation(jsonStr, filename) {
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(link.href);
+    }
+
+
 
     // ================= 工具函数 =================
     /**
@@ -1477,7 +1446,6 @@
         }
     }
 
-
     // 获取地区地块
     async function getRegionPlots(region) {
         if (regionPlotCache[region]?.length) return regionPlotCache[region];
@@ -1491,8 +1459,6 @@
             return [];
         }
     }
-
-
 
     // 转换地块数据格式
     function transformPlotsForNdviCut(rawPlots, dateStr) {
@@ -1636,7 +1602,6 @@
         });
     }
 
-
     // 显示提示信息
     function showCustomMsg(text, duration = 3000) {
         const tip = document.getElementById('drawTip');
@@ -1760,7 +1725,5 @@
     });
 </script>
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="https://cdn.staticfile.org/layui/2.8.18/layui.js"></script>
 </body>
 </html>
