@@ -161,7 +161,9 @@
     let currentNdviTime = null;  // 当前选中时间
     const token = localStorage.getItem('token_admin'); // 管理员 token
     let timeSelect = null; //全局化，用于开始圈地按钮
-    let allPolygons = []; // AI 检测的多边形
+    let allPolygons = []; // AI 检测出来的所有候选地块
+    let selectedAIPolygon = null; // 当前选中的 AI 地块
+    let aiSelectMode = false; // 是否处于 AI 选地模式
     const simplifyRange = document.getElementById("simplifyRange");
     // 把后端原始地块数组转成 /admin/ndvicut 接口需要的格式
     function transformPlotsForNdviCut(rawPlots, dateStr) {
@@ -562,14 +564,50 @@
         // AI 自动圈地按钮
         const btn = document.getElementById("btnAiDraw");
         const loadingOverlay = document.getElementById("loadingOverlay");
+        const AI_TARGET_ZOOM = 16;
+
+        function waitZoomEnd(map) {
+            return new Promise(resolve => map.once("zoomend", resolve));
+        }
+
+        function resetAISelectionState() {
+            if (selectedAIPolygon && selectedAIPolygon.editing && typeof selectedAIPolygon.editing.disable === "function") {
+                selectedAIPolygon.editing.disable();
+            }
+            selectedAIPolygon = null;
+            aiSelectMode = false;
+            allPolygons.forEach(p => {
+                if (map.hasLayer(p)) {
+                    map.removeLayer(p);
+                }
+            });
+            allPolygons = [];
+            drawnItems.clearLayers();
+        }
+
         btn.onclick = async function () {
             loadingOverlay.style.display = "flex";
-            drawnItems.clearLayers();
-            allPolygons.forEach(p => map.removeLayer(p));
+            resetAISelectionState();
 
-            // 截图当前地图
+            const minZ = (typeof map.getMinZoom === "function") ? map.getMinZoom() : 0;
+            const maxZ = (typeof map.getMaxZoom === "function") ? map.getMaxZoom() : 22;
+            const targetZoom = Math.max(minZ, Math.min(maxZ, AI_TARGET_ZOOM));
+
+            console.log("[AI] zoom before:", map.getZoom(), "target:", targetZoom);
+
+            if (map.getZoom() !== targetZoom) {
+                map.setZoom(targetZoom, { animate: true });
+                await waitZoomEnd(map);
+            }
+
+            console.log("[AI] zoom after:", map.getZoom());
+
             leafletImage(map, async function (err, canvas) {
-                if (err) { alert("截图失败"); return; }
+                if (err) {
+                    loadingOverlay.style.display = "none";
+                    alert("截图失败");
+                    return;
+                }
 
                 canvas.toBlob(async function (blob) {
                     const bounds = map.getBounds();
@@ -581,34 +619,47 @@
                     ]));
 
                     try {
-                        const res = await fetch("http://123.56.228.32:8001/predict", { method: "POST", body: payload });
+                        const res = await fetch("http://123.56.228.32:8001/predict", {
+                            method: "POST",
+                            body: payload
+                        });
                         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
                         const data = await res.json();
 
                         if (data.polygons) {
-                            // 调用简化接口
                             const simplifyRes = await fetch("http://123.56.228.32:8003/simplify", {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ polygons: data.polygons, tolerance: simplifyRange.value / 100000 })
-
+                                body: JSON.stringify({
+                                    polygons: data.polygons,
+                                    tolerance: simplifyRange.value / 100000
+                                })
                             });
+
                             const simpleData = await simplifyRes.json();
+
                             allPolygons = [];
+                            selectedAIPolygon = null;
+                            aiSelectMode = true;
 
                             simpleData.simplified_polygons.forEach(latlngs => {
-                                const poly = L.polygon(latlngs, { color: "red", fillOpacity: 0.15 });
+                                const poly = L.polygon(latlngs, {
+                                    color: "red",
+                                    weight: 2,
+                                    fillOpacity: 0.15
+                                });
                                 allPolygons.push(poly);
                                 poly.addTo(map);
                             });
 
-                            alert("✅ 点击任意地块中间选择该地块！");
+                            showCustomMsg("✅ 请先点击一个识别地块进行选择，调整后再次点击该地块进入新增页面", 4000);
                         } else if (data.error) {
                             alert("AI预测出错: " + data.error);
                         }
                     } catch (err) {
                         alert("请求失败: " + err.message);
-                    }finally {
+                    } finally {
                         loadingOverlay.style.display = "none";
                     }
                 }, "image/jpeg", 0.7);
@@ -617,53 +668,63 @@
 
         // 点击地图选择单个地块
         map.on("click", function (e) {
+            if (!aiSelectMode) return;
             if (allPolygons.length === 0) return;
 
             const clickedPoint = e.latlng;
-            let selectedPolygon = null;
 
-            for (const poly of allPolygons) {
-                const latlngs = poly.getLatLngs()[0];
-                if (isPointInPolygon(clickedPoint, latlngs)) {
-                    selectedPolygon = poly;
-                    break;
+            if (!selectedAIPolygon) {
+                let hitPolygon = null;
+
+                for (const poly of allPolygons) {
+                    const latlngs = poly.getLatLngs()[0];
+                    if (isPointInPolygon(clickedPoint, latlngs)) {
+                        hitPolygon = poly;
+                        break;
+                    }
                 }
-            }
 
-            // if (selectedPolygon) {
-            //     drawnItems.clearLayers();
-            //     allPolygons.forEach(p => map.removeLayer(p));
-            //     selectedPolygon.setStyle({ color: "red", fillOpacity: 0.4 });
-            //     drawnItems.addLayer(selectedPolygon);
-            //     drawControl._toolbars.edit._modes.edit.handler.enable();
-            //     openPlotForm(selectedPolygon);
-            // }
-            if (selectedPolygon) {
-                // 清理旧图层
+                if (!hitPolygon) return;
+
+                allPolygons.forEach(p => {
+                    if (p !== hitPolygon && map.hasLayer(p)) {
+                        map.removeLayer(p);
+                    }
+                });
+
+                selectedAIPolygon = hitPolygon;
+                allPolygons = [hitPolygon];
+
                 drawnItems.clearLayers();
-                allPolygons.forEach(p => map.removeLayer(p));
 
-                // 设置选中样式
-                selectedPolygon.setStyle({ color: "red", fillOpacity: 0.4 });
-                drawnItems.addLayer(selectedPolygon);
+                selectedAIPolygon.setStyle({
+                    color: "red",
+                    weight: 3,
+                    fillOpacity: 0.35
+                });
 
-                // ✅ 启用编辑模式（安全写法）
-                enablePolygonEdit(selectedPolygon);
+                drawnItems.addLayer(selectedAIPolygon);
+                enablePolygonEdit(selectedAIPolygon);
 
-                // 打开信息填写弹窗
-                openPlotForm(selectedPolygon);
+                showCustomMsg("✅ 已选中该地块，可拖动顶点调整范围；调整完成后再次点击该地块进入新增页面", 4000);
+                return;
             }
 
+            const currentLatLngs = selectedAIPolygon.getLatLngs()[0];
+            const clickedSelectedPolygon = isPointInPolygon(clickedPoint, currentLatLngs);
+
+            if (clickedSelectedPolygon) {
+                aiSelectMode = false;
+                openPlotForm(selectedAIPolygon);
+            }
         });
     }
-    // ✅ 安全启用多边形编辑模式
+
     function enablePolygonEdit(polygon) {
-        // 如果当前图层支持 editing（来自 Leaflet.Draw）
         if (polygon.editing && typeof polygon.editing.enable === "function") {
             polygon.editing.enable();
             console.log("多边形编辑模式已启用。");
         } else {
-            // 若 Leaflet.Draw 未绑定，可临时使用 enableEdit 方案
             try {
                 const editHandler = new L.Edit.Poly(polygon, { selectedPathOptions: { maintainColor: true } });
                 editHandler.enable();
