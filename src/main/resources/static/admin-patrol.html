@@ -218,7 +218,7 @@
             map.invalidateSize();
 
             try {
-                const resPlots = await fetch('http://123.56.228.32:8080/admin/plots', {
+                const resPlots = await fetch('http://localhost:8080/admin/plots', {
                     headers: {"token": token}
                 });
                 const rawPlots = await resPlots.json();
@@ -1431,8 +1431,8 @@
      */
     async function loadPlots() {
         try {
-            // http://123.56.228.32:8080请求，添加token头
-            const res = await fetch("http://123.56.228.32:8080/admin/plots", {
+            // http://localhost:8080请求，添加token头
+            const res = await fetch("http://localhost:8080/admin/plots", {
                 headers: {
                     "token": token
                 }
@@ -1450,7 +1450,7 @@
     async function getRegionPlots(region) {
         if (regionPlotCache[region]?.length) return regionPlotCache[region];
         try {
-            const res = await fetch(`http://123.56.228.32:8080/admin/plots?region=${region}`, {headers: {"token": token}});
+            const res = await fetch(`http://localhost:8080/admin/plots?region=${region}`, {headers: {"token": token}});
             const plots = await res.json();
             regionPlotCache[region] = plots;
             return plots;
@@ -1625,8 +1625,8 @@
 
         document.getElementById('queryPlot').onclick = async function () {
             try {
-                // http://123.56.228.32:8080请求，添加token头
-                const res = await fetch("http://123.56.228.32:8080/admin/plots", {
+                // http://localhost:8080请求，添加token头
+                const res = await fetch("http://localhost:8080/admin/plots", {
                     headers: {
                         "token": token
                     }

@@ -54,6 +54,6 @@ main
 - 数据库导入java->resource 下的mydb.sql;
 - 在application.yml修改数据库账号密码
 - 完成编译;
-- 打开 http://123.56.228.32:8080/ 默认跳转到登录页面 使用admin admin登录
+- 打开 http://localhost:8080/ 默认跳转到登录页面 使用admin admin登录
 
  

@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Cesium 农田管理系统</title>
+
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.140/Build/Cesium/Cesium.js"></script>
+    <link href="https://cesium.com/downloads/cesiumjs/releases/1.140/Build/Cesium/Widgets/widgets.css" rel="stylesheet"/>
+
+    <style>
+        html, body, #cesiumContainer {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        /* 查询按钮 */
+        #queryBtn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(30,30,30,0.85);
+            color: #fff;
+            padding: 8px 14px;
+            cursor: pointer;
+            border-radius: 4px;
+            z-index: 999;
+        }
+
+        /* 查询面板 */
+        #queryPanel {
+            position: absolute;
+            top: 60px;
+            left: 20px;
+            width: 260px;
+            max-height: 400px;
+            overflow-y: auto;
+            background: rgba(20,20,20,0.9);
+            color: #fff;
+            border-radius: 6px;
+            z-index: 999;
+        }
+
+        .hidden { display: none; }
+
+        .panel-header {
+            padding: 10px;
+            font-weight: bold;
+            border-bottom: 1px solid #444;
+        }
+
+        .plot-item {
+            padding: 8px 10px;
+            border-bottom: 1px solid #333;
+            cursor: pointer;
+        }
+
+        .plot-item:hover {
+            background: rgba(255,255,255,0.1);
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="cesiumContainer"></div>
+
+<!-- 查询UI -->
+<div id="queryBtn">查询地块</div>
+<div id="queryPanel" class="hidden">
+    <div class="panel-header">地块列表</div>
+    <div id="plotList"></div>
+</div>
+
+<script>
+    /* ========================
+       1. 配置
+    ======================== */
+    Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI4Mjk2MjRhNy00YWIyLTQxZWQtOGZmYi02ZWIyNDc5OTgyY2QiLCJpZCI6NDE4NDc4LCJpYXQiOjE3NzYyNDE4MTJ9.jDM1zCdKiaw4UgeFbNp7Akr1TS-v2rSOwsXjvsaU6CQ";
+
+    const API_URL = "http://localhost:8080/admin/plots";
+    const token = localStorage.getItem("token_admin");
+
+    const STYLE = {
+        lineWidth: 4,
+        defaultLine: Cesium.Color.BLUE,
+        highlightLine: Cesium.Color.YELLOW
+    };
+
+    /* ========================
+       2. Viewer
+    ======================== */
+    const viewer = new Cesium.Viewer("cesiumContainer", {
+        terrain: Cesium.Terrain.fromWorldTerrain(),
+        animation: false,
+        timeline: false
+    });
+
+    viewer.scene.globe.depthTestAgainstTerrain = false;
+
+    /* ========================
+       3. 状态
+    ======================== */
+    let selectedEntity = null;
+    let hasFlown = false;
+    const plotMap = new Map(); // id -> entity
+
+    /* ========================
+       4. 初始化
+    ======================== */
+    init();
+
+    function init() {
+        loadPlots();
+        initClickHandler();
+        initPanel();
+    }
+
+    /* ========================
+       5. 加载数据
+    ======================== */
+    async function loadPlots() {
+        try {
+            const res = await fetch(API_URL, {
+                headers: { token }
+            });
+
+            if (!res.ok) throw new Error("请求失败");
+
+            const plots = await res.json();
+
+            plots.forEach(renderPlot);
+
+            buildPlotList(plots);
+
+            console.log("地块加载完成，共", plots.length);
+        } catch (err) {
+            console.error("加载失败：", err);
+            alert("后端服务异常");
+        }
+    }
+
+    /* ========================
+       6. 渲染地块
+    ======================== */
+    function renderPlot(plot) {
+        if (!plot.coordinates) return;
+
+        let geo;
+        try {
+            geo = JSON.parse(plot.coordinates);
+        } catch (e) {
+            console.error("解析失败", plot);
+            return;
+        }
+
+        if (geo.shapeType !== "polygon") return;
+
+        const positions = geo.latlngs.map(p => [p.lng, p.lat]).flat();
+
+        // polygon（只做点击）
+        const entity = viewer.entities.add({
+            name: plot.plotName,
+            polygon: {
+                hierarchy: Cesium.Cartesian3.fromDegreesArray(positions),
+                material: Cesium.Color.TRANSPARENT,
+                outline: false
+            },
+            description: `
+            <div style="padding:10px;">
+                <h3>${plot.plotName}</h3>
+                <p><b>作物：</b>${plot.currentCrop}</p>
+                <p><b>面积：</b>${plot.area} 亩</p>
+                <p><b>联系人：</b>${plot.contactPerson}</p>
+                <p><b>电话：</b>${plot.phone}</p>
+            </div>
+        `
+        });
+
+        // 边框线
+        const linePositions = [...positions, positions[0], positions[1]];
+
+        const lineEntity = viewer.entities.add({
+            polyline: {
+                positions: Cesium.Cartesian3.fromDegreesArray(linePositions),
+                width: STYLE.lineWidth,
+                material: STYLE.defaultLine,
+                clampToGround: true
+            }
+        });
+
+        // 绑定
+        entity.border = lineEntity;
+        entity.plotData = plot;
+        plotMap.set(plot.id, entity);
+
+        // 首次定位
+        if (!hasFlown) {
+            viewer.flyTo(entity);
+            hasFlown = true;
+        }
+    }
+
+    /* ========================
+       7. 点击高亮
+    ======================== */
+    function initClickHandler() {
+        const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+
+        handler.setInputAction((click) => {
+            const picked = viewer.scene.pick(click.position);
+            if (!Cesium.defined(picked) || !picked.id) return;
+
+            const entity = picked.id;
+            if (!entity.polygon) return;
+
+            selectEntity(entity);
+
+        }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+    }
+
+    function selectEntity(entity) {
+        if (selectedEntity && selectedEntity !== entity) {
+            resetEntityStyle(selectedEntity);
+        }
+
+        highlightEntity(entity);
+        selectedEntity = entity;
+
+        viewer.flyTo(entity, { duration: 1 });
+    }
+
+    function highlightEntity(entity) {
+        entity.border.polyline.material = STYLE.highlightLine;
+    }
+
+    function resetEntityStyle(entity) {
+        entity.border.polyline.material = STYLE.defaultLine;
+    }
+
+    /* ========================
+       8. 查询面板
+    ======================== */
+    function initPanel() {
+        const btn = document.getElementById("queryBtn");
+        const panel = document.getElementById("queryPanel");
+
+        btn.onclick = () => {
+            panel.classList.toggle("hidden");
+        };
+    }
+
+    function buildPlotList(plots) {
+        const container = document.getElementById("plotList");
+        container.innerHTML = "";
+
+        plots.forEach(plot => {
+            const div = document.createElement("div");
+            div.className = "plot-item";
+            div.innerText = plot.plotName;
+
+            div.onclick = () => {
+                flyToPlot(plot.id);
+            };
+
+            container.appendChild(div);
+        });
+    }
+
+    function flyToPlot(plotId) {
+        const entity = plotMap.get(plotId);
+        if (!entity) return;
+
+        selectEntity(entity);
+    }
+</script>
+
+</body>
+</html>

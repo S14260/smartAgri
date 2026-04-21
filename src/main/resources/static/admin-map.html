@@ -219,7 +219,7 @@
             currentNdviTime = null;
 
             try {
-                const res = await fetch(`http://123.56.228.32:8080/admin/ndvilist?region=${region}`, {
+                const res = await fetch(`http://123.56.228.32:8000/admin/ndvilist?region=${region}`, {
                     headers: {"token": token}
                 });
                 const ndviList = await res.json();
@@ -285,7 +285,7 @@
 
             try {
                 // 获取地块信息
-                const resPlots = await fetch('http://123.56.228.32:8080/admin/plots', {
+                const resPlots = await fetch('http://localhost:8080/admin/plots', {
                     headers: {"token": token}
                 });
                 const rawPlots = await resPlots.json();
@@ -299,7 +299,7 @@
                 requestData.region = region;
 
                 // 调用裁剪接口
-                const resCut = await fetch('http://123.56.228.32:8080/admin/ndvicut', {
+                const resCut = await fetch('http://123.56.228.32:8000/admin/ndvicut', {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -519,8 +519,8 @@
                         //TODO 修改地块还有bug，到时候统一一下管理端字段名，一起改吧
 
                         try {
-                            // http://123.56.228.32:8080请求，添加token头
-                            const res = await fetch("http://123.56.228.32:8080/admin/plots", {
+                            // http://localhost:8080请求，添加token头
+                            const res = await fetch("http://localhost:8080/admin/plots", {
                                 method: "POST",
                                 headers: {
                                     "Content-Type": "application/json",
@@ -797,8 +797,8 @@
                     //TODO 修改地块还有bug，到时候统一一下管理端字段名，一起改吧
 
                     try {
-                        // http://123.56.228.32:8080请求，添加token头
-                        const res = await fetch("http://123.56.228.32:8080/admin/plots", {
+                        // http://localhost:8080请求，添加token头
+                        const res = await fetch("http://localhost:8080/admin/plots", {
                             method: "POST",
                             headers: {
                                 "Content-Type": "application/json",
@@ -841,10 +841,10 @@
                 return;
             }
 
-            // 2. 获取真实地块数据（http://123.56.228.32:8080请求，添加token头）
+            // 2. 获取真实地块数据（http://localhost:8080请求，添加token头）
             let plots;
             try {
-                const res = await fetch("http://123.56.228.32:8080/admin/plots", {
+                const res = await fetch("http://localhost:8080/admin/plots", {
                     headers: {
                         "token": token
                     }
@@ -975,8 +975,8 @@
      */
     async function loadPlots() {
         try {
-            // http://123.56.228.32:8080请求，添加token头
-            const res = await fetch("http://123.56.228.32:8080/admin/plots", {
+            // http://localhost:8080请求，添加token头
+            const res = await fetch("http://localhost:8080/admin/plots", {
                 headers: {
                     "token": token
                 }
@@ -1039,8 +1039,8 @@
         if (!confirm("确认删除该地块？")) return;
 
         try {
-            // http://123.56.228.32:8080请求，添加token头
-            const res = await fetch(`http://123.56.228.32:8080/admin/plots/${id}`, {
+            // http://localhost:8080请求，添加token头
+            const res = await fetch(`http://localhost:8080/admin/plots/${id}`, {
                 method: "DELETE",
                 headers: {
                     "token": token
@@ -1119,8 +1119,8 @@
         }
 
         try {
-            // http://123.56.228.32:8080请求，添加token头
-            const res = await fetch(`http://123.56.228.32:8080/admin/plots/${id}/area`, {
+            // http://localhost:8080请求，添加token头
+            const res = await fetch(`http://localhost:8080/admin/plots/${id}/area`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -1396,8 +1396,8 @@
 
         document.getElementById('queryPlot').onclick = async function () {
             try {
-                // http://123.56.228.32:8080请求，添加token头
-                const res = await fetch("http://123.56.228.32:8080/admin/plots", {
+                // http://localhost:8080请求，添加token头
+                const res = await fetch("http://localhost:8080/admin/plots", {
                     headers: {
                         "token": token
                     }
