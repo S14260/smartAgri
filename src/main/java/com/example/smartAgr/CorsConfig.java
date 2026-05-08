@@ -1,4 +1,4 @@
-package com.example.smartAgr.config;
+package com.example.smartAgr;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;

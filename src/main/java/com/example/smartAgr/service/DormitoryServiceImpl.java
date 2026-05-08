@@ -1,7 +1,6 @@
 package com.example.smartAgr.service;
 
 import com.example.smartAgr.dao.DormitoryDao;
-import com.example.smartAgr.dao.StudentDao;
 import com.example.smartAgr.model.Dormitory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,7 +13,7 @@ import java.util.List;
 public class DormitoryServiceImpl implements DormitoryService {
     @Autowired
     DormitoryDao dormitorydao;
-    StudentDao studentdao;
+
 
     @Override
     public Integer addDormitory(Dormitory d) {

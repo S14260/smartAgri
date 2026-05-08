@@ -11,6 +11,4 @@ import java.util.List;
 public interface AdminPlotDao extends JpaRepository<AdminPlot, Long> {
 
     public List<AdminPlot> query();
-
-    List<AdminPlot> findByRegion(String region);
 }

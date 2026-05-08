@@ -1,16 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>地块添加</title>
-<!--  <link rel="stylesheet" href="https://cdn.staticfile.org/layui/2.8.18/css/layui.css">-->
+
   <link rel="stylesheet" href="./layui/css/layui.css">
 </head>
 <body>
 
-<div class="layui-container">
+<div class="layui-container" style="padding-top: 20px;">
   <h2>新增地块信息</h2>
+
   <form class="layui-form" id="plotForm">
     <div class="layui-form-item">
       <label class="layui-form-label">地块名称</label>
@@ -114,15 +115,20 @@
   </form>
 </div>
 
-
-<script src="./layui/layui.js"></script>
-
+<script src="layui/layui.js"></script>
 <script>
+
+  // 先检查 layui 是否加载成功
+  if (typeof layui === 'undefined') {
+    alert('layui.js 加载失败，请检查路径是否正确：./layui/layui.js');
+    throw new Error('layui.js 加载失败');
+  }
+
   // 获取 URL 中传递的面积数据（单位已是亩），直接展示
   const urlParams = new URLSearchParams(window.location.search);
   const area = urlParams.get('area');
   if (area) {
-    document.getElementById('areaInput').value = area + " 亩";
+    document.getElementById('areaInput').value = area + ' 亩';
   }
 
   layui.use(['form'], function () {
@@ -130,7 +136,7 @@
 
     // 自定义验证规则
     form.verify({
-      nameLimit: function(value) {
+      nameLimit: function (value) {
         const pattern = /^[\u4e00-\u9fa5a-zA-Z0-9]+$/;
         if (value.length > 20) {
           return '地块名称不能超过20个字符';
@@ -139,7 +145,7 @@
           return '地块名称只能包含中文、英文或数字';
         }
       },
-      phone: function(value) {
+      phone: function (value) {
         const pattern = /^1\d{10}$/;
         if (!pattern.test(value)) {
           return '请输入有效的手机号';
@@ -148,44 +154,29 @@
     });
 
     // 拦截表单提交事件
-    form.on('submit(submitForm)', function(data){
-      // 移除“亩”字并转成数值
+    form.on('submit(submitForm)', function (data) {
       const areaValue = document.getElementById('areaInput').value.replace(/[^\d.]/g, '');
 
-      // 构造 payload
       const payload = {
         ...data.field,
         area: areaValue
       };
 
-      // 发送给父页面（iframe 模式下是 parent，而不是 opener）
-      // if (window.parent !== window) {
-      //   window.parent.postMessage({
-      //     type: "submitPlot",
-      //     payload
-      //   }, "*");
-      // } else {
-      //   alert("无法回传数据，请从地图页面弹出该窗口！");
-      // }
       if (window.parent !== window) {
         window.parent.postMessage({
-          type: "submitPlot",
-          payload
-        }, "*");
+          type: 'submitPlot',
+          payload: payload
+        }, '*');
       } else {
-        alert("无法回传数据，请从地图页面弹出该窗口！");
+        alert('无法回传数据，请从地图页面弹出该窗口！');
       }
 
-
-      return false; // 阻止表单默认提交
+      return false;
     });
 
     form.render();
   });
 </script>
-
-
-
 
 </body>
 </html>
