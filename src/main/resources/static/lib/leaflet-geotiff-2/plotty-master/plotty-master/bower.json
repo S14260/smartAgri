@@ -1,0 +1,10 @@
+{
+  "name": "plotty",
+  "version": "0.4.9",
+  "dependencies": {},
+  "devDependencies":{},
+  "ignore": [
+    "**/.*",
+    "app"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "geoblaze": "^2.8.0",
+    "georaster-layer-for-leaflet": "^3.10.0"
+  }
+}
