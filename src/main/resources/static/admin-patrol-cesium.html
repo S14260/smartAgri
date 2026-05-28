@@ -184,6 +184,32 @@
         .chain-action .spinner { margin-right: 4px; }
         .chain-observation { background: #f7f8fa; padding: 6px 10px; border-radius: 6px; font-size: 12px; color: #666; font-family: 'SFMono-Regular', Consolas, monospace; white-space: pre-wrap; max-height: 100px; overflow-y: auto; margin-top: 4px; }
 
+        /* 操作提示 */
+        #helpToggle {
+            position: absolute; bottom: 20px; left: 20px; z-index: 999;
+            background: rgba(30,30,30,0.85); color: #fff; border: none;
+            width: 36px; height: 36px; border-radius: 50%; cursor: pointer;
+            font-size: 16px; display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s;
+        }
+        #helpToggle:hover { background: rgba(60,60,60,0.95); }
+        #helpPanel {
+            position: absolute; bottom: 66px; left: 20px; z-index: 999;
+            background: rgba(20,20,20,0.92); color: #fff; border-radius: 8px;
+            padding: 14px 18px; font-size: 12px; line-height: 1.8;
+            width: 240px; backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            transition: opacity 0.2s, transform 0.2s;
+        }
+        #helpPanel.hidden { opacity: 0; transform: translateY(10px); pointer-events: none; }
+        #helpPanel h4 { margin: 0 0 10px 0; font-size: 13px; color: #667eea; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 8px; }
+        #helpPanel .help-item { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+        #helpPanel .help-key { background: rgba(255,255,255,0.15); padding: 1px 6px; border-radius: 3px; font-size: 11px; white-space: nowrap; }
+        #helpPanel .help-desc { color: rgba(255,255,255,0.8); }
+        #helpPanel .help-section { margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); }
+        #helpPanel .help-section-title { font-size: 11px; color: #E6A23C; margin-bottom: 6px; }
+
         /* 响应式 */
         @media screen and (max-width: 768px) {
             #topPanel {
@@ -242,6 +268,29 @@
     <button class="toolbar-btn" id="searchBtn"><i class="fa fa-search"></i></button>
 </div>
 
+<!-- 操作提示 -->
+<button id="helpToggle" title="操作帮助"><i class="fa fa-question"></i></button>
+<div id="helpPanel" class="hidden">
+    <h4><i class="fa fa-map"></i> 地图操作</h4>
+    <div class="help-item"><span class="help-key">左键</span><span class="help-desc">点击地块查看详情</span></div>
+    <div class="help-item"><span class="help-key">滚轮</span><span class="help-desc">缩放地图</span></div>
+    <div class="help-item"><span class="help-key">右键拖拽</span><span class="help-desc">旋转 / 倾斜视角</span></div>
+    <div class="help-item"><span class="help-key">中键拖拽</span><span class="help-desc">平移地图</span></div>
+    <div class="help-section">
+        <div class="help-section-title"><i class="fa fa-tools"></i> 工具栏功能</div>
+        <div class="help-item"><span class="help-key">查询地块</span><span class="help-desc">查看地块列表并定位</span></div>
+        <div class="help-item"><span class="help-key">NDVI 控制</span><span class="help-desc">加载卫星遥感图层</span></div>
+        <div class="help-item"><span class="help-key">异常检测</span><span class="help-desc">识别作物异常区域</span></div>
+        <div class="help-item"><span class="help-key">历史工单</span><span class="help-desc">查看巡检报告</span></div>
+        <div class="help-item"><span class="help-key">生成路径</span><span class="help-desc">规划巡田路线</span></div>
+    </div>
+    <div class="help-section">
+        <div class="help-section-title"><i class="fa fa-robot"></i> AI 助手</div>
+        <div class="help-item"><span class="help-key">右下角按钮</span><span class="help-desc">打开 AI 对话</span></div>
+        <div class="help-item"><span class="help-key">示例</span><span class="help-desc">沽源有哪些异常？</span></div>
+    </div>
+</div>
+
 <!-- AI Chat -->
 <button class="ai-chat-toggle" id="aiChatToggle"><i class="fa fa-robot"></i></button>
 <div id="aiChatPanel" class="ai-chat-panel hidden">
@@ -265,7 +314,7 @@
 ======================== */
 Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI4Mjk2MjRhNy00YWIyLTQxZWQtOGZmYi02ZWIyNDc5OTgyY2QiLCJpZCI6NDE4NDc4LCJpYXQiOjE3NzYyNDE4MTJ9.jDM1zCdKiaw4UgeFbNp7Akr1TS-v2rSOwsXjvsaU6CQ";
 
-const API_URL = "http://localhost:8080/admin/plots";
+const API_URL = "http://123.56.228.32:8080/admin/plots";
 const FLASK_URL = "http://123.56.228.32:8000";
 const token = localStorage.getItem("token_admin");
 
@@ -339,6 +388,7 @@ function init() {
     initRoutePlanning();
     initExportPath();
     initNdvi();
+    initHelp();
     initAiChat();
 }
 
@@ -991,7 +1041,7 @@ window.viewAnomalyImage = function(imgPath, plotName) {
 async function callAiExplain(subregion) {
     layui.layer.msg('正在调用 AI 分析...', {icon: 16, shade: 0.3, time: 0});
     try {
-        const res = await fetch('http://localhost:8080/admin/ai/explain', {
+        const res = await fetch('http://123.56.228.32:8080/admin/ai/explain', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'token': token },
             body: JSON.stringify({
@@ -1255,6 +1305,31 @@ function initExportPath() {
 /* ========================
    15. AI Chat
 ======================== */
+/* ========================
+   15. 操作帮助
+======================== */
+function initHelp() {
+    const toggle = document.getElementById("helpToggle");
+    const panel = document.getElementById("helpPanel");
+    let isVisible = false;
+
+    toggle.onclick = () => {
+        isVisible = !isVisible;
+        panel.classList.toggle("hidden", !isVisible);
+    };
+
+    // 5 秒后自动隐藏
+    setTimeout(() => {
+        if (isVisible) {
+            panel.classList.add("hidden");
+            isVisible = false;
+        }
+    }, 8000);
+}
+
+/* ========================
+   16. AI Chat
+======================== */
 function initAiChat() {
     const toggle = document.getElementById("aiChatToggle");
     const panel = document.getElementById("aiChatPanel");
@@ -1304,7 +1379,7 @@ function initAiChat() {
         const responseDiv = appendMessage('assistant', '', true);
 
         try {
-            const res = await fetch('http://localhost:8080/admin/ai/chat/stream', {
+            const res = await fetch('http://123.56.228.32:8080/admin/ai/chat/stream', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'token': token },
                 body: JSON.stringify({ sessionId: chatSessionId, message: msg })
