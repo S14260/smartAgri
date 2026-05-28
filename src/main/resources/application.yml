@@ -30,3 +30,13 @@ jwt:
   user-ttl: 7200000
   # 设置前端传递过来的令牌名称
   user-token-name: authentication
+
+llm:
+  api-key: ${LLM_API_KEY:sk-2f9d0b63be8b4b428f3b04c2d61a7211}
+  base-url: ${LLM_BASE_URL:https://api.deepseek.com}
+  model: ${LLM_MODEL:deepseek-chat}
+  chat-endpoint: /v1/chat/completions
+  system-prompt: |
+    你是智慧农业管理系统的 AI 助手，擅长农业遥感分析、地块管理和农情诊断。
+    你可以帮助用户：查询地块信息、分析异常数据、解释遥感指标（NDVI/EVI/SAVI/NDWI）、
+    规划巡田路径、生成农情报告。请用专业但易懂的语言回答，必要时调用工具获取实时数据。

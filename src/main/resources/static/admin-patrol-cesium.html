@@ -3,141 +3,218 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Cesium 农田管理系统</title>
+    <title>Cesium 智慧农田管理系统</title>
 
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.140/Build/Cesium/Cesium.js"></script>
     <link href="https://cesium.com/downloads/cesiumjs/releases/1.140/Build/Cesium/Widgets/widgets.css" rel="stylesheet"/>
+    <link rel="stylesheet" href="lib/css/layui.css"/>
+    <link rel="stylesheet" href="lib/css/font-awesome.min.css"/>
+    <script src="./lib/layui/layui.js"></script>
+    <script src="./lib/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <style>
-        html, body, #cesiumContainer {
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-        }
+        html, body, #cesiumContainer { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }
+        .hidden { display: none !important; }
 
-
-    </style>
-    <style>
-        /* 顶部容器（关键） */
+        /* 顶部工具栏 */
         #topPanel {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            display: flex;
-            gap: 12px; /* 两个面板之间间距 */
-            z-index: 999;
+            position: absolute; top: 20px; left: 20px;
+            display: flex; gap: 8px; flex-wrap: wrap; z-index: 999;
         }
-
-        /* 查询区域包一层 */
-        #queryWrapper {
-            position: relative;
+        .toolbar-btn {
+            background: rgba(30,30,30,0.85); color: #fff; padding: 8px 14px;
+            cursor: pointer; border-radius: 4px; border: none; font-size: 13px;
+            transition: background 0.2s;
         }
+        .toolbar-btn:hover { background: rgba(60,60,60,0.95); }
+        .toolbar-btn.btn-warm { background: rgba(230,162,60,0.9); }
+        .toolbar-btn.btn-normal { background: rgba(30,136,229,0.9); }
+        .toolbar-btn.btn-red { background: rgba(245,108,108,0.9); }
 
-        /* 查询按钮 */
-        #queryBtn {
-            background: rgba(30,30,30,0.85);
-            color: #fff;
-            padding: 8px 14px;
-            cursor: pointer;
-            border-radius: 4px;
+        /* 查询/NDVI 面板 */
+        #queryWrapper, #ndviWrapper { position: relative; }
+        #queryPanel, #ndviPanel {
+            position: absolute; top: 40px; left: 0;
+            background: rgba(20,20,20,0.9); color: #fff; border-radius: 6px;
+            max-height: 400px; overflow-y: auto;
         }
+        #queryPanel { width: 260px; }
+        #ndviPanel { width: 240px; }
+        .panel-header { padding: 10px; font-weight: bold; border-bottom: 1px solid #444; }
+        .plot-item { padding: 8px 10px; border-bottom: 1px solid #333; cursor: pointer; }
+        .plot-item:hover { background: rgba(255,255,255,0.1); }
+        .ndvi-body { padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+        #ndviPanel select, #ndviPanel button { width: 100%; box-sizing: border-box; padding: 8px; border-radius: 4px; border: none; }
 
-        /* 查询面板（相对按钮展开） */
-        #queryPanel {
-            position: absolute;
-            top: 40px;
-            left: 0;
-            width: 260px;
-            max-height: 400px;
-            overflow-y: auto;
-            background: rgba(20,20,20,0.9);
-            color: #fff;
-            border-radius: 6px;
+        /* 搜索栏 */
+        #searchBar {
+            position: absolute; top: 20px; right: 20px; z-index: 999;
+            display: flex; gap: 6px;
         }
-
-        /* NDVI 面板 */
-        /* NDVI 区域包一层 */
-        #ndviWrapper {
-            position: relative;
+        #searchInput {
+            padding: 8px 12px; border-radius: 4px; border: none;
+            background: rgba(30,30,30,0.85); color: #fff; width: 200px; font-size: 13px;
         }
+        #searchInput::placeholder { color: rgba(255,255,255,0.5); }
 
-        /* NDVI 按钮 */
-        #ndviBtn {
-            background: rgba(30,30,30,0.85);
-            color: #fff;
-            padding: 8px 14px;
-            cursor: pointer;
-            border-radius: 4px;
+        /* AI Chat */
+        .ai-chat-toggle {
+            position: fixed; bottom: 24px; right: 24px; z-index: 10000;
+            width: 90px; height: 90px; border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff; border: none; cursor: pointer; font-size: 36px;
+            box-shadow: 0 4px 15px rgba(102,126,234,0.4);
+            transition: transform 0.2s;
+            animation: aiPulse 2s ease-in-out infinite;
         }
-
-        /* NDVI 折叠面板 */
-        #ndviPanel {
-            position: absolute;
-            top: 40px;
-            left: 0;
-            width: 240px;
-            background: rgba(20,20,20,0.9);
-            backdrop-filter: blur(6px);
-            color: #fff;
-            border-radius: 6px;
-            overflow: hidden;
+        .ai-chat-toggle:hover { transform: scale(1.1); }
+        .ai-chat-toggle::after {
+            content: 'AI'; position: absolute; bottom: 2px; right: 2px;
+            background: #ff6b6b; color: #fff; font-size: 12px; font-weight: 700;
+            padding: 2px 6px; border-radius: 8px; line-height: 1.2;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
-
-        .ndvi-body {
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
+        @keyframes aiPulse {
+            0%, 100% { box-shadow: 0 4px 15px rgba(102,126,234,0.4); }
+            50% { box-shadow: 0 4px 20px rgba(102,126,234,0.7), 0 0 30px rgba(118,75,162,0.3); }
         }
-
-        #ndviPanel select,
-        #ndviPanel button {
-            width: 100%;
-            box-sizing: border-box;
-            padding: 8px;
-            border-radius: 4px;
-            border: none;
+        .ai-chat-panel {
+            position: fixed; bottom: 124px; right: 24px; z-index: 10000;
+            width: 480px; height: 680px; background: #fff; border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15); display: flex; flex-direction: column;
+            overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
-
-        /* 通用 */
-        .panel-header {
-            padding: 10px;
-            font-weight: bold;
-            border-bottom: 1px solid #444;
+        .ai-chat-header {
+            padding: 14px 16px; background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff; display: flex; justify-content: space-between; align-items: center;
+            font-weight: 600; font-size: 15px;
         }
-
-        .plot-item {
-            padding: 8px 10px;
-            border-bottom: 1px solid #333;
-            cursor: pointer;
+        .ai-chat-header button { background: none; border: none; color: #fff; font-size: 20px; cursor: pointer; margin-left: 6px; }
+        .ai-chat-panel.fullscreen {
+            width: 100vw !important; height: 100vh !important;
+            top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+            border-radius: 0 !important; z-index: 10001;
         }
-
-        .plot-item:hover {
-            background: rgba(255,255,255,0.1);
+        .ai-chat-messages { flex: 1; overflow-y: auto; padding: 16px; background: #f7f8fa; }
+        .chat-msg { margin-bottom: 12px; display: flex; }
+        .chat-msg.user { justify-content: flex-end; }
+        .chat-msg.assistant { justify-content: flex-start; }
+        .chat-bubble {
+            max-width: 80%; padding: 10px 14px; border-radius: 12px;
+            font-size: 13px; line-height: 1.6; word-break: break-word;
         }
+        .chat-msg.user .chat-bubble { background: #667eea; color: #fff; border-bottom-right-radius: 4px; }
+        .chat-msg.assistant .chat-bubble { background: #fff; color: #333; border: 1px solid #e8e8e8; border-bottom-left-radius: 4px; }
+        .chat-bubble a {
+            color: #667eea; text-decoration: underline; font-weight: 500;
+            transition: color 0.2s;
+        }
+        .chat-bubble a:hover { color: #5a6fd6; }
+        .chat-msg.user .chat-bubble a { color: #e0e0ff; }
+        .chat-tool-status {
+            padding: 6px 12px; margin-bottom: 8px; background: #fff3cd; border-radius: 8px;
+            font-size: 12px; color: #856404; display: flex; align-items: center; gap: 6px;
+        }
+        .chat-tool-status .spinner { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .ai-chat-input-area {
+            padding: 12px; border-top: 1px solid #eee; display: flex; gap: 8px; background: #fff;
+        }
+        .ai-chat-input-area textarea {
+            flex: 1; resize: none; border: 1px solid #ddd; border-radius: 8px;
+            padding: 8px 12px; font-size: 13px; font-family: inherit; outline: none;
+        }
+        .ai-chat-input-area textarea:focus { border-color: #667eea; }
+        .ai-chat-input-area button {
+            padding: 8px 16px; background: #667eea; color: #fff; border: none;
+            border-radius: 8px; cursor: pointer; font-size: 13px; white-space: nowrap;
+        }
+        .ai-chat-input-area button:hover { background: #5a6fd6; }
 
-        .hidden {
-            display: none;
+        /* Markdown rendering inside chat bubbles */
+        .chat-bubble { white-space: normal; }
+        .chat-bubble p { margin: 0 0 4px 0; }
+        .chat-bubble p:last-child { margin-bottom: 0; }
+        .chat-bubble ul, .chat-bubble ol { margin: 4px 0 8px 0; padding-left: 20px; }
+        .chat-bubble li { margin-bottom: 2px; }
+        .chat-bubble code {
+            background: #f0f0f0; padding: 1px 5px; border-radius: 3px;
+            font-size: 12px; font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            color: #e83e8c;
+        }
+        .chat-bubble pre {
+            background: #1e1e2e; color: #cdd6f4; padding: 10px 12px;
+            border-radius: 6px; overflow-x: auto; margin: 6px 0 8px 0;
+            font-size: 12px; line-height: 1.5;
+        }
+        .chat-bubble pre code { background: none; color: inherit; padding: 0; font-size: inherit; }
+        .chat-bubble strong { font-weight: 600; }
+        .chat-bubble em { font-style: italic; }
+        .chat-bubble blockquote {
+            border-left: 3px solid #667eea; margin: 6px 0 8px 0;
+            padding: 4px 10px; color: #666; background: #f8f9fa;
+            border-radius: 0 4px 4px 0;
+        }
+        .chat-bubble table { border-collapse: collapse; margin: 6px 0 8px 0; font-size: 12px; width: 100%; }
+        .chat-bubble th, .chat-bubble td { border: 1px solid #ddd; padding: 4px 8px; text-align: left; }
+        .chat-bubble th { background: #f0f0f0; font-weight: 600; }
+        .chat-bubble h1, .chat-bubble h2, .chat-bubble h3 { margin: 8px 0 4px 0; font-size: 14px; font-weight: 600; }
+
+        /* Streaming cursor */
+        .chat-bubble.streaming-cursor::after {
+            content: ''; display: inline-block; width: 2px; height: 1em;
+            background: #667eea; margin-left: 2px;
+            animation: blink 0.8s step-end infinite; vertical-align: text-bottom;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* Agent reasoning chain */
+        .chain-panel { margin-bottom: 8px; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; }
+        .chain-header { padding: 8px 12px; background: #f5f5f5; cursor: pointer; font-size: 12px; font-weight: 600; color: #666; display: flex; align-items: center; gap: 6px; user-select: none; }
+        .chain-header .arrow { transition: transform 0.2s; display: inline-block; }
+        .chain-header.collapsed .arrow { transform: rotate(-90deg); }
+        .chain-body { padding: 8px 12px; }
+        .chain-body.hidden { display: none; }
+        .chain-step { position: relative; padding-left: 16px; margin-bottom: 10px; border-left: 2px solid #667eea; }
+        .chain-step:last-child { margin-bottom: 0; }
+        .chain-step-label { font-size: 11px; color: #667eea; font-weight: 600; margin-bottom: 4px; }
+        .chain-thought { background: #eef2ff; padding: 6px 10px; border-radius: 6px; font-size: 12px; color: #4a5568; font-style: italic; margin-bottom: 4px; white-space: normal; line-height: 1.5; }
+        .chain-action { display: inline-block; background: #667eea; color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-bottom: 4px; }
+        .chain-action .spinner { margin-right: 4px; }
+        .chain-observation { background: #f7f8fa; padding: 6px 10px; border-radius: 6px; font-size: 12px; color: #666; font-family: 'SFMono-Regular', Consolas, monospace; white-space: pre-wrap; max-height: 100px; overflow-y: auto; margin-top: 4px; }
+
+        /* 响应式 */
+        @media screen and (max-width: 768px) {
+            #topPanel {
+                top: 10px; left: 10px; gap: 4px; max-width: calc(100vw - 180px);
+            }
+            .toolbar-btn { padding: 6px 10px; font-size: 12px; }
+            .toolbar-btn i { display: none; }
+            #searchBar { top: 10px; right: 10px; }
+            #searchInput { width: 120px; font-size: 12px; padding: 6px 10px; }
+            .ai-chat-toggle { width: 64px; height: 64px; font-size: 28px; bottom: 16px; right: 16px; }
+            .ai-chat-toggle::after { font-size: 10px; }
+            .ai-chat-panel { width: calc(100vw - 32px); height: calc(100vh - 100px); right: 16px; bottom: 90px; }
+            .ai-chat-panel.fullscreen { width: 100vw !important; height: 100vh !important; }
         }
     </style>
 </head>
-
 <body>
 
 <div id="cesiumContainer"></div>
-<!-- 查询UI -->
+
+<!-- 顶部工具栏 -->
 <div id="topPanel">
     <div id="queryWrapper">
-        <div id="queryBtn">查询地块</div>
+        <div id="queryBtn" class="toolbar-btn"><i class="fa fa-map-marker"></i> 查询地块</div>
         <div id="queryPanel" class="hidden">
             <div class="panel-header">地块列表</div>
             <div id="plotList"></div>
         </div>
     </div>
     <div id="ndviWrapper">
-        <div id="ndviBtn">NDVI控制</div>
+        <div id="ndviBtn" class="toolbar-btn"><i class="fa fa-leaf"></i> NDVI控制</div>
         <div id="ndviPanel" class="hidden">
             <div class="panel-header">NDVI控制</div>
             <div class="ndvi-body">
@@ -153,422 +230,1223 @@
             </div>
         </div>
     </div>
+    <button class="toolbar-btn btn-warm" id="loadAbnormalPoints"><i class="fa fa-exclamation-triangle"></i> 异常检测</button>
+    <button class="toolbar-btn btn-normal" id="historyReportBtn"><i class="fa fa-history"></i> 历史工单</button>
+    <button class="toolbar-btn btn-red" id="generatePath"><i class="fa fa-route"></i> 生成路径</button>
+    <button class="toolbar-btn" id="exportPath"><i class="fa fa-download"></i> 导出路径</button>
 </div>
 
+<!-- 搜索栏 -->
+<div id="searchBar">
+    <input type="text" id="searchInput" placeholder="输入地名搜索..."/>
+    <button class="toolbar-btn" id="searchBtn"><i class="fa fa-search"></i></button>
+</div>
+
+<!-- AI Chat -->
+<button class="ai-chat-toggle" id="aiChatToggle"><i class="fa fa-robot"></i></button>
+<div id="aiChatPanel" class="ai-chat-panel hidden">
+    <div class="ai-chat-header">
+        <span><i class="fa fa-robot"></i> AI 农业助手</span>
+        <div>
+            <button id="aiChatFullscreen" title="全屏"><i class="fa fa-expand"></i></button>
+            <button id="aiChatClose">&times;</button>
+        </div>
+    </div>
+    <div id="aiChatMessages" class="ai-chat-messages"></div>
+    <div class="ai-chat-input-area">
+        <textarea id="aiChatInput" placeholder="输入问题，如：沽源地区有哪些异常？" rows="1"></textarea>
+        <button id="aiChatSend">发送</button>
+    </div>
+</div>
 
 <script>
-    /* ========================
-       1. 配置
-    ======================== */
-    Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI4Mjk2MjRhNy00YWIyLTQxZWQtOGZmYi02ZWIyNDc5OTgyY2QiLCJpZCI6NDE4NDc4LCJpYXQiOjE3NzYyNDE4MTJ9.jDM1zCdKiaw4UgeFbNp7Akr1TS-v2rSOwsXjvsaU6CQ";
+/* ========================
+   1. 配置与初始化
+======================== */
+Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI4Mjk2MjRhNy00YWIyLTQxZWQtOGZmYi02ZWIyNDc5OTgyY2QiLCJpZCI6NDE4NDc4LCJpYXQiOjE3NzYyNDE4MTJ9.jDM1zCdKiaw4UgeFbNp7Akr1TS-v2rSOwsXjvsaU6CQ";
 
-    const API_URL = "http://localhost:8080/admin/plots";
-    const token = localStorage.getItem("token_admin");
+const API_URL = "http://localhost:8080/admin/plots";
+const FLASK_URL = "http://123.56.228.32:8000";
+const token = localStorage.getItem("token_admin");
 
+const STYLE = { lineWidth: 4, defaultLine: Cesium.Color.BLUE, highlightLine: Cesium.Color.YELLOW };
 
-    const STYLE = {
-        lineWidth: 4,
-        defaultLine: Cesium.Color.BLUE,
-        highlightLine: Cesium.Color.YELLOW
-    };
+const TIANDITU_TK = "19fc987939ebbcbcb3f0954ab6cf75be";
 
-    /* ========================
-       2. Viewer
-    ======================== */
-    const viewer = new Cesium.Viewer("cesiumContainer", {
-        terrain: Cesium.Terrain.fromWorldTerrain(),
-        animation: false,
-        timeline: false
+const viewer = new Cesium.Viewer("cesiumContainer", {
+    baseLayer: false,
+    animation: false, timeline: false,
+    geocoder: false, baseLayerPicker: false, homeButton: false,
+    sceneModePicker: false, projectionPicker: false, navigationHelpButton: false,
+    fullscreenButton: false, selectionIndicator: false
+});
+
+// 天地图影像底图（卫星图）
+viewer.imageryLayers.addImageryProvider(new Cesium.WebMapTileServiceImageryProvider({
+    url: "http://t0.tianditu.gov.cn/img_w/wmts?tk=" + TIANDITU_TK,
+    layer: 'img', style: 'default',
+    tileMatrixSetID: 'w', format: 'tiles', maximumLevel: 18
+}));
+// 天地图注记图层
+viewer.imageryLayers.addImageryProvider(new Cesium.WebMapTileServiceImageryProvider({
+    url: "http://t0.tianditu.gov.cn/cia_w/wmts?tk=" + TIANDITU_TK,
+    layer: 'cia', style: 'default',
+    tileMatrixSetID: 'w', format: 'tiles', maximumLevel: 18
+}));
+
+/* ========================
+   2. 状态变量
+======================== */
+let selectedEntity = null;
+let hasFlown = false;
+const plotMap = new Map();
+let ndviLayers = [];
+let currentNdviTime = null;
+const regionNdviTimeCache = {};
+
+// 巡田相关
+let abnormalEntities = [];
+let patrolPathEntity = null;
+let patrolPointEntities = [];
+let currentRouteCoords = null;
+let currentHistoryReport = null;
+let currentHistoryPoints = [];
+let anomalyResultPath = '';
+
+const regionList = [
+    {id: "zhangbei", name: "张北"},
+    {id: "ninghe", name: "宁河"},
+    {id: "guyuan", name: "沽源"},
+];
+const regionPlotCache = {};
+const ndviFolderMap = {
+    "沽源": "./static/ndvi_clips/guyuan/admin",
+    "张北": "./static/ndvi_clips/zhangbei/admin",
+    "宁河": "./static/ndvi_clips/ninghe/admin"
+};
+
+/* ========================
+   3. 初始化
+======================== */
+init();
+function init() {
+    loadPlots();
+    initClickHandler();
+    initPanel();
+    initSearch();
+    initAnomalyDetection();
+    initHistoryReport();
+    initRoutePlanning();
+    initExportPath();
+    initNdvi();
+    initAiChat();
+}
+
+/* ========================
+   4. 加载地块
+======================== */
+async function loadPlots() {
+    try {
+        const res = await fetch(API_URL, { headers: { token } });
+        if (!res.ok) throw new Error("请求失败");
+        const plots = await res.json();
+        plots.forEach(renderPlot);
+        buildPlotList(plots);
+    } catch (err) {
+        console.error("加载失败：", err);
+    }
+}
+
+function renderPlot(plot) {
+    if (!plot.coordinates) return;
+    let geo;
+    try { geo = JSON.parse(plot.coordinates); } catch (e) { return; }
+    if (geo.shapeType !== "polygon") return;
+
+    const positions = geo.latlngs.map(p => [p.lng, p.lat]).flat();
+    const entity = viewer.entities.add({
+        name: plot.plotName,
+        polygon: {
+            hierarchy: Cesium.Cartesian3.fromDegreesArray(positions),
+            material: Cesium.Color.TRANSPARENT, outline: false
+        },
+        description: `<div style="padding:10px;">
+            <h3>${plot.plotName}</h3>
+            <p><b>作物：</b>${plot.currentCrop}</p>
+            <p><b>面积：</b>${plot.area} 亩</p>
+            <p><b>联系人：</b>${plot.contactPerson}</p>
+            <p><b>电话：</b>${plot.phone}</p>
+        </div>`
     });
-    //开启地形深度检测  作用:如果一个像素点位于地形表面之下，则不进行绘制。
-    //这确保了我们向下延伸的wal1只有露出地表的部分可见，内部复杂的网格被完美遮挡。
-    viewer.scene.globe.depthTestAgainstTerrain = true;
 
-    /* ========================
-       3. 状态
-    ======================== */
-    let selectedEntity = null;
-    let hasFlown = false;
-    const plotMap = new Map(); // id -> entity
-
-    /* ========================
-       4. 初始化
-    ======================== */
-    init();
-
-    function init() {
-        loadPlots();
-        initClickHandler();
-        initPanel();
-    }
-
-    /* ========================
-       5. 加载数据
-    ======================== */
-    async function loadPlots() {
-        try {
-            const res = await fetch(API_URL, {
-                headers: { token }
-            });
-
-            if (!res.ok) throw new Error("请求失败");
-
-            const plots = await res.json();
-
-            plots.forEach(renderPlot);
-
-            buildPlotList(plots);
-
-            console.log("地块加载完成，共", plots.length);
-        } catch (err) {
-            console.error("加载失败：", err);
-            alert("后端服务异常");
+    const linePositions = [...positions, positions[0], positions[1]];
+    const lineEntity = viewer.entities.add({
+        polyline: {
+            positions: Cesium.Cartesian3.fromDegreesArray(linePositions),
+            width: STYLE.lineWidth, material: STYLE.defaultLine, clampToGround: true
         }
-    }
+    });
 
-    /* ========================
-       6. 渲染地块
-    ======================== */
-    function renderPlot(plot) {
-        if (!plot.coordinates) return;
+    entity.border = lineEntity;
+    entity.plotData = plot;
+    plotMap.set(plot.id, entity);
 
-        let geo;
-        try {
-            geo = JSON.parse(plot.coordinates);
-        } catch (e) {
-            console.error("解析失败", plot);
-            return;
-        }
+    if (!hasFlown) { viewer.flyTo(entity); hasFlown = true; }
+}
 
-        if (geo.shapeType !== "polygon") return;
-
-        const positions = geo.latlngs.map(p => [p.lng, p.lat]).flat();
-
-        // polygon（只做点击）
-        const entity = viewer.entities.add({
-            name: plot.plotName,
-            polygon: {
-                hierarchy: Cesium.Cartesian3.fromDegreesArray(positions),
-                material: Cesium.Color.TRANSPARENT,
-                outline: false
-            },
-            description: `
-            <div style="padding:10px;">
-                <h3>${plot.plotName}</h3>
-                <p><b>作物：</b>${plot.currentCrop}</p>
-                <p><b>面积：</b>${plot.area} 亩</p>
-                <p><b>联系人：</b>${plot.contactPerson}</p>
-                <p><b>电话：</b>${plot.phone}</p>
-            </div>
-        `
-        });
-
-        // 边框线
-        const linePositions = [...positions, positions[0], positions[1]];
-
-        const lineEntity = viewer.entities.add({
-            polyline: {
-                positions: Cesium.Cartesian3.fromDegreesArray(linePositions),
-                width: STYLE.lineWidth,
-                material: STYLE.defaultLine,
-                clampToGround: true
-            }
-        });
-
-        // 绑定
-        entity.border = lineEntity;
-        entity.plotData = plot;
-        plotMap.set(plot.id, entity);
-
-        // 首次定位
-        if (!hasFlown) {
-            viewer.flyTo(entity);
-            hasFlown = true;
-        }
-    }
-
-    /* ========================
-       7. 点击高亮
-    ======================== */
-    function initClickHandler() {
-        const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
-
-        handler.setInputAction((click) => {
-            const picked = viewer.scene.pick(click.position);
-            if (!Cesium.defined(picked) || !picked.id) return;
-
-            const entity = picked.id;
-            if (!entity.polygon) return;
-
-            selectEntity(entity);
-
-        }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
-    }
-
-    function selectEntity(entity) {
-        if (selectedEntity && selectedEntity !== entity) {
-            resetEntityStyle(selectedEntity);
-        }
-
-        highlightEntity(entity);
-        selectedEntity = entity;
-
-        viewer.flyTo(entity, { duration: 1 });
-    }
-
-    function highlightEntity(entity) {
-        entity.border.polyline.material = STYLE.highlightLine;
-    }
-
-    function resetEntityStyle(entity) {
-        entity.border.polyline.material = STYLE.defaultLine;
-    }
-
-    /* ========================
-       8. 查询面板
-    ======================== */
-    function initPanel() {
-        const queryBtn = document.getElementById("queryBtn");
-        const queryPanel = document.getElementById("queryPanel");
-
-        const ndviBtn = document.getElementById("ndviBtn");
-        const ndviPanel = document.getElementById("ndviPanel");
-
-        const queryWrapper = document.getElementById("queryWrapper");
-        const ndviWrapper = document.getElementById("ndviWrapper");
-
-        // 查询地块：点击按钮展开/收起
-        queryBtn.onclick = (e) => {
-            e.stopPropagation();
-            queryPanel.classList.toggle("hidden");
-            ndviPanel.classList.add("hidden");
-        };
-
-        // NDVI：点击按钮展开/收起
-        ndviBtn.onclick = (e) => {
-            e.stopPropagation();
-            ndviPanel.classList.toggle("hidden");
-            queryPanel.classList.add("hidden");
-        };
-
-        // 点击面板内部时，不触发关闭
-        queryWrapper.onclick = (e) => {
-            e.stopPropagation();
-        };
-
-        ndviWrapper.onclick = (e) => {
-            e.stopPropagation();
-        };
-
-        // 点击空白处自动关闭
-        document.addEventListener("click", () => {
-            queryPanel.classList.add("hidden");
-            ndviPanel.classList.add("hidden");
-        });
-    }
-
-    function buildPlotList(plots) {
-        const container = document.getElementById("plotList");
-        container.innerHTML = "";
-
-        plots.forEach(plot => {
-            const div = document.createElement("div");
-            div.className = "plot-item";
-            div.innerText = plot.plotName;
-
-            div.onclick = () => {
-                flyToPlot(plot.id);
-            };
-
-            container.appendChild(div);
-        });
-    }
-
-    function flyToPlot(plotId) {
-        const entity = plotMap.get(plotId);
-        if (!entity) return;
-
+/* ========================
+   5. 点击高亮
+======================== */
+function initClickHandler() {
+    const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+    handler.setInputAction((click) => {
+        const picked = viewer.scene.pick(click.position);
+        if (!Cesium.defined(picked) || !picked.id) return;
+        const entity = picked.id;
+        if (!entity.polygon) return;
         selectEntity(entity);
-    }
-</script>
+    }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+}
 
-<script>
-    /* ========================
-       NDVI 状态
-    ======================== */
+function selectEntity(entity) {
+    if (selectedEntity && selectedEntity !== entity) resetEntityStyle(selectedEntity);
+    highlightEntity(entity);
+    selectedEntity = entity;
+    viewer.flyTo(entity, { duration: 1 });
+}
+
+function highlightEntity(entity) { entity.border.polyline.material = STYLE.highlightLine; }
+function resetEntityStyle(entity) { entity.border.polyline.material = STYLE.defaultLine; }
+
+/* ========================
+   6. 查询面板
+======================== */
+function initPanel() {
+    const queryBtn = document.getElementById("queryBtn");
+    const queryPanel = document.getElementById("queryPanel");
+    const ndviBtn = document.getElementById("ndviBtn");
+    const ndviPanel = document.getElementById("ndviPanel");
+    const queryWrapper = document.getElementById("queryWrapper");
+    const ndviWrapper = document.getElementById("ndviWrapper");
+
+    queryBtn.onclick = (e) => { e.stopPropagation(); queryPanel.classList.toggle("hidden"); ndviPanel.classList.add("hidden"); };
+    ndviBtn.onclick = (e) => { e.stopPropagation(); ndviPanel.classList.toggle("hidden"); queryPanel.classList.add("hidden"); };
+    queryWrapper.onclick = (e) => e.stopPropagation();
+    ndviWrapper.onclick = (e) => e.stopPropagation();
+    document.addEventListener("click", () => { queryPanel.classList.add("hidden"); ndviPanel.classList.add("hidden"); });
+}
+
+function buildPlotList(plots) {
+    const container = document.getElementById("plotList");
+    container.innerHTML = "";
+    plots.forEach(plot => {
+        const div = document.createElement("div");
+        div.className = "plot-item";
+        div.innerText = plot.plotName;
+        div.onclick = () => flyToPlot(plot.id);
+        container.appendChild(div);
+    });
+}
+
+function flyToPlot(plotId) { const entity = plotMap.get(plotId); if (entity) selectEntity(entity); }
+
+/* ========================
+   7. NDVI 控制
+======================== */
+function initNdvi() {
     const regionSelect = document.getElementById("regionSelect");
     const timeSelect = document.getElementById("timeSelect");
     const removeNdviBtn = document.getElementById("removeNdviBtn");
 
-    let currentNdviTime = null;
-    let ndviLayers = [];
-    const regionNdviTimeCache = {};
-
-    /* ========================
-       NDVI：地区选择
-    ======================== */
     regionSelect.addEventListener("change", async () => {
         const region = regionSelect.value;
-
-        timeSelect.innerHTML = `<option value="" selected disabled>请选择日期</option>`;
+        timeSelect.innerHTML = '<option value="" selected disabled>请选择日期</option>';
         currentNdviTime = null;
-
         try {
-            const res = await fetch(`http://123.56.228.32:8000/admin/ndvilist?region=${region}`, {
-                headers: {"token": token}
-            });
-
+            const res = await fetch(`${FLASK_URL}/admin/ndvilist?region=${region}`, { headers: {"token": token} });
             const ndviList = await res.json();
             regionNdviTimeCache[region] = ndviList;
-
-            if (!Array.isArray(ndviList) || ndviList.length === 0) {
-                alert(`⚠️ ${region} 暂无 NDVI 数据`);
-                return;
-            }
-
+            if (!Array.isArray(ndviList) || ndviList.length === 0) { alert(`${region} 暂无 NDVI 数据`); return; }
             const grouped = {};
-
-            ndviList.forEach(item => {
-                if (!grouped[item.year]) grouped[item.year] = [];
-                grouped[item.year].push(item);
-            });
-
+            ndviList.forEach(item => { if (!grouped[item.year]) grouped[item.year] = []; grouped[item.year].push(item); });
             Object.keys(grouped).sort().forEach(year => {
                 const optgroup = document.createElement("optgroup");
                 optgroup.label = year;
-
                 grouped[year].forEach(item => {
                     const key = `${item.year}-${item.date.slice(0,2)}-${item.date.slice(2,4)}`;
                     const option = document.createElement("option");
-                    option.value = key;
-                    option.textContent = key;
+                    option.value = key; option.textContent = key;
                     optgroup.appendChild(option);
                 });
-
                 timeSelect.appendChild(optgroup);
             });
-
-        } catch (err) {
-            console.error("NDVI列表失败", err);
-            alert("获取NDVI日期失败");
-        }
+        } catch (err) { console.error("NDVI列表失败", err); }
     });
 
-    /* ========================
-       NDVI：时间选择
-    ======================== */
     timeSelect.addEventListener("change", async () => {
         const region = regionSelect.value;
         const selectedTime = timeSelect.value;
-
-        if (!region || !selectedTime) return;
-        if (selectedTime === currentNdviTime) return;
-
+        if (!region || !selectedTime || selectedTime === currentNdviTime) return;
         currentNdviTime = selectedTime;
-
         const dateForApi = selectedTime.replace(/-(\d{2})-(\d{2})/, "_$1$2");
-
         removeAllNdviLayers();
-
         try {
-            // 获取地块
-            const resPlots = await fetch("http://localhost:8080/admin/plots", {
-                headers: {"token": token}
-            });
-
+            const resPlots = await fetch(API_URL, { headers: {"token": token} });
             const rawPlots = await resPlots.json();
-
             const requestData = transformPlotsForNdviCut(rawPlots, dateForApi);
             requestData.region = region;
-
-            // 裁剪接口
-            const resCut = await fetch("http://123.56.228.32:8000/admin/ndvicut", {
+            const resCut = await fetch(`${FLASK_URL}/admin/ndvicut`, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "token": token
-                },
+                headers: { "Content-Type": "application/json", "token": token },
                 body: JSON.stringify(requestData)
             });
-
             const results = await resCut.json();
+            if (!results.success || results.success.length === 0) { alert("无NDVI结果"); return; }
+            results.success.forEach(item => {
+                const bounds = item.bounds;
+                const rectangle = Cesium.Rectangle.fromDegrees(bounds[0][1], bounds[0][0], bounds[1][1], bounds[1][0]);
+                const layer = viewer.imageryLayers.addImageryProvider(new Cesium.SingleTileImageryProvider({ url: item.png_url, rectangle }));
+                ndviLayers.push(layer);
+            });
+        } catch (err) { console.error("NDVI加载失败", err); }
+    });
 
-            if (!results.success || results.success.length === 0) {
-                alert("⚠️ 无NDVI结果");
+    removeNdviBtn.addEventListener("click", () => { removeAllNdviLayers(); currentNdviTime = null; timeSelect.value = ""; });
+}
+
+function removeAllNdviLayers() { ndviLayers.forEach(layer => viewer.imageryLayers.remove(layer)); ndviLayers = []; }
+
+function transformPlotsForNdviCut(rawPlots, dateStr) {
+    const plots = rawPlots.map(item => {
+        let polygonObj;
+        try { polygonObj = typeof item.coordinates === 'string' ? JSON.parse(item.coordinates) : item.coordinates; } catch (e) { polygonObj = null; }
+        return { plotId: item.id, plotname: item.plotName, polygon: polygonObj };
+    }).filter(p => p.polygon);
+    return { date: dateStr, plots };
+}
+
+/* ========================
+   8. 地址搜索
+======================== */
+function initSearch() {
+    document.getElementById("searchBtn").addEventListener("click", async () => {
+        const keyword = document.getElementById("searchInput").value.trim();
+        if (!keyword) return;
+        try {
+            const res = await fetch(`https://api.tianditu.gov.cn/search?postStr={"keyWord":"${keyword}","level":"12","mapBound":"73,3,135,54","queryType":"1","start":"0","count":"1","specifyAdminCode":""}&type=query&tk=your_tk`);
+            // 备用：直接飞到关键词匹配的地块
+            let found = false;
+            plotMap.forEach((entity, id) => {
+                if (!found && entity.plotData && entity.plotData.plotName && entity.plotData.plotName.includes(keyword)) {
+                    selectEntity(entity);
+                    found = true;
+                }
+            });
+            if (!found) layui.layer.msg('未找到匹配地块', {icon: 0});
+        } catch (err) {
+            // 降级：搜索本地地块
+            let found = false;
+            plotMap.forEach((entity, id) => {
+                if (!found && entity.plotData && entity.plotData.plotName && entity.plotData.plotName.includes(keyword)) {
+                    selectEntity(entity);
+                    found = true;
+                }
+            });
+            if (!found) layui.layer.msg('未找到匹配地块', {icon: 0});
+        }
+    });
+    document.getElementById("searchInput").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") document.getElementById("searchBtn").click();
+    });
+}
+
+/* ========================
+   9. 异常检测
+======================== */
+function initAnomalyDetection() {
+    document.getElementById("loadAbnormalPoints").addEventListener("click", function() {
+        layui.use(['layer', 'form', 'laydate'], function() {
+            const layer = layui.layer;
+            const form = layui.form;
+            const laydate = layui.laydate;
+
+            const formHtml = `
+            <div style="padding: 20px;">
+                <div style="margin-bottom: 16px;">
+                    <label style="font-weight:500;">选择地区：</label>
+                    <select id="detectRegionSelect" lay-verify="required" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;">
+                        <option value="" selected disabled>请选择地区</option>
+                        ${regionList.map(r => `<option value="${r.name}">${r.name}</option>`).join('')}
+                    </select>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <label style="font-weight:500;">检测时间范围：</label>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <input type="text" id="startDate" placeholder="开始日期" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:4px;" readonly>
+                        <span>至</span>
+                        <input type="text" id="endDate" placeholder="结束日期" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:4px;" readonly>
+                    </div>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <label style="font-weight:500;">选择地块：</label>
+                    <div id="plotCheckAll" style="color:#1E88E5;cursor:pointer;font-size:12px;margin-bottom:6px;display:none;">全选/反选</div>
+                    <form class="layui-form" lay-filter="plotForm">
+                        <div id="plotCheckboxContainer" style="max-height:150px;overflow-y:auto;border:1px solid #eee;border-radius:4px;padding:8px;">
+                            <div style="text-align:center;color:#999;font-size:13px;">请先选择地区</div>
+                        </div>
+                    </form>
+                </div>
+                <div style="text-align:right;">
+                    <button class="layui-btn layui-btn-primary" id="cancelDetectBtn">取消</button>
+                    <button class="layui-btn layui-btn-normal" id="confirmDetectBtn" disabled>开始异常检测</button>
+                </div>
+            </div>`;
+
+            const modalIndex = layer.open({
+                type: 1, title: '异常检测参数选择', area: ['520px', '450px'],
+                content: formHtml, shade: 0.3, shadeClose: false
+            });
+
+            setTimeout(() => {
+                const layero = document.querySelector('.layui-layer' + modalIndex) || document;
+                const detectRegionSelect = document.getElementById("detectRegionSelect");
+                const startDateEl = document.getElementById("startDate");
+                const endDateEl = document.getElementById("endDate");
+                const plotCheckboxContainer = document.getElementById("plotCheckboxContainer");
+                const plotCheckAll = document.getElementById("plotCheckAll");
+                const confirmDetectBtn = document.getElementById("confirmDetectBtn");
+
+                laydate.render({ elem: startDateEl, type: 'date', value: '2025-06-01', done: updateBtn });
+                laydate.render({ elem: endDateEl, type: 'date', value: '2025-10-01', done: updateBtn });
+                form.render('checkbox');
+
+                detectRegionSelect.addEventListener('change', async function() {
+                    const selectedRegion = this.value;
+                    if (!selectedRegion) return;
+                    plotCheckboxContainer.innerHTML = '<div style="text-align:center;color:#999;">加载中...</div>';
+                    plotCheckAll.style.display = 'none';
+                    confirmDetectBtn.disabled = true;
+
+                    try {
+                        const plots = await getRegionPlots(selectedRegion);
+                        if (plots.length === 0) {
+                            plotCheckboxContainer.innerHTML = '<div style="text-align:center;color:#F56C6C;">该地区无地块数据</div>';
+                        } else {
+                            plotCheckboxContainer.innerHTML = plots.map(plot =>
+                                `<div style="padding:4px 0;"><input type="checkbox" name="plotIds" value="${plot.id}" lay-skin="primary" lay-filter="plotIds" title="${plot.plotName || '未命名'}"></div>`
+                            ).join('');
+                            plotCheckAll.style.display = 'inline-block';
+                            setTimeout(() => form.render('checkbox'), 50);
+                        }
+                    } catch (err) {
+                        plotCheckboxContainer.innerHTML = '<div style="text-align:center;color:#F56C6C;">加载失败</div>';
+                    }
+                });
+
+                plotCheckAll.addEventListener('click', function() {
+                    const cbs = plotCheckboxContainer.querySelectorAll('input[name="plotIds"]');
+                    let allChecked = true;
+                    cbs.forEach(cb => { if (!cb.checked) allChecked = false; });
+                    cbs.forEach(cb => { cb.checked = !allChecked; });
+                    form.render('checkbox');
+                    updateBtn();
+                });
+
+                form.on('checkbox(plotIds)', updateBtn);
+
+                function updateBtn() {
+                    const checked = document.querySelectorAll('input[name="plotIds"]:checked').length;
+                    confirmDetectBtn.disabled = !(checked >= 1 && startDateEl.value && endDateEl.value);
+                }
+
+                document.getElementById("cancelDetectBtn").onclick = () => layer.close(modalIndex);
+
+                document.getElementById("confirmDetectBtn").onclick = async function() {
+                    if (this.disabled) return;
+                    this.disabled = true;
+
+                    const selectedRegion = detectRegionSelect.value;
+                    const selectedPlotIds = [];
+                    document.querySelectorAll('input[name="plotIds"]:checked').forEach(cb => selectedPlotIds.push(cb.value));
+
+                    if (selectedPlotIds.length < 1) { layer.msg('必须选择至少1个地块', {icon: 2}); this.disabled = false; return; }
+
+                    const selectedPlots = await getRegionPlots(selectedRegion);
+                    const targetPlots = selectedPlots.filter(p => selectedPlotIds.includes(String(p.id)));
+                    const requestData = targetPlots.map(plot => ({
+                        plot_id: `${plot.id}_${plot.plotName}`,
+                        start_date: startDateEl.value,
+                        end_date: endDateEl.value,
+                        ndvi_folder: ndviFolderMap[selectedRegion] || "./static/ndvi_clips/guyuan/admin"
+                    }));
+
+                    layer.close(modalIndex);
+                    layui.layer.msg(`正在对【${selectedRegion}】的 ${selectedPlotIds.length} 个地块执行异常检测...`, {icon: 16, shade: 0.3, time: 0});
+
+                    try {
+                        clearAnomalyEntities();
+                        const res = await fetch(`${FLASK_URL}/xuntian/run`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json", "token": token || "" },
+                            body: JSON.stringify(requestData)
+                        });
+                        if (!res.ok) throw new Error(`状态码：${res.status}`);
+                        const responseData = await res.json();
+                        const timestamp = responseData.timestamp;
+                        if (!timestamp) throw new Error("未返回时间戳");
+
+                        const pollTimer = setInterval(async () => {
+                            try {
+                                const statusRes = await fetch(`${FLASK_URL}/xuntian/status?timestamp=${timestamp}`, { headers: { "token": token || "" } });
+                                if (!statusRes.ok) return;
+                                const statusData = await statusRes.json();
+
+                                if (statusData.status === "completed") {
+                                    clearInterval(pollTimer);
+                                    layui.layer.closeAll();
+
+                                    anomalyResultPath = statusData.result_url;
+                                    if (!anomalyResultPath) { layui.layer.msg('已完成但未返回结果路径', {icon: 0}); return; }
+
+                                    const reportRes = await fetch(`${anomalyResultPath}/巡田最终工单_${timestamp}.json`, { headers: { "token": token || "" } });
+                                    const anomalyReport = await reportRes.json();
+
+                                    renderAnomalyResults(anomalyReport, anomalyResultPath);
+                                    showAnomalyResultModal(anomalyReport, anomalyResultPath);
+                                    layui.layer.msg(`异常检测完成，共识别 ${(anomalyReport.anomaly_subregions || []).length} 个异常子区域`, {icon: 1});
+                                }
+                            } catch (e) { console.warn("轮询异常：", e); }
+                        }, 3000);
+                    } catch (err) {
+                        layui.layer.closeAll();
+                        layui.layer.msg('异常检测失败：' + err.message, {icon: 2});
+                    } finally { this.disabled = false; }
+                };
+            }, 100);
+        });
+    });
+}
+
+async function getRegionPlots(region) {
+    if (regionPlotCache[region]) return regionPlotCache[region];
+    const res = await fetch(`${API_URL}?region=${encodeURIComponent(region)}`, { headers: { token } });
+    const plots = await res.json();
+    regionPlotCache[region] = plots;
+    return plots;
+}
+
+function clearAnomalyEntities() {
+    abnormalEntities.forEach(e => viewer.entities.remove(e));
+    abnormalEntities = [];
+}
+
+/* ========================
+   10. 渲染异常结果 (Cesium)
+======================== */
+function renderAnomalyResults(anomalyReport, resultPath) {
+    clearAnomalyEntities();
+    const anomalySubregions = anomalyReport.anomaly_subregions || [];
+    if (!Array.isArray(anomalySubregions) || anomalySubregions.length === 0) return;
+
+    anomalySubregions.forEach(item => {
+        const lat = item.centroid?.[0];
+        const lng = item.centroid?.[1];
+        if (!lat || !lng) return;
+
+        let markerColor = '#F56C6C';
+        if (item.ndvi_grade_label === '中度干旱') markerColor = '#E6A23C';
+        if (item.ndvi_grade_label === '轻度干旱（预警）') markerColor = '#409EFF';
+        if (item.ndvi_grade_label === '病虫害/长势异常') markerColor = '#9C27B0';
+        if (item.ndvi_grade_label === '已收割/无植被') markerColor = '#67C23A';
+        if (item.anomaly_category === '积水/水渍') markerColor = '#8ea4a4';
+
+        const entity = viewer.entities.add({
+            position: Cesium.Cartesian3.fromDegrees(lng, lat),
+            billboard: {
+                image: createCircleCanvas(markerColor, 14),
+                width: 14, height: 14,
+                verticalOrigin: Cesium.VerticalOrigin.CENTER,
+                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+            },
+            label: {
+                text: item.plot_name || '',
+                font: '11px sans-serif',
+                style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                outlineWidth: 2,
+                verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                pixelOffset: new Cesium.Cartesian2(0, -10),
+                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+                showBackground: true,
+                backgroundColor: Cesium.Color.fromCssColorString('rgba(0,0,0,0.6)')
+            },
+            description: `<div style="font-size:13px;line-height:1.6;">
+                <b>地块名称:</b> ${item.plot_name || '未知'}<br>
+                <b>子区域ID:</b> ${item.subregion_id || ''}<br>
+                <b>检测日期:</b> ${item.date || '未知'}<br>
+                <b>异常等级:</b> <span style="color:${markerColor};">${item.ndvi_grade_label || '未知'}</span><br>
+                <b>异常类型:</b> ${item.anomaly_category || '未知'}<br>
+                <b>NDVI均值:</b> ${item.mean_ndvi || 0}<br>
+                <b>面积:</b> ${(item.area_m2 / 666.67).toFixed(2)} 亩<br>
+                <b>优先级:</b> ${item.priority || 0}<br>
+                ${item.plot_id && item.date ? `<button onclick="viewAnomalyImage('${resultPath}/visualReports/subregion_anomaly_map_${item.plot_id}_${item.date}.png','${item.plot_name || ''}')" style="margin-top:6px;padding:4px 10px;background:#1E88E5;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;">查看异常图</button>` : ''}
+            </div>`,
+            anomalyData: item
+        });
+        abnormalEntities.push(entity);
+    });
+
+    // 定位到异常区域
+    if (abnormalEntities.length > 0) {
+        const positions = abnormalEntities.map(e => e.position.getValue(Cesium.JulianDate.now())).filter(Boolean);
+        const boundingSphere = Cesium.BoundingSphere.fromPoints(positions);
+        viewer.camera.flyToBoundingSphere(boundingSphere, { duration: 1.5, offset: new Cesium.HeadingPitchRange(0, -0.5, 0) });
+    }
+}
+
+function createCircleCanvas(color, size) {
+    const canvas = document.createElement('canvas');
+    canvas.width = size; canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    ctx.beginPath();
+    ctx.arc(size/2, size/2, size/2 - 1, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    return canvas.toDataURL();
+}
+
+/* ========================
+   11. 异常结果弹窗
+======================== */
+function showAnomalyResultModal(anomalyReport, resultPath) {
+    layui.use('layer', function() {
+        const layer = layui.layer;
+        const staticBaseUrl = 'http://123.56.228.32:8000/static';
+        const reportInfo = anomalyReport.report_info || {};
+        const visualReportUrl = reportInfo.visual_report_dir ? reportInfo.visual_report_dir.replace('/www/wwwroot/api/static', staticBaseUrl) : '';
+
+        let modalContent = `
+        <div style="padding:20px;height:700px;display:flex;flex-direction:column;gap:16px;overflow:hidden;">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;flex-shrink:0;">
+                <div style="background:#e8f4f8;padding:12px;border-radius:8px;text-align:center;">
+                    <div style="font-size:12px;color:#666;">总异常数</div>
+                    <div style="font-size:24px;font-weight:bold;color:#F56C6C;">${anomalyReport.total_anomaly_count || 0}</div>
+                </div>
+                <div style="background:#f0f8fb;padding:12px;border-radius:8px;text-align:center;">
+                    <div style="font-size:12px;color:#666;">生成时间</div>
+                    <div style="font-size:14px;color:#333;">${reportInfo.generate_time || '-'}</div>
+                </div>
+                <div style="background:#f5fafe;padding:12px;border-radius:8px;text-align:center;">
+                    <div style="font-size:12px;color:#666;">总地块数</div>
+                    <div style="font-size:20px;font-weight:bold;color:#1E88E5;">${reportInfo.total_plots || 0}</div>
+                </div>
+                <div style="background:#fdf2f8;padding:12px;border-radius:8px;text-align:center;">
+                    <div style="font-size:12px;color:#666;">总子区域数</div>
+                    <div style="font-size:20px;font-weight:bold;color:#9C27B0;">${reportInfo.total_subregions || 0}</div>
+                </div>
+            </div>
+            <div style="height:200px;flex-shrink:0;border:1px solid #EBEEF5;border-radius:8px;padding:8px;">
+                <div id="anomalyStatsChart" style="width:100%;height:100%;"></div>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:8px;overflow:hidden;">
+                <div style="display:flex;gap:8px;flex-shrink:0;">
+                    <input type="text" id="anomalySearchInput" placeholder="搜索地块/异常类型" style="flex:1;padding:8px;border:1px solid #EBEEF5;border-radius:6px;font-size:13px;">
+                    <select id="anomalyTypeFilter" style="padding:8px;border:1px solid #EBEEF5;border-radius:6px;font-size:13px;">
+                        <option value="">全部异常类型</option>
+                        ${[...new Set((anomalyReport.anomaly_subregions || []).map(i => i.anomaly_category).filter(Boolean))].map(t => `<option value="${t}">${t}</option>`).join('')}
+                    </select>
+                </div>
+                <div id="anomalySubregionList" style="flex:1;overflow-y:auto;border:1px solid #EBEEF5;border-radius:8px;padding:8px;">
+                    ${(anomalyReport.anomaly_subregions || []).map((item, index) => `
+                        <div class="anomaly-subregion-item" data-index="${index}" data-type="${item.anomaly_category || ''}" data-plot="${item.plot_name || ''}"
+                             style="padding:12px;margin-bottom:8px;border-radius:6px;background:#F5F7FA;cursor:pointer;transition:background 0.2s;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                                <span style="font-weight:500;color:#333;">${item.plot_name || '未知'} (子区域${item.subregion_id})</span>
+                                <span style="padding:2px 8px;border-radius:4px;font-size:12px;
+                                    ${item.ndvi_grade_label === '重度干旱' ? 'background:#FDE2E2;color:#F56C6C;' :
+                                    item.ndvi_grade_label === '中度干旱' ? 'background:#FEF3C7;color:#E6A23C;' :
+                                    'background:#E1F5FE;color:#409EFF;'}">${item.ndvi_grade_label || '未知'}</span>
+                            </div>
+                            <div style="font-size:12px;color:#666;line-height:1.5;">
+                                <div>异常类型：${item.anomaly_category || '未知'}</div>
+                                <div>NDVI均值：${item.mean_ndvi || 0} | 面积：${(item.area_m2 / 666.67).toFixed(2)}亩 | 优先级：${item.priority || 0}</div>
+                                <div style="margin-top:4px;">
+                                    <button class="view-img-btn" data-img-path="${visualReportUrl}/subregion_anomaly_map_${item.plot_id}_${item.date}.png"
+                                        style="padding:3px 8px;background:#1E88E5;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:12px;">查看可视化图</button>
+                                    <button class="ai-explain-btn" data-index="${index}"
+                                        style="padding:3px 8px;background:#667eea;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:12px;margin-left:4px;">AI 解释</button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                    ${(anomalyReport.anomaly_subregions || []).length === 0 ? '<div style="text-align:center;color:#909399;padding:20px;">暂无异常子区域数据</div>' : ''}
+                </div>
+            </div>
+        </div>`;
+
+        layer.open({
+            type: 1, title: '巡田最终工单详情', area: ['90%', '80%'],
+            content: modalContent, shade: 0.3, maxmin: true, resize: true,
+            btn: ['导出工单JSON', '关闭'], btnAlign: 'r',
+            yes: function() {
+                const blob = new Blob([JSON.stringify(anomalyReport, null, 2)], {type: 'application/json'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `巡田工单_${reportInfo.generate_time ? reportInfo.generate_time.replace(/\s|:/g, '_') : Date.now()}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+        });
+
+        setTimeout(() => {
+            // ECharts 饼图
+            const chartDom = document.getElementById('anomalyStatsChart');
+            if (chartDom) {
+                const myChart = echarts.init(chartDom);
+                const stats = anomalyReport.ndvi_grade_stats || {};
+                const chartData = [
+                    { name: '重度干旱', value: stats['重度干旱'] || 0 },
+                    { name: '中度干旱', value: stats['中度干旱'] || 0 },
+                    { name: '轻度干旱（预警）', value: stats['轻度干旱（预警）'] || 0 },
+                    { name: '病虫害/长势异常', value: stats['病虫害/长势异常'] || 0 },
+                    { name: '积水/水渍', value: stats['积水/水渍'] || 0 },
+                    { name: '已收割/无植被', value: stats['已收割/无植被'] || 0 }
+                ].filter(i => i.value > 0);
+                myChart.setOption({
+                    tooltip: { trigger: 'item' },
+                    legend: { orient: 'vertical', right: 30, top: 'middle', textStyle: { fontSize: 12 } },
+                    series: [{
+                        name: '异常等级分布', type: 'pie', radius: ['40%', '70%'], data: chartData,
+                        label: { fontSize: 12, formatter: '{b}: {c} ({d}%)' },
+                        itemStyle: { color: function(p) {
+                            const m = {'重度干旱':'#F56C6C','中度干旱':'#E6A23C','轻度干旱（预警）':'#409EFF','病虫害/长势异常':'#9C27B0','已收割/无植被':'#67C23A','积水/水渍':'#8ea4a4'};
+                            return m[p.name] || '#888';
+                        }}
+                    }]
+                });
+                window.addEventListener('resize', () => myChart.resize());
+            }
+
+            // 列表筛选
+            const searchInput = document.getElementById('anomalySearchInput');
+            const typeFilter = document.getElementById('anomalyTypeFilter');
+            const listItems = document.querySelectorAll('.anomaly-subregion-item');
+
+            function filterList() {
+                const key = searchInput.value.toLowerCase().trim();
+                const type = typeFilter.value;
+                listItems.forEach(item => {
+                    const plot = (item.dataset.plot || '').toLowerCase();
+                    const atype = item.dataset.type || '';
+                    item.style.display = ((!key || plot.includes(key) || atype.toLowerCase().includes(key)) && (!type || atype === type)) ? 'block' : 'none';
+                });
+            }
+            searchInput.addEventListener('input', filterList);
+            typeFilter.addEventListener('change', filterList);
+
+            // 列表项点击定位
+            listItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('view-img-btn') || e.target.classList.contains('ai-explain-btn')) return;
+                    const idx = item.getAttribute('data-index');
+                    const sub = anomalyReport.anomaly_subregions[idx];
+                    if (sub?.centroid) {
+                        viewer.camera.flyTo({ destination: Cesium.Cartesian3.fromDegrees(sub.centroid[1], sub.centroid[0], 500), duration: 1.5 });
+                    }
+                });
+            });
+
+            // 查看可视化图
+            document.querySelectorAll('.view-img-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    viewAnomalyImage(btn.getAttribute('data-img-path'), '异常可视化图');
+                });
+            });
+
+            // AI 解释按钮
+            document.querySelectorAll('.ai-explain-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const idx = btn.getAttribute('data-index');
+                    const sub = anomalyReport.anomaly_subregions[idx];
+                    if (sub) callAiExplain(sub);
+                });
+            });
+        }, 300);
+    });
+}
+
+window.viewAnomalyImage = function(imgPath, plotName) {
+    layui.layer.open({
+        type: 1, title: `${plotName} - 异常可视化图`, area: ['80%', '80%'],
+        content: `<div style="text-align:center;padding:20px;"><img src="${imgPath}" style="max-width:100%;max-height:100%;" alt="${plotName}"></div>`,
+        shade: 0.5
+    });
+}
+
+async function callAiExplain(subregion) {
+    layui.layer.msg('正在调用 AI 分析...', {icon: 16, shade: 0.3, time: 0});
+    try {
+        const res = await fetch('http://localhost:8080/admin/ai/explain', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'token': token },
+            body: JSON.stringify({
+                plot: subregion.plot_name, date: subregion.date,
+                anomaly_type: subregion.anomaly_category, anomaly_category: subregion.anomaly_category,
+                mean_ndvi: subregion.mean_ndvi, delta_ndvi: subregion.delta_ndvi,
+                mean_evi: subregion.mean_evi, mean_savi: subregion.mean_savi, mean_ndwi: subregion.mean_ndwi,
+                area_m2: subregion.area_m2, priority: subregion.priority, severity: subregion.severity
+            })
+        });
+        const result = await res.json();
+        layui.layer.closeAll();
+        if (result.code === 1) {
+            layui.layer.open({
+                type: 1, title: 'AI 异常解释', area: ['600px', '400px'],
+                content: `<div style="padding:20px;line-height:1.8;font-size:14px;white-space:pre-wrap;">${result.data}</div>`
+            });
+        } else {
+            layui.layer.msg(result.msg || 'AI 解释失败', {icon: 2});
+        }
+    } catch (err) {
+        layui.layer.closeAll();
+        layui.layer.msg('AI 解释请求失败：' + err.message, {icon: 2});
+    }
+}
+
+/* ========================
+   12. 历史工单
+======================== */
+function initHistoryReport() {
+    document.getElementById("historyReportBtn").addEventListener("click", async () => {
+        try {
+            const res = await fetch(`${FLASK_URL}/xuntian/reports`);
+            if (!res.ok) throw new Error('请求失败');
+            const reportList = await res.json();
+            openHistoryReportLayer(reportList);
+        } catch (err) {
+            layui.layer.msg('获取历史工单失败', {icon: 2});
+        }
+    });
+}
+
+function openHistoryReportLayer(reportList) {
+    let tableHtml = '<table class="layui-table" lay-skin="line"><thead><tr><th>生成时间</th><th>异常数量</th><th>操作</th></tr></thead><tbody>';
+    reportList.forEach(r => {
+        tableHtml += `<tr><td>${r.generate_time}</td><td>${r.total_anomaly_count}</td>
+            <td><button class="layui-btn layui-btn-xs layui-btn-normal" onclick="viewReportDetail('${r.report_url}','${r.base_path}')">查看</button></td></tr>`;
+    });
+    tableHtml += '</tbody></table>';
+    layui.layer.open({
+        type: 1, title: '历史巡田工单', area: ['600px', '400px'],
+        shadeClose: true, content: `<div style="padding:15px">${tableHtml}</div>`
+    });
+}
+
+window.viewReportDetail = async function(reportUrl, basePath) {
+    try {
+        layui.layer.load(1, { shade: 0.3 });
+        const res = await fetch(`${FLASK_URL}/xuntian/report/detail?path=${encodeURIComponent(reportUrl)}`);
+        if (!res.ok) throw new Error('工单读取失败');
+        const anomalyReport = await res.json();
+        layui.layer.closeAll('loading');
+
+        window.currentReportBasePath = basePath;
+        currentHistoryReport = anomalyReport;
+        const anomalySubregions = anomalyReport.anomaly_subregions || [];
+        currentHistoryPoints = anomalySubregions
+            .filter(r => Array.isArray(r.centroid) && r.centroid.length === 2)
+            .map(r => ({ lat: r.centroid[0], lng: r.centroid[1], plotId: r.plot_id, plotName: r.plot_name }));
+
+        renderAnomalyResults(anomalyReport, basePath);
+        showAnomalyResultModal(anomalyReport, basePath);
+    } catch (err) {
+        layui.layer.closeAll('loading');
+        layui.layer.msg('加载历史工单失败：' + err.message, {icon: 2});
+    }
+}
+
+/* ========================
+   13. 路径规划
+======================== */
+function initRoutePlanning() {
+    document.getElementById("generatePath").addEventListener("click", async () => {
+        if (!currentHistoryReport) { layui.layer.msg('请先加载一个历史工单', {icon: 0}); return; }
+        if (currentHistoryPoints.length < 2) { layui.layer.msg('异常点不足（至少需要2个）', {icon: 0}); return; }
+
+        let report_path = '';
+        if (currentHistoryReport?.report_info?.report_json_path) {
+            report_path = currentHistoryReport.report_info.report_json_path;
+            const basePath = window.currentReportBasePath || '';
+            const timeMatch = basePath.match(/reports_(\d{8}_\d{6})/);
+            if (timeMatch && timeMatch[1]) report_path = report_path.replace(/巡田最终工单_\d+\.json/, `巡田最终工单_${timeMatch[1]}.json`);
+        } else if (window.currentReportBasePath) {
+            const timeMatch = window.currentReportBasePath.match(/reports_(\d{8}_\d{6})/);
+            const targetTime = timeMatch ? timeMatch[1] : new Date().toISOString().replace(/[-:\.T]/g, '').slice(0, 14);
+            report_path = `${window.currentReportBasePath}/巡田最终工单_${targetTime}.json`;
+        } else { layui.layer.msg('无法获取工单路径', {icon: 0}); return; }
+
+        const btn = document.getElementById("generatePath");
+        const originText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> 生成中...';
+        btn.disabled = true;
+
+        try {
+            layui.layer.msg('正在生成巡田路径...', {icon: 16, shade: 0.3, time: 0});
+            const res = await fetch(`${FLASK_URL}/xuntian/patrol/plan`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "token": token || "" },
+                body: JSON.stringify({ report_path, enable_2opt: true })
+            });
+            const responseData = await res.json();
+            if (!res.ok || responseData.status !== "success") throw new Error(responseData.message || "路径规划失败");
+
+            clearPatrolPath();
+
+            const geojsonUrl = responseData.data.geojson;
+            const routeGeoJSON = await (await fetch(geojsonUrl)).json();
+            const coords = routeGeoJSON.features[0].geometry.coordinates;
+            currentRouteCoords = coords;
+
+            const positions = coords.map(c => Cesium.Cartesian3.fromDegrees(c[0], c[1]));
+            const plotCount = responseData.data.plot_count || 0;
+            const pointCount = responseData.data.point_count || 0;
+            const routeLength = (responseData.data.route_length_m / 1000).toFixed(2);
+            const visualizationUrl = encodeURI(responseData.data.visualization);
+            const geojsonPath = encodeURI(geojsonUrl);
+            const evaluationUrl = encodeURI(responseData.data.evaluation);
+
+            patrolPathEntity = viewer.entities.add({
+                polyline: {
+                    positions: positions, width: 4,
+                    material: new Cesium.PolylineDashMaterialProperty({ color: Cesium.Color.fromCssColorString('#1E88E5'), dashLength: 16 }),
+                    clampToGround: true
+                },
+                description: `<div style="font-size:13px;line-height:1.8;">
+                    <b>巡田路径规划结果</b><br>
+                    <b>地块数量：</b>${plotCount}<br>
+                    <b>异常点数：</b>${pointCount}<br>
+                    <b>路径总长：</b>${routeLength} 公里<br>
+                    <b>优化算法：</b>2-opt<br>
+                    <button onclick="viewPathVisual('${visualizationUrl}')" style="padding:4px 8px;background:#1E88E5;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:12px;margin-top:4px;">查看路径图</button>
+                    <button onclick="downloadPathGeoJSON('${geojsonPath}')" style="padding:4px 8px;background:#67C23A;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:12px;margin-left:4px;">下载GeoJSON</button>
+                    <button onclick="showEvaluationModal('${evaluationUrl}')" style="padding:4px 8px;background:#E6A23C;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:12px;margin-left:4px;">查看评估</button>
+                </div>`
+            });
+
+            // 起止标记
+            [0, coords.length - 1].forEach(idx => {
+                const c = coords[idx];
+                const isStart = idx === 0;
+                const label = isStart ? '起' : '终';
+                const bg = isStart ? '#2ECC71' : '#E74C3C';
+                const entity = viewer.entities.add({
+                    position: Cesium.Cartesian3.fromDegrees(c[0], c[1]),
+                    billboard: {
+                        image: createLabelCircle(label, bg),
+                        width: 26, height: 26,
+                        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                    },
+                    label: {
+                        text: isStart ? '路径起点' : '路径终点',
+                        font: '12px sans-serif',
+                        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                        pixelOffset: new Cesium.Cartesian2(0, -16),
+                        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                    }
+                });
+                patrolPointEntities.push(entity);
+            });
+
+            // 定位到路径
+            const boundingSphere = Cesium.BoundingSphere.fromPoints(positions);
+            viewer.camera.flyToBoundingSphere(boundingSphere, { duration: 1.5, offset: new Cesium.HeadingPitchRange(0, -0.5, 0) });
+
+            layui.layer.closeAll();
+            layui.layer.msg(`巡田路径生成完成（${routeLength} 公里）`, {icon: 1});
+        } catch (err) {
+            layui.layer.closeAll();
+            layui.layer.msg('路径生成失败：' + err.message, {icon: 2});
+        } finally {
+            btn.innerHTML = originText;
+            btn.disabled = false;
+        }
+    });
+}
+
+function createLabelCircle(text, bgColor) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 26; canvas.height = 26;
+    const ctx = canvas.getContext('2d');
+    ctx.beginPath();
+    ctx.arc(13, 13, 12, 0, Math.PI * 2);
+    ctx.fillStyle = bgColor;
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, 13, 13);
+    return canvas.toDataURL();
+}
+
+function clearPatrolPath() {
+    if (patrolPathEntity) { viewer.entities.remove(patrolPathEntity); patrolPathEntity = null; }
+    patrolPointEntities.forEach(e => viewer.entities.remove(e));
+    patrolPointEntities = [];
+    currentRouteCoords = null;
+}
+
+window.viewPathVisual = function(url) {
+    layui.layer.open({
+        type: 1, title: '路径可视化图', area: ['700px', '500px'],
+        content: `<div style="width:100%;height:100%;display:flex;justify-content:center;align-items:center;"><img src="${url}" style="max-width:100%;max-height:100%;"></div>`
+    });
+}
+
+window.downloadPathGeoJSON = async function(geojsonUrl) {
+    try {
+        const res = await fetch(geojsonUrl, { headers: { "token": token || "" } });
+        const data = await res.json();
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = `巡田路径_${Date.now()}.geojson`; a.click();
+        URL.revokeObjectURL(url);
+    } catch (err) { layui.layer.msg('下载失败', {icon: 2}); }
+}
+
+window.showEvaluationModal = function(url) {
+    fetch(url).then(r => r.json()).then(data => {
+        layui.layer.open({
+            type: 1, title: '巡田路径评估结果', area: ['500px', '400px'],
+            content: `<div style="padding:15px;"><pre style="max-height:300px;overflow:auto;background:#f5f5f5;padding:10px;border-radius:4px;">${JSON.stringify(data, null, 2)}</pre></div>`
+        });
+    }).catch(() => layui.layer.msg('获取评估结果失败', {icon: 2}));
+}
+
+/* ========================
+   14. 导出路径
+======================== */
+function initExportPath() {
+    document.getElementById("exportPath").addEventListener("click", () => {
+        if (!currentRouteCoords) { layui.layer.msg('请先生成巡田路径', {icon: 0}); return; }
+        const geojson = {
+            type: "FeatureCollection",
+            features: [{ type: "Feature", geometry: { type: "LineString", coordinates: currentRouteCoords }, properties: {} }]
+        };
+        const blob = new Blob([JSON.stringify({ type: "巡田路径规划结果", exportTime: new Date().toLocaleString(), data: geojson }, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = `巡田路径_${Date.now()}.geojson`; a.click();
+        URL.revokeObjectURL(url);
+        layui.layer.msg('导出成功', {icon: 1});
+    });
+}
+
+/* ========================
+   15. AI Chat
+======================== */
+function initAiChat() {
+    const toggle = document.getElementById("aiChatToggle");
+    const panel = document.getElementById("aiChatPanel");
+    const closeBtn = document.getElementById("aiChatClose");
+    const sendBtn = document.getElementById("aiChatSend");
+    const input = document.getElementById("aiChatInput");
+    const messages = document.getElementById("aiChatMessages");
+
+    let chatSessionId = 'session_' + Date.now();
+
+    if (typeof marked !== 'undefined') { marked.setOptions({ breaks: true, gfm: true }); }
+
+    function renderMarkdown(text) {
+        if (typeof marked === 'undefined') return text;
+        var clean = text.replace(/\n{2,}/g, '\n\n');
+        return marked.parse(clean);
+    }
+
+    function fixLinks(container) {
+        container.querySelectorAll('a').forEach(function(a) {
+            a.setAttribute('target', '_blank');
+            a.setAttribute('rel', 'noopener noreferrer');
+        });
+    }
+
+    toggle.onclick = () => {
+        panel.classList.toggle("hidden");
+        toggle.style.animation = panel.classList.contains('hidden') ? '' : 'none';
+    };
+    closeBtn.onclick = () => panel.classList.add("hidden");
+
+    const fsBtn = document.getElementById("aiChatFullscreen");
+    fsBtn.onclick = () => {
+        panel.classList.toggle('fullscreen');
+        fsBtn.querySelector('i').className = panel.classList.contains('fullscreen') ? 'fa fa-compress' : 'fa fa-expand';
+    };
+
+    sendBtn.onclick = () => sendChatMessage();
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChatMessage(); } });
+
+    async function sendChatMessage() {
+        const msg = input.value.trim();
+        if (!msg) return;
+        input.value = '';
+
+        appendMessage('user', msg);
+        const responseDiv = appendMessage('assistant', '', true);
+
+        try {
+            const res = await fetch('http://localhost:8080/admin/ai/chat/stream', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'token': token },
+                body: JSON.stringify({ sessionId: chatSessionId, message: msg })
+            });
+
+            if (!res.ok) {
+                const errText = await res.text();
+                responseDiv.textContent = '请求失败 (' + res.status + '): ' + errText;
+                responseDiv.classList.remove('streaming-cursor');
                 return;
             }
 
-            // 👉 Cesium加载
-            results.success.forEach(item => {
-                const bounds = item.bounds;
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            let accumulatedMarkdown = '';
+            let chainPanel = null, chainBody = null, currentStepDiv = null;
 
-                const rectangle = Cesium.Rectangle.fromDegrees(
-                    bounds[0][1], // west
-                    bounds[0][0], // south
-                    bounds[1][1], // east
-                    bounds[1][0]  // north
-                );
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop();
 
-                const layer = viewer.imageryLayers.addImageryProvider(
-                    new Cesium.SingleTileImageryProvider({
-                        url: item.png_url,
-                        rectangle: rectangle
-                    })
-                );
-
-                ndviLayers.push(layer);
-            });
-
-            console.log("NDVI加载完成");
-
-        } catch (err) {
-            console.error("NDVI加载失败", err);
-            alert("NDVI加载失败");
-        }
-    });
-
-    /* ========================
-       NDVI：移除
-    ======================== */
-    removeNdviBtn.addEventListener("click", () => {
-        removeAllNdviLayers();
-        currentNdviTime = null;
-        timeSelect.value = "";
-    });
-
-    /* ========================
-       NDVI：工具函数
-    ======================== */
-    function removeAllNdviLayers() {
-        ndviLayers.forEach(layer => {
-            viewer.imageryLayers.remove(layer);
-        });
-        ndviLayers = [];
-    }
-
-    /* ========================
-       ⚠️ 必须补一个函数（你后端用的）
-    ======================== */
-    // 转换地块数据格式
-    function transformPlotsForNdviCut(rawPlots, dateStr) {
-        const plots = rawPlots.map(item => {
-            let polygonObj;
-            try {
-                polygonObj = typeof item.coordinates === 'string' ? JSON.parse(item.coordinates) : item.coordinates;
-            } catch (e) {
-                console.warn(`地块 ${item.plotName} 坐标解析失败`, e);
-                polygonObj = null;
+                for (const line of lines) {
+                    const trimmed = line.trim();
+                    if (!trimmed.startsWith('data:')) continue;
+                    try {
+                        const data = JSON.parse(trimmed.substring(trimmed.indexOf(':') + 1));
+                        if (data.type === 'step') {
+                            if (!chainPanel) {
+                                chainPanel = document.createElement('div');
+                                chainPanel.className = 'chain-panel';
+                                const header = document.createElement('div');
+                                header.className = 'chain-header';
+                                header.innerHTML = '<span class="arrow">&#9660;</span> Agent 过程';
+                                header.onclick = () => {
+                                    header.classList.toggle('collapsed');
+                                    chainBody.classList.toggle('hidden');
+                                };
+                                chainBody = document.createElement('div');
+                                chainBody.className = 'chain-body';
+                                chainPanel.appendChild(header);
+                                chainPanel.appendChild(chainBody);
+                                messages.insertBefore(chainPanel, responseDiv.parentElement);
+                            }
+                            currentStepDiv = document.createElement('div');
+                            currentStepDiv.className = 'chain-step';
+                            currentStepDiv.innerHTML = `<div class="chain-step-label">步骤 ${data.step}</div>`;
+                            chainBody.appendChild(currentStepDiv);
+                            messages.scrollTop = messages.scrollHeight;
+                        } else if (data.type === 'thought') {
+                            if (currentStepDiv) {
+                                const thoughtDiv = document.createElement('div');
+                                thoughtDiv.className = 'chain-thought';
+                                thoughtDiv.textContent = data.content || '';
+                                currentStepDiv.appendChild(thoughtDiv);
+                                messages.scrollTop = messages.scrollHeight;
+                            }
+                        } else if (data.type === 'token') {
+                            accumulatedMarkdown += data.content;
+                            if (typeof marked !== 'undefined') {
+                                responseDiv.innerHTML = renderMarkdown(accumulatedMarkdown);
+                                fixLinks(responseDiv);
+                            } else {
+                                responseDiv.textContent = accumulatedMarkdown;
+                            }
+                            messages.scrollTop = messages.scrollHeight;
+                        } else if (data.type === 'tool_start') {
+                            if (currentStepDiv) {
+                                const actionDiv = document.createElement('div');
+                                actionDiv.className = 'chain-action';
+                                actionDiv.innerHTML = `<span class="spinner">&#8635;</span> ${data.tool_name || ''}`;
+                                actionDiv.id = 'action-' + data.tool_name;
+                                currentStepDiv.appendChild(actionDiv);
+                            }
+                            messages.scrollTop = messages.scrollHeight;
+                        } else if (data.type === 'tool_result') {
+                            if (currentStepDiv) {
+                                const actionEl = currentStepDiv.querySelector('#action-' + data.tool_name);
+                                if (actionEl) {
+                                    const spinner = actionEl.querySelector('.spinner');
+                                    if (spinner) spinner.remove();
+                                }
+                                if (data.result_preview) {
+                                    const obsDiv = document.createElement('div');
+                                    obsDiv.className = 'chain-observation';
+                                    obsDiv.textContent = data.result_preview;
+                                    currentStepDiv.appendChild(obsDiv);
+                                }
+                            }
+                            messages.scrollTop = messages.scrollHeight;
+                        } else if (data.type === 'done') {
+                            responseDiv.classList.remove('streaming-cursor');
+                            if (chainPanel && chainBody) {
+                                setTimeout(() => {
+                                    const header = chainPanel.querySelector('.chain-header');
+                                    if (header) header.classList.add('collapsed');
+                                    chainBody.classList.add('hidden');
+                                }, 3000);
+                            }
+                        }
+                    } catch (e) { console.warn('SSE parse error:', e, trimmed); }
+                }
             }
-            return {
-                plotId: item.id,
-                plotname: item.plotName,
-                polygon: polygonObj
-            };
-        }).filter(p => p.polygon);
-
-        return {date: dateStr, plots};
+            responseDiv.classList.remove('streaming-cursor');
+        } catch (err) {
+            responseDiv.textContent = '错误: ' + err.message;
+            responseDiv.classList.remove('streaming-cursor');
+        }
+        messages.scrollTop = messages.scrollHeight;
     }
 
+    function appendMessage(role, content, isStreaming) {
+        const div = document.createElement('div');
+        div.className = `chat-msg ${role}`;
+        const bubble = document.createElement('div');
+        bubble.className = 'chat-bubble';
+        if (isStreaming) {
+            bubble.classList.add('streaming-cursor');
+        } else {
+            if (typeof marked !== 'undefined' && role === 'assistant') {
+                bubble.innerHTML = renderMarkdown(content);
+                fixLinks(bubble);
+            } else {
+                bubble.textContent = content;
+            }
+        }
+        div.appendChild(bubble);
+        messages.appendChild(div);
+        messages.scrollTop = messages.scrollHeight;
+        return bubble;
+    }
+}
+
+/* ========================
+   16. 工具函数
+======================== */
+function showCustomMsg(text, duration) {
+    layui.layer.msg(text, { icon: 0, time: duration || 3000 });
+}
 </script>
 </body>
 </html>
