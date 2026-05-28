@@ -1,0 +1,37 @@
+<!doctype html>
+<html class="no-js">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>plotty.js</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width">
+
+    <link rel="stylesheet" href="styles/main.css" />
+
+    <link href='https://fonts.googleapis.com/css?family=Droid+Sans' rel='stylesheet' type='text/css'>
+  </head>
+  <body>
+    <div> <h1>plotty.js</h1> </div>
+    <canvas id="canvas" style="height: 90%; width: 50%;" width="500" height="500"></canvas>
+    <div id="controls">
+      <input type="file" id="files" name="files[]" multiple />
+      <output id="list"></output>
+      <span style="width:100%; margin-bottom: 2em;">
+        <select style="width:100%;" id="colorscaleselect"></select>
+      </span>
+      <br/>
+      <span style="width:49%;"><input id="min" type="range"/><label for="min" id="min_label"></label></span>
+      <span style="width:49%;"><input id="max" type="range"/><label for="max" id="max_label"></label></span><br/>
+      <span style="margin-top:3em;"><div id="measurevalue"></div></span>
+      <div id="colorscale" style="width:200px;height:20px;"></div>
+      <span style="width:49%;"><input id="clamp_low" type="checkbox"/><label for="min" id="min_label">Clamp Low</label></span>
+      <span style="width:49%;"><input id="clamp_high" type="checkbox"/><label for="min" id="min_label">Clamp High</label></span>
+      <canvas id="histogram" width="500" height="100"></canvas>
+    </div>
+
+    <script type="text/javascript" src="/budo/livereload.js" async="" defer=""></script>
+    <script src="plotty.js"></script>
+    <script src="scripts/main.js"></script>
+  </body>
+</html>
