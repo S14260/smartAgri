@@ -2,8 +2,8 @@ spring:
 #  jpa:
 #    database-platform: org.hibernate.dialect.MySQL8Dialect
   datasource:
-    username: root
-    password: root
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
     url: jdbc:mysql://localhost:3306/mydb?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&useSSL=false&serverTimezone=GMT
     driver-class-name: com.mysql.cj.jdbc.Driver
 
@@ -14,25 +14,25 @@ spring:
 server:
   port: 8080
 amap:
-  key: 9c7f97e95b93948af40ddab4871ffa18
+  key: ${AMAP_KEY:your_amap_key_here}
 
 
 jwt:
   # 设置jwt签名加密时使用的秘钥
-  admin-secret-key: smartArgAdmin
+  admin-secret-key: ${JWT_ADMIN_SECRET:your_admin_secret_here}
   # 设置jwt过期时间 2小时
   admin-ttl: 7200000
   # 设置前端传递过来的令牌名称
   admin-token-name: token
   # 设置jwt签名加密时使用的秘钥
-  user-secret-key: smartArgUser
+  user-secret-key: ${JWT_USER_SECRET:your_user_secret_here}
   # 设置jwt过期时间 2小时
   user-ttl: 7200000
   # 设置前端传递过来的令牌名称
   user-token-name: authentication
 
 llm:
-  api-key: ${LLM_API_KEY:sk-2f9d0b63be8b4b428f3b04c2d61a7211}
+  api-key: ${LLM_API_KEY:your_llm_api_key_here}
   base-url: ${LLM_BASE_URL:https://api.deepseek.com}
   model: ${LLM_MODEL:deepseek-chat}
   chat-endpoint: /v1/chat/completions
