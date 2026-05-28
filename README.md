@@ -137,7 +137,7 @@ llm:
 java -jar target/smartAgr-0.0.1-SNAPSHOT.jar
 ```
 
-后端启动在 http://localhost:8080
+后端启动在 http://123.56.228.32:8080
 
 ### 4. 启动 Flask 微服务（可选）
 ```bash
@@ -149,7 +149,7 @@ python app.py
 Flask 服务启动在 http://localhost:8000
 
 ### 5. 访问系统
-- 打开 http://localhost:8080/
+- 打开 http://123.56.228.32:8080/
 - 默认管理员账号：`admin` / `admin`
 - 管理端入口：`/admin-index.html`
 - 用户端入口：`/user-index.html`

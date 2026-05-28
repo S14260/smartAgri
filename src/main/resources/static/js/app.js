@@ -137,7 +137,7 @@ function openPlotForm(poly) {
             const plotData = { name, lastCrop, currentCrop, contactPerson, phone, soilType, irrigationType, landType, shapeType: "polygon", coordinates, area };
 
             try {
-                const res = await fetch("http://localhost:8080/plots", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(plotData) });
+                const res = await fetch("http://123.56.228.32:8080/plots", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(plotData) });
                 if (!res.ok) throw new Error("请求失败");
                 const saved = await res.json();
                 popupWindow.close();

@@ -161,7 +161,7 @@
             console.log("收到修改地块数据：", updatedData);
 
             // 🔁 发起请求更新地块信息
-            fetch(`http://localhost:8080/user/plots/${updatedData.id}`, {
+            fetch(`http://123.56.228.32:8080/user/plots/${updatedData.id}`, {
                 method: "PUT",
                 headers: {
                     'Content-Type': 'application/json',

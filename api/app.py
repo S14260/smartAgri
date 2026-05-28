@@ -16,7 +16,7 @@ XUNTIAN_RESULT_BASE = 'http://123.56.228.32:8000';
 # ====== CORS 配置 ======
 CORS(app, supports_credentials=True, resources={
     r"/*": {
-        "origins": ["http://localhost:8080", "http://123.56.228.32:8080"],
+        "origins": ["http://123.56.228.32:8080", "http://123.56.228.32:8080"],
         "allow_headers": ["Content-Type", "Authorization", "token", "authentication"],
         "methods": ["GET", "POST", "OPTIONS"]
     }
