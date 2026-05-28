@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./mvnw compile *)",
+      "Bash(node *)",
+      "Bash(python3 -c \"import docx; print\\('ok'\\)\")",
+      "Bash(python -c \"import docx; print\\('ok'\\)\")",
+      "Bash(python3 -c ' *)",
+      "Bash(python -c ' *)",
+      "Bash(python3 *)",
+      "Bash(python *)",
+      "Bash(start *)",
+      "Bash(git reset *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
+    ]
+  }
+}
