@@ -1,97 +1,375 @@
 <!DOCTYPE html>
-<html class="x-admin-sm">
-    <head>
-        <meta charset="UTF-8">
-        <title>学生宿舍管理系统</title>
-        <meta name="renderer" content="webkit">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-        <meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8,target-densitydpi=low-dpi" />
-        <link rel="stylesheet" href="./css/font.css">
-        <link rel="stylesheet" href="./css/xadmin.css">
-        <script src="./lib/layui/layui.js" charset="utf-8"></script>
-        <script type="text/javascript" src="./js/xadmin.js"></script>
-        <!-- 让IE8/9支持媒体查询，从而兼容栅格 -->
-        <!--[if lt IE 9]>
-          <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
-          <script src="https://cdn.staticfile.org/respond.js/1.4.2/respond.min.js"></script>
-        <![endif]-->
-    </head>
-    <body>
-        <div class="layui-fluid">
-            <div class="layui-row layui-col-space15">
-                <div class="layui-col-md12">
-                    <div class="layui-card">
-                        <div class="layui-card-body ">
-                            <blockquote class="layui-elem-quote">欢迎管理员：
-                                <span class="x-red">test</span><span id="nowtime"></span>
-                            </blockquote>
-                        </div>
-                    </div>
-                </div>
-                <div class="layui-col-md12">
-                    <div class="layui-card">
-                        <div class="layui-card-header">数据统计</div>
-                        <div class="layui-card-body ">
-                            <ul class="layui-row layui-col-space10 layui-this x-admin-carousel x-admin-backlog">
-                                <li class="layui-col-md2 layui-col-xs6">
-                                    <a href="javascript:;" class="x-admin-backlog-body">
-                                        <h3>地块数</h3>
-                                        <p>
-                                            <cite id="student">1000</cite></p>
-                                    </a>
-                                </li>
-                                <li class="layui-col-md2 layui-col-xs6">
-                                    <a href="javascript:;" class="x-admin-backlog-body">
-                                        <h3>XXX</h3>
-                                        <p>
-                                            <cite>30</cite></p>
-                                    </a>
-                                </li>
-                                <li class="layui-col-md2 layui-col-xs6">
-                                    <a href="javascript:;" class="x-admin-backlog-body">
-                                        <h3>XXX</h3>
-                                        <p>
-                                            <cite>99</cite></p>
-                                    </a>
-                                </li>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>驾驶舱 — 农田智能监测平台</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./css/font.css">
+    <link rel="stylesheet" href="./css/design-tokens.css">
+    <link rel="stylesheet" href="./css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <script src="./js/jquery.min.js"></script>
+    <script src="./lib/echarts.min.js"></script>
+</head>
+<body>
+<div class="dashboard">
 
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <style id="welcome_style"></style>
+    <!-- 顶部欢迎区 -->
+    <div class="dashboard-welcome">
+        <div class="welcome-info">
+            <h2 id="welcomeUser">欢迎回来，管理员</h2>
+            <p>农田智能监测与巡田决策平台 · 数据概览</p>
+        </div>
+        <div class="welcome-time">
+            <div class="date" id="currentDate"></div>
+            <div id="currentTime"></div>
+        </div>
+    </div>
+
+    <!-- 统计卡片 -->
+    <div class="stat-cards">
+        <div class="stat-card">
+            <div class="card-icon blue"><i class="fa fa-map-marker"></i></div>
+            <div class="card-info">
+                <div class="number" id="statPlots">--</div>
+                <div class="label">地块总数</div>
             </div>
         </div>
+        <div class="stat-card">
+            <div class="card-icon green"><i class="fa fa-expand"></i></div>
+            <div class="card-info">
+                <div class="number" id="statArea">--</div>
+                <div class="label">总亩数</div>
+            </div>
         </div>
-    </body>
+        <div class="stat-card">
+            <div class="card-icon orange"><i class="fa fa-exclamation-triangle"></i></div>
+            <div class="card-info">
+                <div class="number" id="statAnomaly">--</div>
+                <div class="label">异常地块</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="card-icon purple"><i class="fa fa-tasks"></i></div>
+            <div class="card-info">
+                <div class="number" id="statReports">--</div>
+                <div class="label">巡田工单</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="card-icon cyan"><i class="fa fa-satellite"></i></div>
+            <div class="card-info">
+                <div class="number" id="statLatestImage">--</div>
+                <div class="label">遥感影像</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 图表区域 -->
+    <div class="chart-section">
+        <div class="chart-card">
+            <div class="chart-card-header">
+                <div class="title"><i class="fa fa-pie-chart"></i> 作物类型分布</div>
+            </div>
+            <div class="chart-card-body">
+                <div class="chart-container" id="chartCrop"></div>
+            </div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-card-header">
+                <div class="title"><i class="fa fa-bar-chart"></i> 地区地块分布</div>
+            </div>
+            <div class="chart-card-body">
+                <div class="chart-container" id="chartRegion"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部：快捷入口 + 最新工单 -->
+    <div class="bottom-section">
+        <!-- 快捷入口 -->
+        <div class="quick-actions">
+            <div class="title"><i class="fa fa-th-large"></i> 快捷入口</div>
+            <div class="action-grid">
+                <a class="action-item" onclick="parent.xadmin && parent.xadmin.add_tab && parent.xadmin.add_tab('地块列表','admin-plots-list.html')">
+                    <div class="icon bg-blue"><i class="fa fa-list"></i></div>
+                    <div class="name">地块管理</div>
+                </a>
+                <a class="action-item" onclick="parent.xadmin && parent.xadmin.add_tab && parent.xadmin.add_tab('地图圈地','admin-map.html')">
+                    <div class="icon bg-green"><i class="fa fa-map"></i></div>
+                    <div class="name">地图圈地</div>
+                </a>
+                <a class="action-item" onclick="parent.xadmin && parent.xadmin.add_tab && parent.xadmin.add_tab('巡田管理','admin-patrol.html')">
+                    <div class="icon bg-orange"><i class="fa fa-compass"></i></div>
+                    <div class="name">巡田分析</div>
+                </a>
+                <a class="action-item" onclick="parent.xadmin && parent.xadmin.add_tab && parent.xadmin.add_tab('3D地球','admin-patrol-cesium.html')">
+                    <div class="icon bg-purple"><i class="fa fa-globe"></i></div>
+                    <div class="name">3D地球</div>
+                </a>
+                <a class="action-item" onclick="parent.xadmin && parent.xadmin.add_tab && parent.xadmin.add_tab('AI助手','admin-patrol-cesium.html')">
+                    <div class="icon bg-cyan"><i class="fa fa-comments"></i></div>
+                    <div class="name">AI助手</div>
+                </a>
+                <a class="action-item" onclick="parent.xadmin && parent.xadmin.add_tab && parent.xadmin.add_tab('打卡记录','punch-record-list.html')">
+                    <div class="icon bg-teal"><i class="fa fa-clock-o"></i></div>
+                    <div class="name">打卡记录</div>
+                </a>
+            </div>
+        </div>
+
+        <!-- 最新巡田工单 -->
+        <div class="recent-reports">
+            <div class="header">
+                <div class="title"><i class="fa fa-file-text-o"></i> 最新巡田工单</div>
+                <a class="more" onclick="parent.xadmin && parent.xadmin.add_tab && parent.xadmin.add_tab('巡田管理','admin-patrol.html')">查看全部 <i class="fa fa-angle-right"></i></a>
+            </div>
+            <ul class="report-list" id="reportList">
+                <li class="loading-mask"><i class="fa fa-spinner fa-spin"></i> 加载中...</li>
+            </ul>
+        </div>
+    </div>
+
+</div>
+
 <script>
+// ====== 时间更新 ======
+function updateTime() {
+    var now = new Date();
+    var y = now.getFullYear();
+    var M = String(now.getMonth() + 1).padStart(2, '0');
+    var d = String(now.getDate()).padStart(2, '0');
+    var h = String(now.getHours()).padStart(2, '0');
+    var m = String(now.getMinutes()).padStart(2, '0');
+    var s = String(now.getSeconds()).padStart(2, '0');
 
-    window.onload=function(){
-        //每1秒刷新时间
-        setInterval("NowTime()",1000);
-    }
-    function NowTime(){
-        var myDate=new Date();
-        var y = myDate.getFullYear();
-        var M = myDate.getMonth()+1;     //获取当前月份(0-11,0代表1月)
-        var d = myDate.getDate();        //获取当前日(1-31)
-        var h = myDate.getHours();       //获取当前小时数(0-23)
-        var m = myDate.getMinutes();     //获取当前分钟数(0-59)
-        var s = myDate.getSeconds();     //获取当前秒数(0-59)
+    var weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+    document.getElementById('currentDate').textContent = M + '月' + d + '日 ' + weekDays[now.getDay()];
+    document.getElementById('currentTime').textContent = h + ':' + m + ':' + s;
+}
+setInterval(updateTime, 1000);
+updateTime();
 
-        //检查是否小于10
-        M=check(M);
-        d=check(d);
-        h=check(h);
-        m=check(m);
-        s=check(s);
-        var timestr = y+"-"+M+"-"+d+" "+h+":"+m+":"+s;
-        document.getElementById("nowtime").innerHTML="当前时间：" + timestr;
+// ====== 欢迎语 ======
+var username = localStorage.getItem('username') || '管理员';
+document.getElementById('welcomeUser').textContent = '欢迎回来，' + username;
+
+// ====== API 配置 ======
+var API_BASE = window.location.protocol + '//' + window.location.hostname + ':8080';
+var FLASK_BASE = window.location.protocol + '//' + window.location.hostname + ':8000';
+
+function getAdminToken() {
+    return localStorage.getItem('token_admin') || '';
+}
+
+function authHeaders() {
+    return { 'token': getAdminToken() };
+}
+
+// ====== 加载统计数据 ======
+function loadStats() {
+    // 1. 地块数据
+    $.ajax({
+        url: API_BASE + '/admin/plots',
+        headers: authHeaders(),
+        success: function(data) {
+            var plots = Array.isArray(data) ? data : (data.data || []);
+            document.getElementById('statPlots').textContent = plots.length;
+
+            // 总亩数
+            var totalArea = 0;
+            plots.forEach(function(p) {
+                totalArea += parseFloat(p.area) || 0;
+            });
+            document.getElementById('statArea').textContent = totalArea.toFixed(1);
+
+            // 作物分布图
+            renderCropChart(plots);
+            // 地区分布图
+            renderRegionChart(plots);
+        },
+        error: function() {
+            document.getElementById('statPlots').textContent = '0';
+            document.getElementById('statArea').textContent = '0';
+        }
+    });
+
+    // 2. 巡田工单数据
+    $.ajax({
+        url: FLASK_BASE + '/xuntian/reports',
+        success: function(data) {
+            var reports = Array.isArray(data) ? data : [];
+            document.getElementById('statReports').textContent = reports.length;
+
+            // 异常数（从最新工单获取）
+            if (reports.length > 0) {
+                document.getElementById('statAnomaly').textContent = reports[0].total_anomaly_count || 0;
+            } else {
+                document.getElementById('statAnomaly').textContent = '0';
+            }
+
+            // 渲染工单列表
+            renderReportList(reports);
+        },
+        error: function() {
+            document.getElementById('statReports').textContent = '0';
+            document.getElementById('statAnomaly').textContent = '0';
+            document.getElementById('reportList').innerHTML =
+                '<li class="report-empty"><i class="fa fa-inbox"></i><br>暂无巡田工单数据</li>';
+        }
+    });
+
+    // 3. 遥感影像数据
+    $.ajax({
+        url: FLASK_BASE + '/admin/ndvilist',
+        success: function(data) {
+            var files = Array.isArray(data) ? data : [];
+            if (files.length > 0) {
+                // 获取最新日期
+                var dates = files.map(function(f) { return f.filename || ''; }).sort().reverse();
+                var latest = dates[0];
+                // 提取日期部分
+                var match = latest.match(/(\d{4}-\d{2}-\d{2})/);
+                document.getElementById('statLatestImage').textContent = match ? match[1] : files.length + '份';
+            } else {
+                document.getElementById('statLatestImage').textContent = '0';
+            }
+        },
+        error: function() {
+            document.getElementById('statLatestImage').textContent = '--';
+        }
+    });
+}
+
+// ====== 作物分布饼图 ======
+function renderCropChart(plots) {
+    var cropMap = {};
+    plots.forEach(function(p) {
+        var crop = p.currentCrop || '未知';
+        cropMap[crop] = (cropMap[crop] || 0) + 1;
+    });
+
+    var data = Object.keys(cropMap).map(function(key) {
+        return { value: cropMap[key], name: key };
+    }).sort(function(a, b) { return b.value - a.value; });
+
+    var chart = echarts.init(document.getElementById('chartCrop'));
+    chart.setOption({
+        tooltip: { trigger: 'item', formatter: '{b}: {c}块 ({d}%)' },
+        legend: {
+            orient: 'vertical',
+            right: 10,
+            top: 'center',
+            textStyle: { fontSize: 12, color: '#606266' }
+        },
+        color: ['#1E88E5', '#43A047', '#FF6D00', '#7B1FA2', '#00ACC1', '#E6A23C', '#F56C6C', '#909399'],
+        series: [{
+            type: 'pie',
+            radius: ['42%', '70%'],
+            center: ['35%', '50%'],
+            avoidLabelOverlap: true,
+            itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
+            label: { show: false },
+            emphasis: {
+                label: { show: true, fontSize: 14, fontWeight: 'bold' }
+            },
+            data: data
+        }]
+    });
+
+    window.addEventListener('resize', function() { chart.resize(); });
+}
+
+// ====== 地区分布柱状图 ======
+function renderRegionChart(plots) {
+    var regionMap = {};
+    plots.forEach(function(p) {
+        var region = p.region || '未知';
+        regionMap[region] = (regionMap[region] || 0) + 1;
+    });
+
+    var keys = Object.keys(regionMap).sort(function(a, b) { return regionMap[b] - regionMap[a]; });
+    var values = keys.map(function(k) { return regionMap[k]; });
+
+    var chart = echarts.init(document.getElementById('chartRegion'));
+    chart.setOption({
+        tooltip: { trigger: 'axis', formatter: '{b}: {c}块' },
+        grid: { left: 40, right: 20, top: 20, bottom: 40 },
+        xAxis: {
+            type: 'category',
+            data: keys,
+            axisLabel: { fontSize: 12, color: '#606266', rotate: keys.length > 6 ? 30 : 0 },
+            axisLine: { lineStyle: { color: '#EBEEF5' } },
+            axisTick: { show: false }
+        },
+        yAxis: {
+            type: 'value',
+            axisLabel: { fontSize: 12, color: '#909399' },
+            splitLine: { lineStyle: { color: '#F2F6FC' } },
+            axisLine: { show: false }
+        },
+        series: [{
+            type: 'bar',
+            data: values,
+            barWidth: '50%',
+            itemStyle: {
+                borderRadius: [4, 4, 0, 0],
+                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                    { offset: 0, color: '#42A5F5' },
+                    { offset: 1, color: '#1E88E5' }
+                ])
+            },
+            emphasis: {
+                itemStyle: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        { offset: 0, color: '#64B5F6' },
+                        { offset: 1, color: '#1976D2' }
+                    ])
+                }
+            }
+        }]
+    });
+
+    window.addEventListener('resize', function() { chart.resize(); });
+}
+
+// ====== 渲染工单列表 ======
+function renderReportList(reports) {
+    var list = document.getElementById('reportList');
+
+    if (!reports || reports.length === 0) {
+        list.innerHTML = '<li class="report-empty"><i class="fa fa-inbox"></i><br>暂无巡田工单数据</li>';
+        return;
     }
-    //时间数字小于10，则在之前加个“0”补位。
-    function check(i){
-        var num = (i<10)?("0"+i) : i;
-        return num;
-    }
+
+    var html = '';
+    var showReports = reports.slice(0, 8); // 最多显示8条
+
+    showReports.forEach(function(r) {
+        var count = r.total_anomaly_count || 0;
+        var level = count >= 5 ? 'high' : (count >= 2 ? 'medium' : 'low');
+        var levelText = count >= 5 ? '高' : (count >= 2 ? '中' : '低');
+        var time = r.timestamp || r.generate_time || '';
+        if (time.length > 15) {
+            time = time.substring(0, 4) + '-' + time.substring(4, 6) + '-' + time.substring(6, 8) +
+                   ' ' + time.substring(9, 11) + ':' + time.substring(11, 13);
+        }
+
+        html += '<li class="report-item" data-url="' + (r.report_url || '') + '">' +
+                '<span class="dot ' + level + '"></span>' +
+                '<div class="info">' +
+                '<div class="name">巡田工单 ' + time + '</div>' +
+                '<div class="meta">发现 ' + count + ' 个异常区域</div>' +
+                '</div>' +
+                '<span class="badge ' + level + '">' + levelText + '风险</span>' +
+                '</li>';
+    });
+
+    list.innerHTML = html;
+}
+
+// ====== 初始化 ======
+loadStats();
 </script>
+</body>
 </html>
