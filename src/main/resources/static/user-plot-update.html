@@ -123,7 +123,7 @@
         const laytpl = layui.laytpl;
 
         // 打开页面后立即弹出地块选择器
-        fetch("http://123.56.228.32:8080/user/plots", {
+        fetch("http://localhost:8080/user/plots", {
           method: 'GET',
           headers: {
             'authentication': localStorage.getItem('token_user') // token 从 localStorage 获取

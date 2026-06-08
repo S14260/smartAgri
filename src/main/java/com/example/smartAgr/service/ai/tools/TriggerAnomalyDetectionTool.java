@@ -67,6 +67,12 @@ public class TriggerAnomalyDetectionTool implements AgentTool {
         properties.set("region", regionProp);
 
         schema.set("properties", properties);
+        ArrayNode required = objectMapper.createArrayNode();
+        required.add("plot_ids");
+        required.add("start_date");
+        required.add("end_date");
+        required.add("region");
+        schema.set("required", required);
         return schema;
     }
 

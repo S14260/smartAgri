@@ -3,6 +3,7 @@ package com.example.smartAgr.service.ai.tools;
 import com.example.smartAgr.service.ai.AgentTool;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import okhttp3.*;
@@ -48,6 +49,9 @@ private final OkHttpClient httpClient = new OkHttpClient.Builder()
         properties.set("enable_2opt", enable2optProp);
 
         schema.set("properties", properties);
+        ArrayNode required = objectMapper.createArrayNode();
+        required.add("report_path");
+        schema.set("required", required);
         return schema;
     }
 

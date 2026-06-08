@@ -102,7 +102,7 @@
                 },
                 success: function(res){
                     if (res.code === 1 && res.data) {
-                        layer.msg(res.message || "登录成功", {icon: 1});
+                        layer.msg(res.msg || "登录成功", {icon: 1});
 
                         if (role === 'admin') {
                             localStorage.setItem("token_admin", res.data);
@@ -120,7 +120,7 @@
                             }
                         }, 800);
                     } else {
-                        layer.msg(res.message || "账号或密码错误", {icon: 2});
+                        layer.msg(res.msg || "账号或密码错误", {icon: 2});
                         $btn.html(originalText);
                         $btn.prop('disabled', false);
                     }

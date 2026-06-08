@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>巡田报告 — 农田智能监测平台</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./css/font.css">
+    <link rel="stylesheet" href="./css/design-tokens.css">
+    <link rel="stylesheet" href="./css/report.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <script src="./js/jquery.min.js"></script>
+    <script src="./lib/echarts.min.js"></script>
+</head>
+<body>
+<div class="report-page">
+
+    <!-- 面包屑 -->
+    <div class="breadcrumb">
+        <a href="javascript:;">首页</a> / <a href="javascript:;">巡田管理</a> / <span>巡田报告</span>
+    </div>
+
+    <!-- 页面标题 -->
+    <div class="page-header">
+        <h2><i class="fa fa-file-text-o"></i> 巡田报告</h2>
+        <div class="header-actions">
+            <button class="layui-btn layui-btn-normal layui-btn-sm" onclick="refreshData()">
+                <i class="fa fa-refresh"></i> 刷新
+            </button>
+        </div>
+    </div>
+
+    <!-- 概览卡片 -->
+    <div class="overview-cards">
+        <div class="overview-card">
+            <div class="card-icon blue"><i class="fa fa-file-text-o"></i></div>
+            <div class="card-info">
+                <div class="number" id="statTotal">--</div>
+                <div class="label">工单总数</div>
+            </div>
+        </div>
+        <div class="overview-card">
+            <div class="card-icon red"><i class="fa fa-exclamation-circle"></i></div>
+            <div class="card-info">
+                <div class="number" id="statAnomaly">--</div>
+                <div class="label">异常总数</div>
+            </div>
+        </div>
+        <div class="overview-card">
+            <div class="card-icon orange"><i class="fa fa-warning"></i></div>
+            <div class="card-info">
+                <div class="number" id="statHigh">--</div>
+                <div class="label">高危异常</div>
+            </div>
+        </div>
+        <div class="overview-card">
+            <div class="card-icon green"><i class="fa fa-check-circle"></i></div>
+            <div class="card-info">
+                <div class="number" id="statLow">--</div>
+                <div class="label">低危异常</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 报告选择 -->
+    <div class="report-selector" id="reportSelector">
+        <label><i class="fa fa-list"></i> 选择工单：</label>
+        <select id="reportSelect" onchange="loadReportDetail(this.value)">
+            <option value="">请选择工单</option>
+        </select>
+        <span id="reportTime" style="color:#909399; font-size:13px;"></span>
+        <button class="layui-btn layui-btn-normal" id="generateBtn" onclick="generateReport()" disabled>
+            <i class="fa fa-magic"></i> 生成巡田任务单
+        </button>
+    </div>
+
+    <!-- 异常详情表格 -->
+    <div class="content-section">
+        <div class="section-header"><i class="fa fa-table"></i> 异常详情</div>
+        <div class="anomaly-table-wrapper">
+            <table class="anomaly-table" id="anomalyTable">
+                <thead>
+                    <tr>
+                        <th>序号</th>
+                        <th>地块</th>
+                        <th>异常类型</th>
+                        <th>严重程度</th>
+                        <th>面积(亩)</th>
+                        <th>说明</th>
+                    </tr>
+                </thead>
+                <tbody id="anomalyBody">
+                    <tr><td colspan="6" class="empty-state"><i class="fa fa-inbox"></i><p>请先选择工单</p></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 图表区域 -->
+    <div class="chart-row" id="chartSection">
+        <div class="chart-box">
+            <div class="chart-header"><i class="fa fa-pie-chart"></i> 异常类型分布</div>
+            <div class="chart-container" id="chartAnomalyType"></div>
+        </div>
+        <div class="chart-box">
+            <div class="chart-header"><i class="fa fa-bar-chart"></i> 异常严重程度分布</div>
+            <div class="chart-container" id="chartSeverity"></div>
+        </div>
+    </div>
+
+    <!-- ========== 巡田任务单（可打印区域） ========== -->
+    <div id="reportOutput" class="report-output" style="display:none;">
+
+        <!-- 任务单头部 -->
+        <div class="task-sheet">
+            <div class="task-sheet-header">
+                <div class="task-sheet-title">
+                    <h1>巡田任务单</h1>
+                    <p class="task-sheet-subtitle">PATROL INSPECTION REPORT</p>
+                </div>
+                <div class="task-sheet-meta">
+                    <div class="meta-item"><span class="meta-label">工单编号</span><span class="meta-value" id="rptId">--</span></div>
+                    <div class="meta-item"><span class="meta-label">生成时间</span><span class="meta-value" id="rptTime">--</span></div>
+                    <div class="meta-item"><span class="meta-label">风险等级</span><span class="meta-value" id="rptRisk">--</span></div>
+                </div>
+            </div>
+
+            <!-- 概览 -->
+            <div class="task-sheet-overview">
+                <div class="overview-stat"><span class="stat-num" id="rptTotal">0</span><span class="stat-label">异常总数</span></div>
+                <div class="overview-stat high"><span class="stat-num" id="rptHigh">0</span><span class="stat-label">高危</span></div>
+                <div class="overview-stat medium"><span class="stat-num" id="rptMedium">0</span><span class="stat-label">中危</span></div>
+                <div class="overview-stat low"><span class="stat-num" id="rptLow">0</span><span class="stat-label">低危</span></div>
+            </div>
+
+            <!-- AI总结 -->
+            <div class="task-sheet-summary" id="rptSummary"></div>
+
+            <!-- 巡检路线 -->
+            <div class="task-sheet-route-section" id="rptRouteSection" style="display:none;">
+                <h3><i class="fa fa-road"></i> 巡检路线规划</h3>
+                <div class="route-info-bar">
+                    <span class="route-stat"><i class="fa fa-arrows-h"></i> 总里程: <b id="rptRouteDist">--</b></span>
+                    <span class="route-stat"><i class="fa fa-map-marker"></i> 途经: <b id="rptRouteCount">--</b> 个地块</span>
+                </div>
+                <div class="route-map-container" id="rptRouteMapBox">
+                    <div class="route-map-loading" id="rptRouteLoading"><i class="fa fa-spinner fa-spin"></i> 路线规划中，请稍候...</div>
+                    <img id="rptRouteMap" src="" alt="路线图" style="display:none;" onload="this.style.display='block';document.getElementById('rptRouteLoading').style.display='none';" onerror="this.style.display='none';document.getElementById('rptRouteLoading').innerHTML='<i class=\'fa fa-exclamation-circle\'></i> 路线图加载失败';" />
+                </div>
+                <div class="route-suggestion" id="rptRouteSuggestion"></div>
+            </div>
+
+            <!-- 任务清单 -->
+            <div class="task-sheet-tasks">
+                <h3><i class="fa fa-tasks"></i> 巡检任务清单</h3>
+                <div id="rptTaskList"></div>
+            </div>
+
+            <!-- 签字区 -->
+            <div class="task-sheet-sign">
+                <div class="sign-row">
+                    <div class="sign-item"><span class="sign-label">巡检人：</span><span class="sign-line"></span></div>
+                    <div class="sign-item"><span class="sign-label">日期：</span><span class="sign-line"></span></div>
+                </div>
+                <div class="sign-row">
+                    <div class="sign-item"><span class="sign-label">复核人：</span><span class="sign-line"></span></div>
+                    <div class="sign-item"><span class="sign-label">日期：</span><span class="sign-line"></span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 打印按钮（不打印） -->
+        <div class="no-print" style="text-align:center; margin:16px 0;">
+            <button class="layui-btn layui-btn-normal layui-btn-sm" onclick="window.print()">
+                <i class="fa fa-print"></i> 打印任务单
+            </button>
+            <button class="layui-btn layui-btn-primary layui-btn-sm" onclick="document.getElementById('reportOutput').style.display='none'">
+                <i class="fa fa-close"></i> 关闭
+            </button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+var FLASK_BASE = 'http://123.56.228.32:8000';
+var API_BASE = window.location.protocol + '//' + window.location.hostname + ':8080';
+var reports = [];
+var currentAnomalyData = null;
+var currentReportUrl = null;
+
+// 加载工单列表
+function loadReports() {
+    $.ajax({
+        url: FLASK_BASE + '/xuntian/reports',
+        success: function(data) {
+            reports = Array.isArray(data) ? data : [];
+            renderReportOptions(reports);
+            updateOverview(reports);
+            if (reports.length > 0) {
+                loadReportDetail(reports[0].report_url || '');
+            }
+        },
+        error: function() {
+            document.getElementById('reportSelect').innerHTML =
+                '<option value="">加载失败</option>';
+        }
+    });
+}
+
+// 渲染工单选项
+function renderReportOptions(list) {
+    var select = document.getElementById('reportSelect');
+    if (!list || list.length === 0) {
+        select.innerHTML = '<option value="">暂无工单</option>';
+        return;
+    }
+    var html = '<option value="">请选择工单</option>';
+    list.forEach(function(r, i) {
+        var time = r.timestamp || r.generate_time || '';
+        if (time.length > 15) {
+            time = time.substring(0,4) + '-' + time.substring(4,6) + '-' + time.substring(6,8) +
+                   ' ' + time.substring(9,11) + ':' + time.substring(11,13);
+        }
+        var count = r.total_anomaly_count || 0;
+        html += '<option value="' + (r.report_url || '') + '">工单 #' + (i+1) + ' - ' + time + ' (' + count + '个异常)</option>';
+    });
+    select.innerHTML = html;
+}
+
+// 更新概览数据
+function updateOverview(list) {
+    document.getElementById('statTotal').textContent = list.length;
+    var totalAnomaly = 0, highCount = 0, lowCount = 0;
+    list.forEach(function(r) {
+        var c = r.total_anomaly_count || 0;
+        totalAnomaly += c;
+        if (c >= 5) highCount++;
+        else lowCount++;
+    });
+    document.getElementById('statAnomaly').textContent = totalAnomaly;
+    document.getElementById('statHigh').textContent = highCount;
+    document.getElementById('statLow').textContent = lowCount;
+}
+
+// 加载工单详情
+function loadReportDetail(reportUrl) {
+    if (!reportUrl) {
+        document.getElementById('anomalyBody').innerHTML =
+            '<tr><td colspan="6" class="empty-state"><i class="fa fa-inbox"></i><p>请先选择工单</p></td></tr>';
+        return;
+    }
+
+    document.getElementById('anomalyBody').innerHTML =
+        '<tr><td colspan="6" class="loading-state"><i class="fa fa-spinner fa-spin"></i> 加载中...</td></tr>';
+
+    currentReportUrl = reportUrl;
+    $.ajax({
+        url: FLASK_BASE + '/xuntian/report/detail?path=' + encodeURIComponent(reportUrl),
+        success: function(data) {
+            currentAnomalyData = data;
+            document.getElementById('generateBtn').disabled = false;
+            renderAnomalyTable(data);
+            renderCharts(data);
+        },
+        error: function() {
+            document.getElementById('anomalyBody').innerHTML =
+                '<tr><td colspan="6" class="empty-state"><i class="fa fa-exclamation-circle"></i><p>加载失败</p></td></tr>';
+        }
+    });
+}
+
+// 渲染异常表格
+function renderAnomalyTable(data) {
+    var tbody = document.getElementById('anomalyBody');
+    var anomalies = data.anomaly_subregions || [];
+
+    if (!anomalies || anomalies.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><i class="fa fa-check-circle"></i><p>无异常记录</p></td></tr>';
+        return;
+    }
+
+    var html = '';
+    anomalies.forEach(function(a, i) {
+        var areaMu = a.area_m2 ? (a.area_m2 / 666.67).toFixed(2) : '--';
+        var grade = a.ndvi_grade_label || '未知';
+        var severityClass = 'low';
+        if (grade.indexOf('重度') >= 0 || a.priority >= 3) severityClass = 'high';
+        else if (grade.indexOf('中度') >= 0 || a.priority >= 2) severityClass = 'medium';
+        html += '<tr>' +
+            '<td>' + (i + 1) + '</td>' +
+            '<td>' + (a.plot_name || '--') + '</td>' +
+            '<td>' + (a.anomaly_category || '未知') + '</td>' +
+            '<td><span class="severity-tag ' + severityClass + '">' + grade + '</span></td>' +
+            '<td>' + areaMu + '</td>' +
+            '<td>NDVI均值: ' + (a.mean_ndvi ? a.mean_ndvi.toFixed(3) : '--') + '</td>' +
+            '</tr>';
+    });
+    tbody.innerHTML = html;
+}
+
+// 渲染图表
+function renderCharts(data) {
+    var anomalies = data.anomaly_subregions || [];
+    if (!anomalies || anomalies.length === 0) return;
+
+    // 异常类型饼图
+    var typeMap = {};
+    anomalies.forEach(function(a) {
+        var type = a.anomaly_category || '未知';
+        typeMap[type] = (typeMap[type] || 0) + 1;
+    });
+    var typeData = Object.keys(typeMap).map(function(k) {
+        return { value: typeMap[k], name: k };
+    });
+
+    var chart1 = echarts.init(document.getElementById('chartAnomalyType'));
+    chart1.setOption({
+        tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+        color: ['#F56C6C', '#E6A23C', '#67C23A', '#1E88E5', '#909399', '#9C27B0'],
+        series: [{
+            type: 'pie',
+            radius: ['40%', '65%'],
+            label: { show: true, fontSize: 12 },
+            data: typeData
+        }]
+    });
+
+    // 严重程度柱状图（按 ndvi_grade_label 分组）
+    var gradeMap = {};
+    anomalies.forEach(function(a) {
+        var grade = a.ndvi_grade_label || '未知';
+        gradeMap[grade] = (gradeMap[grade] || 0) + 1;
+    });
+    var gradeKeys = Object.keys(gradeMap);
+    var gradeValues = gradeKeys.map(function(k) { return gradeMap[k]; });
+    var gradeColors = ['#F56C6C', '#E6A23C', '#409EFF', '#9C27B0', '#67C23A', '#909399'];
+
+    var chart2 = echarts.init(document.getElementById('chartSeverity'));
+    chart2.setOption({
+        tooltip: { trigger: 'axis', formatter: '{b}: {c}个' },
+        grid: { left: 60, right: 20, top: 20, bottom: 60 },
+        xAxis: {
+            type: 'category',
+            data: gradeKeys,
+            axisLabel: { fontSize: 11, color: '#606266', rotate: gradeKeys.length > 4 ? 30 : 0 },
+            axisLine: { lineStyle: { color: '#EBEEF5' } }
+        },
+        yAxis: {
+            type: 'value',
+            splitLine: { lineStyle: { color: '#F2F6FC' } },
+            axisLabel: { fontSize: 12, color: '#909399' }
+        },
+        series: [{
+            type: 'bar',
+            data: gradeValues.map(function(v, i) {
+                return { value: v, itemStyle: { color: gradeColors[i % gradeColors.length] } };
+            }),
+            barWidth: '50%',
+            itemStyle: { borderRadius: [4, 4, 0, 0] }
+        }]
+    });
+
+    window.addEventListener('resize', function() { chart1.resize(); chart2.resize(); });
+}
+
+// ====== 构建异常图片URL ======
+function buildAnomalyImageUrl(anomaly) {
+    if (!currentAnomalyData || !currentAnomalyData.report_info) return null;
+    var visualDir = currentAnomalyData.report_info.visual_report_dir;
+    if (!visualDir) return null;
+    // 提取 reports_xxx/visualReports 部分（兼容 Windows 路径和 Linux 路径）
+    var idx = visualDir.indexOf('xuntian_results');
+    if (idx < 0) return null;
+    var relativePath = visualDir.substring(idx).replace(/\\/g, '/');
+    var visualUrl = FLASK_BASE + '/static/' + relativePath;
+    var plotId = anomaly.plot_id || anomaly.plot_name || '';
+    var date = anomaly.date || '';
+    return visualUrl + '/subregion_anomaly_map_' + plotId + '_' + date + '.png';
+}
+
+// ====== 打开异常图片弹窗 ======
+function openAnomalyImage(imgUrl, title) {
+    if (!imgUrl) { layer.msg('暂无异常图片', {icon: 0}); return; }
+    layer.photos({
+        photos: {
+            title: title || '异常检测图',
+            data: [{ src: imgUrl, pid: 1 }]
+        },
+        anim: 5
+    });
+}
+
+// ====== 获取巡检路线 ======
+function fetchRoutePlan() {
+    if (!currentReportUrl) return;
+
+    var routeSection = document.getElementById('rptRouteSection');
+    routeSection.style.display = 'block';
+    // 重置加载状态
+    document.getElementById('rptRouteMap').style.display = 'none';
+    document.getElementById('rptRouteLoading').style.display = 'block';
+    document.getElementById('rptRouteLoading').innerHTML = '<i class="fa fa-spinner fa-spin"></i> 路线规划中，请稍候...';
+    document.getElementById('rptRouteDist').textContent = '规划中...';
+    document.getElementById('rptRouteCount').textContent = '--';
+
+    $.ajax({
+        url: FLASK_BASE + '/xuntian/patrol/plan',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ report_path: currentReportUrl }),
+        timeout: 120000,
+        success: function(res) {
+            if (res.status === 'error') {
+                document.getElementById('rptRouteLoading').innerHTML = '<i class="fa fa-exclamation-circle"></i> 路线规划失败: ' + (res.message || '未知错误');
+                document.getElementById('rptRouteDist').textContent = '规划失败';
+                return;
+            }
+            var data = res.data || res;
+            // 路线图
+            if (data.visualization) {
+                document.getElementById('rptRouteMap').src = data.visualization;
+                // onload 会自动显示图片并隐藏 loading
+            } else {
+                document.getElementById('rptRouteLoading').innerHTML = '<i class="fa fa-exclamation-circle"></i> 未生成路线图';
+            }
+            // 总里程
+            if (data.route_length_m) {
+                document.getElementById('rptRouteDist').textContent = (data.route_length_m / 1000).toFixed(1) + ' km';
+            }
+            // 途经地块数
+            if (data.plot_count) {
+                document.getElementById('rptRouteCount').textContent = data.plot_count;
+            }
+        },
+        error: function(xhr) {
+            var msg = '获取失败';
+            if (xhr.statusText === 'timeout') msg = '规划超时（>2分钟）';
+            document.getElementById('rptRouteLoading').innerHTML = '<i class="fa fa-exclamation-circle"></i> ' + msg;
+            document.getElementById('rptRouteDist').textContent = '获取失败';
+        }
+    });
+}
+
+// ====== 生成巡田任务单 ======
+function generateReport() {
+    if (!currentAnomalyData || !currentAnomalyData.anomaly_subregions) {
+        layer.msg('请先选择工单', {icon: 0});
+        return;
+    }
+
+    var btn = document.getElementById('generateBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> AI生成中...';
+
+    var selectedTime = document.getElementById('reportSelect').selectedOptions[0]?.text || '';
+
+    $.ajax({
+        url: API_BASE + '/admin/report/generate',
+        type: 'POST',
+        contentType: 'application/json',
+        headers: { 'token': localStorage.getItem('token_admin') || '' },
+        data: JSON.stringify({
+            anomaly_subregions: currentAnomalyData.anomaly_subregions,
+            report_time: selectedTime
+        }),
+        success: function(res) {
+            var data = res.data || res;
+            renderReportSheet(data);
+            btn.innerHTML = '<i class="fa fa-magic"></i> 重新生成';
+            btn.disabled = false;
+            // 获取路线规划
+            fetchRoutePlan();
+        },
+        error: function(xhr) {
+            layer.msg('生成失败: ' + (xhr.responseText || '网络错误'), {icon: 2});
+            btn.innerHTML = '<i class="fa fa-magic"></i> 生成巡田任务单';
+            btn.disabled = false;
+        }
+    });
+}
+
+// 渲染任务单
+function renderReportSheet(data) {
+    var output = document.getElementById('reportOutput');
+    output.style.display = 'block';
+
+    document.getElementById('rptId').textContent = 'RPT-' + new Date().getTime();
+    document.getElementById('rptTime').textContent = data.generated_time || '--';
+    document.getElementById('rptRisk').textContent = data.risk_level || '--';
+    document.getElementById('rptTotal').textContent = data.total_anomaly || 0;
+    document.getElementById('rptHigh').textContent = data.high_count || 0;
+    document.getElementById('rptMedium').textContent = data.medium_count || 0;
+    document.getElementById('rptLow').textContent = data.low_count || 0;
+
+    // 风险等级样式
+    var riskEl = document.getElementById('rptRisk');
+    riskEl.className = 'meta-value risk-' + (data.risk_level || '中');
+
+    // AI总结
+    document.getElementById('rptSummary').textContent = data.summary || '暂无总结';
+
+    // 任务清单
+    var tasks = data.tasks || [];
+    var anomalies = currentAnomalyData ? (currentAnomalyData.anomaly_subregions || []) : [];
+    var taskHtml = '';
+    tasks.forEach(function(t, i) {
+        var sevClass = 'low';
+        var sevLabel = t.severity_label || '低危';
+        if (sevLabel.indexOf('高') >= 0) sevClass = 'high';
+        else if (sevLabel.indexOf('中') >= 0) sevClass = 'medium';
+
+        // 查找对应的异常数据，获取图片URL
+        var matchedAnomaly = null;
+        for (var j = 0; j < anomalies.length; j++) {
+            if (anomalies[j].plot_name === t.plot_name) { matchedAnomaly = anomalies[j]; break; }
+        }
+        var imgUrl = matchedAnomaly ? buildAnomalyImageUrl(matchedAnomaly) : null;
+        var imgThumb = imgUrl ? '<div class="task-thumb" onclick="openAnomalyImage(\'' + imgUrl + '\',\'' + (t.plot_name || '') + ' 异常图\')"><img src="' + imgUrl + '" onerror="this.parentNode.style.display=\'none\'" /><span class="thumb-overlay"><i class="fa fa-search-plus"></i></span></div>' : '';
+
+        taskHtml += '<div class="task-item">' +
+            '<div class="task-header">' +
+                '<span class="task-num">' + (i + 1) + '</span>' +
+                '<span class="task-severity ' + sevClass + '">' + sevLabel + '</span>' +
+                '<span class="task-plot">' + (t.plot_name || '未知地块') + '</span>' +
+                '<span class="task-type">' + (t.anomaly_category || '') + '</span>' +
+                (imgUrl ? '<span class="task-view-img" onclick="openAnomalyImage(\'' + imgUrl + '\',\'' + (t.plot_name || '') + ' 异常图\')"><i class="fa fa-image"></i> 查看异常图</span>' : '') +
+            '</div>' +
+            '<div class="task-body">' +
+                '<div class="task-content-row">' +
+                    '<div class="task-content-left">' +
+                        '<div class="task-metrics">' +
+                            '<span><i class="fa fa-expand"></i> 面积: ' + (t.area_mu || '--') + ' 亩</span>' +
+                            '<span><i class="fa fa-leaf"></i> NDVI: ' + (t.ndvi_mean ? Number(t.ndvi_mean).toFixed(3) : '--') + '</span>' +
+                        '</div>' +
+                        '<div class="task-action">' +
+                            '<i class="fa fa-lightbulb-o"></i> ' + (t.action || '请现场核实') +
+                        '</div>' +
+                        (t.contact ? '<div class="task-contact"><i class="fa fa-user"></i> ' + t.contact + (t.phone ? ' <i class="fa fa-phone"></i> ' + t.phone : '') + '</div>' : '') +
+                    '</div>' +
+                    imgThumb +
+                '</div>' +
+            '</div>' +
+        '</div>';
+    });
+    document.getElementById('rptTaskList').innerHTML = taskHtml || '<p class="empty-text">无任务</p>';
+
+    // LLM 路线建议（先显示文本，fetchRoutePlan 后续可能补充路线图）
+    if (data.route_suggestion) {
+        document.getElementById('rptRouteSuggestion').innerHTML =
+            '<i class="fa fa-info-circle"></i> ' + data.route_suggestion;
+        document.getElementById('rptRouteSection').style.display = 'block';
+    }
+
+    // 滚动到任务单
+    output.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// 刷新
+function refreshData() {
+    loadReports();
+}
+
+// 初始化
+loadReports();
+</script>
+</body>
+</html>

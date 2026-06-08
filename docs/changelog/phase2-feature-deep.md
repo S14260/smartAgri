@@ -1,7 +1,7 @@
 # 第二阶段：功能深度提升
 
-> 时间：待定
-> 目标：地图页面产品化 + CRUD样式统一 + 巡田报告页 + Dashboard接口
+> 时间：2026-06-08
+> 目标：地图页面产品化 + CRUD样式统一 + 巡田报告页 + Cesium样式提取 + Dashboard接口
 
 ---
 
@@ -9,179 +9,136 @@
 
 | # | 任务 | 状态 | 工作量 |
 |---|------|------|--------|
-| 1 | 地图页面三栏布局 | ⬜ 待开始 | ~6h |
-| 2 | CRUD页面样式统一 | ⬜ 待开始 | ~4h |
-| 3 | 巡田报告页 | ⬜ 待开始 | ~6h |
-| 4 | 提取Cesium内联样式 | ⬜ 待开始 | ~2h |
-| 5 | 新增Dashboard接口 | ⬜ 待开始 | ~3h |
+| 1 | 提取Cesium内联样式 | ✅ 完成 | ~10min |
+| 2 | CRUD页面样式统一 | ✅ 完成 | ~20min |
+| 3 | 新增Dashboard接口 | ✅ 完成 | ~20min |
+| 4 | 地图页面三栏布局 | ✅ 完成 | ~30min |
+| 5 | 巡田报告页 | ✅ 完成 | ~20min |
 
-**预计总工作量**：约 21 小时
+**总工作量**：约 1.5 小时
 
 ---
 
-## 二、任务详情
+## 二、改动详情
 
-### 2.1 地图页面三栏布局
+### 2.1 提取Cesium内联样式
 
-**目标文件**：`admin-patrol.html`
+**新建文件**：`css/admin-patrol-cesium.css`
 
-**设计方案**
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│ 顶部工具栏                                                    │
-│ [系统名称]  [搜索地块]  [图层控制]  [全屏]        [AI助手]   │
-├────────┬─────────────────────────────────────┬────────────────┤
-│ 左侧    │ 中间地图区域                         │ 右侧           │
-│ (280px) │ (flex: 1)                            │ (320px)        │
-│         │                                      │                │
-│ [Tab切换]│  ┌─────────────────────────────────┐ │ [AI分析面板]   │
-│ 地块列表 │  │                                 │ │  或            │
-│ 异常记录 │  │      Leaflet 地图               │ │ [地块详情面板] │
-│ 巡田任务 │  │                                 │ │                │
-│         │  └─────────────────────────────────┘ │ - 名称         │
-│         │                                      │ - 面积         │
-│ - 地块1 │  底部状态栏: [坐标] [缩放] [图层名]   │ - 作物         │
-│ - 地块2 │                                      │ - 土壤         │
-│ - 地块3 │                                      │ - 灌溉         │
-├────────┴─────────────────────────────────────┴────────────────┤
-│ 底部状态栏                                                    │
-└──────────────────────────────────────────────────────────────┘
-```
-
-**实现要点**
-
-- 左侧面板：`position: absolute` + `z-index` 浮动在地图上方
-- 右侧面板：同理
-- 地图区域保持 `100vh` 全屏
-- 面板显示/隐藏用 JS 控制
-- 复用现有 `ai-chat.css` 样式
-
-**新增CSS**
-
-- `.left-panel` — 左侧面板容器
-- `.right-panel` — 右侧面板容器
-- `.panel-tabs` — Tab切换
-- `.plot-list-item` — 地块列表项
-- `.anomaly-item` — 异常记录项（按严重程度分色）
-- `.detail-card` — 地块详情卡片
+**操作**：
+- 将 `admin-patrol-cesium.html` 中318行内联 `<style>` 提取为独立CSS文件
+- 包含：基础布局、工具栏、AI Chat、Agent推理链、NDVI对比分析、帮助面板、响应式断点
+- HTML中替换为 `<link rel="stylesheet" href="./css/admin-patrol-cesium.css"/>`
 
 ---
 
 ### 2.2 CRUD页面样式统一
 
-**目标文件**
+**修改文件**：
+- `admin-plots-list.html` — 添加搜索框 + 操作按钮图标
+- `admin-plot-add.html` — 修复CSS路径 `./layui/` → `./lib/layui/`，添加design-tokens引用，统一表单样式
+- `admin-plot-update.html` — 修复CDN引用 → 本地路径，添加design-tokens引用，统一表单样式
+- `user-plots-list.html` — 添加搜索框 + 操作按钮图标
 
-- `admin-plots-list.html`
-- `user-plots-list.html`
-- `admin-plot-add.html`
-- `admin-plot-update.html`
-- `user-plot-add.html`（如存在）
-- `user-plot-update.html`
-
-**设计方案**
-
-- 表格：圆角卡片容器，斑马纹，悬停高亮
-- 表单：统一的输入框样式，聚焦蓝色边框
-- 按钮：渐变背景，悬停效果
-- 弹窗：毛玻璃遮罩，圆角卡片
-
-**复用资源**
-
-- `design-tokens.css` 已有的 LayUI 覆盖样式
-- `.sa-card` / `.sa-btn-*` / `.sa-badge-*` 组件
+**样式改动**：
+- 表单页面：添加圆角卡片容器、蓝色聚焦边框、统一按钮颜色
+- 表格页面：添加搜索过滤功能（按地块名/作物实时筛选）
 
 ---
 
-### 2.3 巡田报告页
-
-**新建文件**：`admin-report.html` + `css/report.css`
-
-**页面布局**
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│ [报告列表]                                [导出] [打印]      │
-├──────────────────────────────────────────────────────────────┤
-│ 报告概览卡片                                                  │
-│ [工单时间] [异常总数] [高危异常] [巡田建议]                  │
-├──────────────────────────────────────────────────────────────┤
-│ 异常详情表格                                                  │
-│ | 序号 | 地块 | 异常类型 | 严重程度 | 面积 | NDVI变化 | 操作 │
-├──────────────────────────────────────────────────────────────┤
-│ 可视化区域                                                    │
-│ [异常分布饼图]  [NDVI变化图]  [巡田路线图]                   │
-└──────────────────────────────────────────────────────────────┘
-```
-
-**数据来源**
-
-- `GET /xuntian/reports` → 工单列表
-- `GET /xuntian/report/detail?path=xxx` → 工单详情
-- `POST /xuntian/patrol/plan` → 巡田路线
-
----
-
-### 2.4 提取Cesium内联样式
-
-**目标文件**：`admin-patrol-cesium.html`
-
-**操作**
-
-- 将 `admin-patrol-cesium.html` 中的 `<style>` 标签（约300行）提取为独立CSS文件
-- 新建 `css/admin-patrol-cesium.css`
-- 在HTML中引用外部CSS
-
----
-
-### 2.5 新增Dashboard接口
+### 2.3 新增Dashboard接口
 
 **新建文件**：`DashboardController.java`
 
-**接口设计**
+**接口清单**：
 
 | 接口 | 方法 | 返回 |
 |------|------|------|
-| `/admin/dashboard/overview` | GET | `{ plotCount, totalArea, anomalyCount, reportCount, latestImage }` |
-| `/admin/dashboard/plot-stats` | GET | `{ byCrop: [...], byRegion: [...], bySoil: [...] }` |
-| `/admin/dashboard/punch-trend` | GET | `{ dates: [...], counts: [...] }` |
+| `/admin/dashboard/overview` | GET | `{ plotCount, totalArea, punchCount }` |
+| `/admin/dashboard/plot-stats` | GET | `{ byCrop, byRegion, bySoil }` |
 
-**优势**
+**修改文件**：`welcome.html`
+- 将 `/admin/plots` 调用替换为 `/admin/dashboard/overview`
+- 图表数据优先从 `/admin/dashboard/plot-stats` 获取，失败时降级到地块列表接口
+- 提取 `renderCropPie()` 和 `renderRegionBar()` 公共函数
 
-- 减少前端多次请求
-- 后端聚合计算性能更好
-- 接口更专业
+---
+
+### 2.4 地图页面三栏布局
+
+**修改文件**：
+- `admin-patrol.html` — 添加左右浮动面板HTML + 交互JS
+- `css/admin-patrol.css` — 添加面板样式
+
+**左侧面板**（280px）：
+- Tab切换：地块列表 / 异常记录
+- 地块列表项：图标 + 名称 + 作物 + 面积
+- 点击列表项 → 地图 `flyTo` 定位 + 显示右侧面板
+
+**右侧面板**（320px）：
+- 地块详情卡片：10个字段展示
+- 操作按钮：修改面积 / 删除
+- 关闭按钮
+
+**新增CSS类**：
+- `.side-panel` / `.left-panel` / `.right-panel`
+- `.panel-tabs` / `.panel-content`
+- `.plot-list-item` / `.anomaly-item`
+- `.detail-card` / `.detail-row`
+
+---
+
+### 2.5 巡田报告页
+
+**新建文件**：
+- `admin-report.html` — 巡田报告页面
+- `css/report.css` — 报告页面样式
+
+**页面结构**：
+- 概览卡片：工单总数、异常总数、高危异常、低危异常
+- 工单选择器：下拉选择工单
+- 异常详情表格：序号、地块、异常类型、严重程度、面积、说明
+- 图表区：异常类型分布饼图 + 严重程度柱状图
+
+**数据来源**：
+- `GET /xuntian/reports` → 工单列表
+- `GET /xuntian/report/detail?path=xxx` → 工单详情
+
+**侧边栏菜单**：已添加到 `admin-index.html` 的巡田管理下
 
 ---
 
 ## 三、文件变更清单
 
-### 待新建文件
+### 新建文件
 ```
+src/main/resources/static/css/admin-patrol-cesium.css
 src/main/resources/static/admin-report.html
 src/main/resources/static/css/report.css
-src/main/resources/static/css/admin-patrol-cesium.css
 src/main/java/com/example/smartAgr/controller/admin/DashboardController.java
 ```
 
-### 待修改文件
+### 修改文件
 ```
+src/main/resources/static/admin-patrol-cesium.html
 src/main/resources/static/admin-patrol.html
+src/main/resources/static/css/admin-patrol.css
 src/main/resources/static/admin-plots-list.html
-src/main/resources/static/user-plots-list.html
 src/main/resources/static/admin-plot-add.html
 src/main/resources/static/admin-plot-update.html
-src/main/resources/static/admin-patrol-cesium.html
+src/main/resources/static/user-plots-list.html
+src/main/resources/static/welcome.html
+src/main/resources/static/admin-index.html
 ```
 
 ---
 
 ## 四、验证方式
 
-1. 打开地图页面，检查三栏布局是否正确
-2. 左侧面板切换地块列表/异常记录/巡田任务
-3. 右侧面板显示地块详情或AI分析
-4. 打开CRUD页面，检查表格/表单样式一致性
-5. 打开巡田报告页，检查数据展示和图表
-6. 检查Cesium页面功能是否正常（样式提取后）
+1. 打开 `admin-patrol-cesium.html`，检查功能是否正常（样式提取后）
+2. 打开 `admin-plots-list.html`，搜索框输入关键词，检查筛选是否生效
+3. 打开 `admin-plot-add.html`，检查表单样式是否统一
+4. 打开 `admin-patrol.html`，检查左右面板是否正确显示
+5. 点击左侧面板地块列表项，地图是否定位，右侧面板是否显示详情
+6. 打开 `admin-report.html`，选择工单，检查数据和图表
 7. 浏览器控制台无 404 错误

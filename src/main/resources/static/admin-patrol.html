@@ -54,6 +54,33 @@
                 </div>
             </div>
 
+            <!-- 左侧面板：地块列表 -->
+            <div class="side-panel left-panel" id="leftPanel">
+                <div class="panel-tabs">
+                    <a class="active" data-tab="plots" onclick="switchTab(this, 'plots')">地块列表</a>
+                    <a data-tab="anomalies" onclick="switchTab(this, 'anomalies')">异常记录</a>
+                </div>
+                <div class="panel-content" id="plotListPanel">
+                    <div class="panel-loading"><i class="fa fa-spinner fa-spin"></i> 加载中...</div>
+                </div>
+                <div class="panel-content hidden" id="anomalyListPanel">
+                    <div class="panel-empty"><i class="fa fa-inbox"></i> 暂无异常记录</div>
+                </div>
+            </div>
+            <!-- 左侧面板折叠按钮 -->
+            <div class="panel-toggle-btn" id="leftPanelToggle" onclick="toggleLeftPanel()" title="折叠/展开地块列表">
+                <i class="fa fa-angle-left" id="leftPanelToggleIcon"></i>
+            </div>
+
+            <!-- 右侧面板：地块详情 -->
+            <div class="side-panel right-panel hidden" id="rightPanel">
+                <div class="panel-header">
+                    <span class="title">地块详情</span>
+                    <a class="close-btn" onclick="closeRightPanel()">&times;</a>
+                </div>
+                <div class="panel-content" id="detailContent"></div>
+            </div>
+
             <div id="map">
                 <div id="ndviSliderWrapper"
                      style="display: none; align-items: center; gap: 16px; flex-wrap: wrap;">
@@ -218,7 +245,7 @@
             map.invalidateSize();
 
             try {
-                const resPlots = await fetch('http://123.56.228.32:8080/admin/plots', {
+                const resPlots = await fetch('http://localhost:8080/admin/plots', {
                     headers: {"token": token}
                 });
                 const rawPlots = await resPlots.json();
@@ -1431,26 +1458,125 @@
      */
     async function loadPlots() {
         try {
-            // http://123.56.228.32:8080请求，添加token头
-            const res = await fetch("http://123.56.228.32:8080/admin/plots", {
+            // http://localhost:8080请求，添加token头
+            const res = await fetch("http://localhost:8080/admin/plots", {
                 headers: {
                     "token": token
                 }
             });
             if (!res.ok) throw new Error("请求失败");
             const plots = await res.json();
+            plotList = plots;
             plots.forEach(displayPlot);
+            renderPlotListPanel(plots);
         } catch (err) {
             console.error("地块加载失败：", err);
-            alert("加载失败，请检查服务是否运行");
+            document.getElementById('plotListPanel').innerHTML =
+                '<div class="panel-empty"><i class="fa fa-exclamation-circle"></i> 加载失败</div>';
         }
+    }
+
+    // 渲染左侧面板地块列表
+    function renderPlotListPanel(plots) {
+        const container = document.getElementById('plotListPanel');
+        if (!plots || plots.length === 0) {
+            container.innerHTML = '<div class="panel-empty"><i class="fa fa-inbox"></i> 暂无地块数据</div>';
+            return;
+        }
+        container.innerHTML = plots.map(p => `
+            <div class="plot-list-item" onclick="flyToPlot(${p.id})" title="${p.plotName}">
+                <div class="plot-icon"><i class="fa fa-map-marker"></i></div>
+                <div class="plot-info">
+                    <div class="plot-name">${p.plotName}</div>
+                    <div class="plot-meta">${p.currentCrop || '未知作物'} · ${p.region || ''}</div>
+                </div>
+                <div class="plot-area">${p.area || '--'}亩</div>
+            </div>
+        `).join('');
+    }
+
+    // 飞到指定地块
+    function flyToPlot(plotId) {
+        const plot = plotList.find(p => p.id === plotId);
+        if (!plot) return;
+        try {
+            const coord = JSON.parse(plot.coordinates);
+            if (coord.shapeType === 'polygon' && coord.latlngs) {
+                const layer = L.polygon(coord.latlngs);
+                map.fitBounds(layer.getBounds(), { padding: [50, 50] });
+            } else if (coord.shapeType === 'circle' && coord.center) {
+                map.setView([coord.center.lat, coord.center.lng], 17);
+            }
+            showRightPanel(plot);
+        } catch (e) {
+            console.error('定位失败', e);
+        }
+    }
+
+    // 显示右侧面板
+    function showRightPanel(plot) {
+        const panel = document.getElementById('rightPanel');
+        const content = document.getElementById('detailContent');
+        content.innerHTML = `
+            <div class="detail-card">
+                <div class="detail-title">${plot.plotName}</div>
+                <div class="detail-row"><span class="label">本季作物</span><span class="value">${plot.currentCrop || '--'}</span></div>
+                <div class="detail-row"><span class="label">上季作物</span><span class="value">${plot.lastCrop || '--'}</span></div>
+                <div class="detail-row"><span class="label">面积</span><span class="value">${plot.area || '--'} 亩</span></div>
+                <div class="detail-row"><span class="label">联系人</span><span class="value">${plot.contactPerson || '--'}</span></div>
+                <div class="detail-row"><span class="label">电话</span><span class="value">${plot.phone || '--'}</span></div>
+                <div class="detail-row"><span class="label">土壤类型</span><span class="value">${plot.soilType || '--'}</span></div>
+                <div class="detail-row"><span class="label">灌溉条件</span><span class="value">${plot.irrigationType || '--'}</span></div>
+                <div class="detail-row"><span class="label">土地类型</span><span class="value">${plot.landType || '--'}</span></div>
+                <div class="detail-row"><span class="label">地区</span><span class="value">${plot.region || '--'}</span></div>
+                <div class="detail-row"><span class="label">地址</span><span class="value">${plot.address || '--'}</span></div>
+                <div class="detail-actions">
+                    <button class="layui-btn layui-btn-normal layui-btn-sm" onclick="updateArea(${plot.id})">修改面积</button>
+                    <button class="layui-btn layui-btn-danger layui-btn-sm" onclick="deletePlot(${plot.id})">删除</button>
+                </div>
+            </div>
+        `;
+        panel.classList.remove('hidden');
+    }
+
+    // 关闭右侧面板
+    function closeRightPanel() {
+        document.getElementById('rightPanel').classList.add('hidden');
+    }
+
+    // 折叠/展开左侧面板
+    function toggleLeftPanel() {
+        var panel = document.getElementById('leftPanel');
+        var toggle = document.getElementById('leftPanelToggle');
+        var icon = document.getElementById('leftPanelToggleIcon');
+        panel.classList.toggle('collapsed');
+        toggle.classList.toggle('collapsed');
+        if (panel.classList.contains('collapsed')) {
+            icon.className = 'fa fa-angle-right';
+        } else {
+            icon.className = 'fa fa-angle-left';
+        }
+        // 刷新地图尺寸
+        setTimeout(function() {
+            if (window.map && typeof window.map.invalidateSize === "function") {
+                window.map.invalidateSize();
+            }
+        }, 350);
+    }
+
+    // Tab切换
+    function switchTab(el, tab) {
+        el.parentElement.querySelectorAll('a').forEach(a => a.classList.remove('active'));
+        el.classList.add('active');
+        document.getElementById('plotListPanel').classList.toggle('hidden', tab !== 'plots');
+        document.getElementById('anomalyListPanel').classList.toggle('hidden', tab !== 'anomalies');
     }
 
     // 获取地区地块
     async function getRegionPlots(region) {
         if (regionPlotCache[region]?.length) return regionPlotCache[region];
         try {
-            const res = await fetch(`http://123.56.228.32:8080/admin/plots?region=${region}`, {headers: {"token": token}});
+            const res = await fetch(`http://localhost:8080/admin/plots?region=${region}`, {headers: {"token": token}});
             const plots = await res.json();
             regionPlotCache[region] = plots;
             return plots;
@@ -1625,8 +1751,8 @@
 
         document.getElementById('queryPlot').onclick = async function () {
             try {
-                // http://123.56.228.32:8080请求，添加token头
-                const res = await fetch("http://123.56.228.32:8080/admin/plots", {
+                // http://localhost:8080请求，添加token头
+                const res = await fetch("http://localhost:8080/admin/plots", {
                     headers: {
                         "token": token
                     }

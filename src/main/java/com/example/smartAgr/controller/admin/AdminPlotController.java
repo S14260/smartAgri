@@ -13,7 +13,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/admin/plots")
-@CrossOrigin
 public class AdminPlotController {
 
     @Autowired

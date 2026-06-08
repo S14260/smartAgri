@@ -4,8 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>地块添加</title>
-<!--  <link rel="stylesheet" href="https://cdn.staticfile.org/layui/2.8.18/css/layui.css">-->
-  <link rel="stylesheet" href="./layui/css/layui.css">
+  <link rel="stylesheet" href="./css/design-tokens.css">
+  <link rel="stylesheet" href="./lib/css/layui.css">
+  <style>
+    body { background: var(--bg-page, #f0f2f5); padding: 16px; }
+    h2 { color: var(--text-primary, #303133); font-size: 18px; margin-bottom: 20px; padding-left: 12px; border-left: 3px solid var(--primary-color, #1E88E5); }
+    .layui-container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: var(--radius-md, 8px); padding: 24px 32px; box-shadow: var(--shadow-sm, 0 2px 8px rgba(0,0,0,0.06)); }
+    .layui-form-label { width: 80px; color: var(--text-regular, #606266); }
+    .layui-input:focus, .layui-textarea:focus { border-color: var(--primary-color, #1E88E5); }
+    .layui-btn { background: var(--primary-color, #1E88E5); border-radius: var(--radius-sm, 4px); }
+    .layui-btn:hover { opacity: 0.9; }
+  </style>
 </head>
 <body>
 
@@ -115,7 +124,7 @@
 </div>
 
 
-<script src="./layui/layui.js"></script>
+<script src="./lib/layui/layui.js"></script>
 
 <script>
   // 获取 URL 中传递的面积数据（单位已是亩），直接展示

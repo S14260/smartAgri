@@ -244,29 +244,51 @@ public class AgentService {
                         if (tc.has("id")) {
                             AgentResponse.ToolCall toolCall = new AgentResponse.ToolCall();
                             toolCall.setId(tc.get("id").asText());
-                            toolCall.setName(tc.path("function").path("name").asText());
+                            String funcName = tc.path("function").path("name").asText(null);
+                            toolCall.setName(funcName);
                             toolCalls.add(toolCall);
                             toolCallArguments.put(index, new StringBuilder());
                         }
+                        // name 可能在后续 chunk 中到达
+                        if (tc.has("function") && tc.get("function").has("name")) {
+                            String name = tc.get("function").get("name").asText(null);
+                            if (name != null && index < toolCalls.size() && toolCalls.get(index).getName() == null) {
+                                toolCalls.get(index).setName(name);
+                            }
+                        }
                         if (tc.has("function") && tc.get("function").has("arguments")) {
-                            toolCallArguments.get(index).append(tc.get("function").get("arguments").asText());
+                            if (toolCallArguments.containsKey(index)) {
+                                toolCallArguments.get(index).append(tc.get("function").get("arguments").asText());
+                            }
                         }
                     }
                 }
             }
         }
 
-        // 解析工具调用参数
+        // 解析工具调用参数，过滤掉 name 为空的无效调用
+        List<AgentResponse.ToolCall> validToolCalls = new ArrayList<>();
         for (int i = 0; i < toolCalls.size(); i++) {
+            AgentResponse.ToolCall tc = toolCalls.get(i);
+            if (tc.getName() == null) {
+                log.warn("Skipping tool call with null name at index {}", i);
+                continue;
+            }
             StringBuilder argsStr = toolCallArguments.get(i);
             if (argsStr != null && argsStr.length() > 0) {
-                toolCalls.get(i).setArguments(objectMapper.readTree(argsStr.toString()));
+                try {
+                    tc.setArguments(objectMapper.readTree(argsStr.toString()));
+                } catch (Exception e) {
+                    log.warn("Failed to parse tool call arguments for {}: {}", tc.getName(), argsStr, e);
+                    tc.setArguments(objectMapper.createObjectNode());
+                }
             }
+            validToolCalls.add(tc);
         }
 
         AgentResponse agentResponse = new AgentResponse();
         agentResponse.setContent(fullContent.toString());
-        agentResponse.setToolCalls(toolCalls.isEmpty() ? null : toolCalls);
+        agentResponse.setToolCalls(validToolCalls.isEmpty() ? null : validToolCalls);
         return agentResponse;
     }
 
@@ -331,7 +353,12 @@ public class AgentService {
                 toolCall.setId(tc.get("id").asText());
                 toolCall.setName(tc.path("function").path("name").asText());
                 String argsStr = tc.path("function").path("arguments").asText();
-                toolCall.setArguments(objectMapper.readTree(argsStr));
+                try {
+                    toolCall.setArguments(objectMapper.readTree(argsStr));
+                } catch (Exception e) {
+                    log.warn("Failed to parse tool call arguments: {}", argsStr, e);
+                    toolCall.setArguments(objectMapper.createObjectNode());
+                }
                 toolCalls.add(toolCall);
             }
             response.setToolCalls(toolCalls);

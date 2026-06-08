@@ -13,309 +13,7 @@
     <script src="./lib/echarts.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-    <style>
-        html, body, #cesiumContainer { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }
-        .hidden { display: none !important; }
-
-        /* 顶部工具栏 */
-        #topPanel {
-            position: absolute; top: 20px; left: 20px;
-            display: flex; gap: 8px; flex-wrap: wrap; z-index: 999;
-        }
-        .toolbar-btn {
-            background: rgba(30,30,30,0.85); color: #fff; padding: 8px 14px;
-            cursor: pointer; border-radius: 4px; border: none; font-size: 13px;
-            transition: background 0.2s;
-        }
-        .toolbar-btn:hover { background: rgba(60,60,60,0.95); }
-        .toolbar-btn.btn-warm { background: rgba(230,162,60,0.9); }
-        .toolbar-btn.btn-normal { background: rgba(30,136,229,0.9); }
-        .toolbar-btn.btn-red { background: rgba(245,108,108,0.9); }
-
-        /* 查询/NDVI 面板 */
-        #queryWrapper, #ndviWrapper { position: relative; }
-        #queryPanel, #ndviPanel {
-            position: absolute; top: 40px; left: 0;
-            background: rgba(20,20,20,0.9); color: #fff; border-radius: 6px;
-            max-height: 400px; overflow-y: auto;
-        }
-        #queryPanel { width: 260px; }
-        #ndviPanel { width: 240px; }
-        .panel-header { padding: 10px; font-weight: bold; border-bottom: 1px solid #444; }
-        .plot-item { padding: 8px 10px; border-bottom: 1px solid #333; cursor: pointer; }
-        .plot-item:hover { background: rgba(255,255,255,0.1); }
-        .ndvi-body { padding: 10px; display: flex; flex-direction: column; gap: 10px; }
-        #ndviPanel select, #ndviPanel button { width: 100%; box-sizing: border-box; padding: 8px; border-radius: 4px; border: none; }
-
-        /* 搜索栏 */
-        #searchBar {
-            position: absolute; top: 20px; right: 20px; z-index: 999;
-            display: flex; gap: 6px;
-        }
-        #searchInput {
-            padding: 8px 12px; border-radius: 4px; border: none;
-            background: rgba(30,30,30,0.85); color: #fff; width: 200px; font-size: 13px;
-        }
-        #searchInput::placeholder { color: rgba(255,255,255,0.5); }
-
-        /* AI Chat */
-        .ai-chat-toggle {
-            position: fixed; bottom: 24px; right: 24px; z-index: 10000;
-            width: 90px; height: 90px; border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #fff; border: none; cursor: pointer; font-size: 36px;
-            box-shadow: 0 4px 15px rgba(102,126,234,0.4);
-            transition: transform 0.2s;
-            animation: aiPulse 2s ease-in-out infinite;
-        }
-        .ai-chat-toggle:hover { transform: scale(1.1); }
-        .ai-chat-toggle::after {
-            content: 'AI'; position: absolute; bottom: 2px; right: 2px;
-            background: #ff6b6b; color: #fff; font-size: 12px; font-weight: 700;
-            padding: 2px 6px; border-radius: 8px; line-height: 1.2;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-        }
-        @keyframes aiPulse {
-            0%, 100% { box-shadow: 0 4px 15px rgba(102,126,234,0.4); }
-            50% { box-shadow: 0 4px 20px rgba(102,126,234,0.7), 0 0 30px rgba(118,75,162,0.3); }
-        }
-        .ai-chat-panel {
-            position: fixed; bottom: 124px; right: 24px; z-index: 10000;
-            width: 480px; height: 680px; background: #fff; border-radius: 12px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.15); display: flex; flex-direction: column;
-            overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        }
-        .ai-chat-header {
-            padding: 14px 16px; background: linear-gradient(135deg, #667eea, #764ba2);
-            color: #fff; display: flex; justify-content: space-between; align-items: center;
-            font-weight: 600; font-size: 15px;
-        }
-        .ai-chat-header button { background: none; border: none; color: #fff; font-size: 20px; cursor: pointer; margin-left: 6px; }
-        .ai-chat-panel.fullscreen {
-            width: 100vw !important; height: 100vh !important;
-            top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
-            border-radius: 0 !important; z-index: 10001;
-        }
-        .ai-chat-messages { flex: 1; overflow-y: auto; padding: 16px; background: #f7f8fa; }
-        .chat-msg { margin-bottom: 12px; display: flex; }
-        .chat-msg.user { justify-content: flex-end; }
-        .chat-msg.assistant { justify-content: flex-start; }
-        .chat-bubble {
-            max-width: 80%; padding: 10px 14px; border-radius: 12px;
-            font-size: 13px; line-height: 1.6; word-break: break-word;
-        }
-        .chat-msg.user .chat-bubble { background: #667eea; color: #fff; border-bottom-right-radius: 4px; }
-        .chat-msg.assistant .chat-bubble { background: #fff; color: #333; border: 1px solid #e8e8e8; border-bottom-left-radius: 4px; }
-        .chat-bubble a {
-            color: #667eea; text-decoration: underline; font-weight: 500;
-            transition: color 0.2s;
-        }
-        .chat-bubble a:hover { color: #5a6fd6; }
-        .chat-msg.user .chat-bubble a { color: #e0e0ff; }
-        .chat-tool-status {
-            padding: 6px 12px; margin-bottom: 8px; background: #fff3cd; border-radius: 8px;
-            font-size: 12px; color: #856404; display: flex; align-items: center; gap: 6px;
-        }
-        .chat-tool-status .spinner { animation: spin 1s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .ai-chat-input-area {
-            padding: 12px; border-top: 1px solid #eee; display: flex; gap: 8px; background: #fff;
-        }
-        .ai-chat-input-area textarea {
-            flex: 1; resize: none; border: 1px solid #ddd; border-radius: 8px;
-            padding: 8px 12px; font-size: 13px; font-family: inherit; outline: none;
-        }
-        .ai-chat-input-area textarea:focus { border-color: #667eea; }
-        .ai-chat-input-area button {
-            padding: 8px 16px; background: #667eea; color: #fff; border: none;
-            border-radius: 8px; cursor: pointer; font-size: 13px; white-space: nowrap;
-        }
-        .ai-chat-input-area button:hover { background: #5a6fd6; }
-
-        /* Markdown rendering inside chat bubbles */
-        .chat-bubble { white-space: normal; }
-        .chat-bubble p { margin: 0 0 4px 0; }
-        .chat-bubble p:last-child { margin-bottom: 0; }
-        .chat-bubble ul, .chat-bubble ol { margin: 4px 0 8px 0; padding-left: 20px; }
-        .chat-bubble li { margin-bottom: 2px; }
-        .chat-bubble code {
-            background: #f0f0f0; padding: 1px 5px; border-radius: 3px;
-            font-size: 12px; font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-            color: #e83e8c;
-        }
-        .chat-bubble pre {
-            background: #1e1e2e; color: #cdd6f4; padding: 10px 12px;
-            border-radius: 6px; overflow-x: auto; margin: 6px 0 8px 0;
-            font-size: 12px; line-height: 1.5;
-        }
-        .chat-bubble pre code { background: none; color: inherit; padding: 0; font-size: inherit; }
-        .chat-bubble strong { font-weight: 600; }
-        .chat-bubble em { font-style: italic; }
-        .chat-bubble blockquote {
-            border-left: 3px solid #667eea; margin: 6px 0 8px 0;
-            padding: 4px 10px; color: #666; background: #f8f9fa;
-            border-radius: 0 4px 4px 0;
-        }
-        .chat-bubble table { border-collapse: collapse; margin: 6px 0 8px 0; font-size: 12px; width: 100%; }
-        .chat-bubble th, .chat-bubble td { border: 1px solid #ddd; padding: 4px 8px; text-align: left; }
-        .chat-bubble th { background: #f0f0f0; font-weight: 600; }
-        .chat-bubble h1, .chat-bubble h2, .chat-bubble h3 { margin: 8px 0 4px 0; font-size: 14px; font-weight: 600; }
-
-        /* Streaming cursor */
-        .chat-bubble.streaming-cursor::after {
-            content: ''; display: inline-block; width: 2px; height: 1em;
-            background: #667eea; margin-left: 2px;
-            animation: blink 0.8s step-end infinite; vertical-align: text-bottom;
-        }
-        @keyframes blink { 50% { opacity: 0; } }
-
-        /* Agent reasoning chain */
-        .chain-panel { margin-bottom: 8px; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; }
-        .chain-header { padding: 8px 12px; background: #f5f5f5; cursor: pointer; font-size: 12px; font-weight: 600; color: #666; display: flex; align-items: center; gap: 6px; user-select: none; }
-        .chain-header .arrow { transition: transform 0.2s; display: inline-block; }
-        .chain-header.collapsed .arrow { transform: rotate(-90deg); }
-        .chain-body { padding: 8px 12px; }
-        .chain-body.hidden { display: none; }
-        .chain-step { position: relative; padding-left: 16px; margin-bottom: 10px; border-left: 2px solid #667eea; }
-        .chain-step:last-child { margin-bottom: 0; }
-        .chain-step-label { font-size: 11px; color: #667eea; font-weight: 600; margin-bottom: 4px; }
-        .chain-thought { background: #eef2ff; padding: 6px 10px; border-radius: 6px; font-size: 12px; color: #4a5568; font-style: italic; margin-bottom: 4px; white-space: normal; line-height: 1.5; }
-        .chain-action { display: inline-block; background: #667eea; color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-bottom: 4px; }
-        .chain-action .spinner { margin-right: 4px; }
-        .chain-observation { background: #f7f8fa; padding: 6px 10px; border-radius: 6px; font-size: 12px; color: #666; font-family: 'SFMono-Regular', Consolas, monospace; white-space: pre-wrap; max-height: 100px; overflow-y: auto; margin-top: 4px; }
-
-        /* 操作提示 */
-        #helpToggle {
-            position: absolute; bottom: 20px; left: 20px; z-index: 999;
-            background: rgba(30,30,30,0.85); color: #fff; border: none;
-            width: 36px; height: 36px; border-radius: 50%; cursor: pointer;
-            font-size: 16px; display: flex; align-items: center; justify-content: center;
-            transition: background 0.2s;
-        }
-        #helpToggle:hover { background: rgba(60,60,60,0.95); }
-        #helpPanel {
-            position: absolute; bottom: 66px; left: 20px; z-index: 999;
-            background: rgba(20,20,20,0.92); color: #fff; border-radius: 8px;
-            padding: 14px 18px; font-size: 12px; line-height: 1.8;
-            width: 240px; backdrop-filter: blur(8px);
-            border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            transition: opacity 0.2s, transform 0.2s;
-        }
-        #helpPanel.hidden { opacity: 0; transform: translateY(10px); pointer-events: none; }
-        #helpPanel h4 { margin: 0 0 10px 0; font-size: 13px; color: #667eea; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 8px; }
-        #helpPanel .help-item { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-        #helpPanel .help-key { background: rgba(255,255,255,0.15); padding: 1px 6px; border-radius: 3px; font-size: 11px; white-space: nowrap; }
-        #helpPanel .help-desc { color: rgba(255,255,255,0.8); }
-        #helpPanel .help-section { margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); }
-        #helpPanel .help-section-title { font-size: 11px; color: #E6A23C; margin-bottom: 6px; }
-
-        /* 对比分析面板 */
-        .compare-modal {
-            padding: 20px;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-        .compare-modal h3 {
-            margin: 0 0 16px 0;
-            font-size: 16px;
-            color: #333;
-            border-bottom: 2px solid #667eea;
-            padding-bottom: 8px;
-        }
-        .compare-form-group {
-            margin-bottom: 16px;
-        }
-        .compare-form-group label {
-            display: block;
-            font-weight: 500;
-            margin-bottom: 6px;
-            color: #555;
-        }
-        .compare-form-group select {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 13px;
-            background: #fff;
-        }
-        .compare-form-group select:focus {
-            border-color: #667eea;
-            outline: none;
-        }
-        .compare-time-row {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-        }
-        .compare-time-row select {
-            flex: 1;
-        }
-        .compare-time-row .vs {
-            font-weight: bold;
-            color: #667eea;
-            font-size: 14px;
-        }
-        .compare-btn {
-            width: 100%;
-            padding: 10px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-        .compare-btn:hover {
-            opacity: 0.9;
-        }
-        .compare-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-        .compare-result {
-            margin-top: 16px;
-            padding: 12px;
-            background: #f5f7fa;
-            border-radius: 8px;
-            font-size: 13px;
-            line-height: 1.8;
-        }
-        .compare-result .highlight {
-            color: #F56C6C;
-            font-weight: 600;
-        }
-        .compare-result .positive {
-            color: #67C23A;
-            font-weight: 600;
-        }
-        .compare-chart-container {
-            width: 100%;
-            height: 300px;
-            margin-top: 12px;
-            background: #fff;
-            border-radius: 8px;
-            padding: 10px;
-            box-sizing: border-box;
-        }
-
-        /* 响应式 */
-        @media screen and (max-width: 768px) {
-            #topPanel {
-                top: 10px; left: 10px; gap: 4px; max-width: calc(100vw - 180px);
-            }
-            .toolbar-btn { padding: 6px 10px; font-size: 12px; }
-            .toolbar-btn i { display: none; }
-            #searchBar { top: 10px; right: 10px; }
-            #searchInput { width: 120px; font-size: 12px; padding: 6px 10px; }
-            .ai-chat-toggle { width: 64px; height: 64px; font-size: 28px; bottom: 16px; right: 16px; }
-            .ai-chat-toggle::after { font-size: 10px; }
-            .ai-chat-panel { width: calc(100vw - 32px); height: calc(100vh - 100px); right: 16px; bottom: 90px; }
-            .ai-chat-panel.fullscreen { width: 100vw !important; height: 100vh !important; }
-        }
-    </style>
+    <link rel="stylesheet" href="./css/admin-patrol-cesium.css"/>
 </head>
 <body>
 
@@ -1823,6 +1521,7 @@ function initAiChat() {
             let buffer = '';
             let accumulatedMarkdown = '';
             let chainPanel = null, chainBody = null, currentStepDiv = null;
+            let toolCallCounter = 0;
 
             while (true) {
                 const { done, value } = await reader.read();
@@ -1857,6 +1556,7 @@ function initAiChat() {
                             currentStepDiv.className = 'chain-step';
                             currentStepDiv.innerHTML = `<div class="chain-step-label">步骤 ${data.step}</div>`;
                             chainBody.appendChild(currentStepDiv);
+                            toolCallCounter = 0;
                             messages.scrollTop = messages.scrollHeight;
                         } else if (data.type === 'thought') {
                             if (currentStepDiv) {
@@ -1864,6 +1564,9 @@ function initAiChat() {
                                 thoughtDiv.className = 'chain-thought';
                                 thoughtDiv.textContent = data.content || '';
                                 currentStepDiv.appendChild(thoughtDiv);
+                                // 清空回答气泡中的思考内容（这些内容是中间推理，不是最终回答）
+                                accumulatedMarkdown = '';
+                                responseDiv.innerHTML = '';
                                 messages.scrollTop = messages.scrollHeight;
                             }
                         } else if (data.type === 'token') {
@@ -1877,16 +1580,26 @@ function initAiChat() {
                             messages.scrollTop = messages.scrollHeight;
                         } else if (data.type === 'tool_start') {
                             if (currentStepDiv) {
+                                toolCallCounter++;
                                 const actionDiv = document.createElement('div');
                                 actionDiv.className = 'chain-action';
                                 actionDiv.innerHTML = `<span class="spinner">&#8635;</span> ${data.tool_name || ''}`;
-                                actionDiv.id = 'action-' + data.tool_name;
+                                actionDiv.id = 'action-' + toolCallCounter;
+                                actionDiv.dataset.toolName = data.tool_name || '';
                                 currentStepDiv.appendChild(actionDiv);
                             }
                             messages.scrollTop = messages.scrollHeight;
                         } else if (data.type === 'tool_result') {
                             if (currentStepDiv) {
-                                const actionEl = currentStepDiv.querySelector('#action-' + data.tool_name);
+                                // 查找当前步骤中最后一个匹配的 action 元素
+                                const actionEls = currentStepDiv.querySelectorAll('.chain-action');
+                                let actionEl = null;
+                                for (let i = actionEls.length - 1; i >= 0; i--) {
+                                    if (actionEls[i].dataset.toolName === data.tool_name && actionEls[i].querySelector('.spinner')) {
+                                        actionEl = actionEls[i];
+                                        break;
+                                    }
+                                }
                                 if (actionEl) {
                                     const spinner = actionEl.querySelector('.spinner');
                                     if (spinner) spinner.remove();

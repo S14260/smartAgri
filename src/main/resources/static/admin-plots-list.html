@@ -118,10 +118,16 @@
             <div class="layui-card">
                 <div class="layui-card-body">
 
-                    <button class="layui-btn layui-btn-normal" onclick="xadmin.open('修改地块','./admin-plot-update.html',800,600)">
-                        <i class="layui-icon"></i>修改地块</button>
-                    <button class="layui-btn layui-btn-danger" onclick="xadmin.open('删除地块','./admin-plot-delete.html',800,600)">
-                        <i class="layui-icon"></i>删除地块</button>
+                    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <i class="layui-icon layui-icon-search" style="color:#999;"></i>
+                            <input type="text" id="searchInput" placeholder="搜索地块名称/作物..." class="layui-input" style="width:220px; display:inline-block;">
+                        </div>
+                        <button class="layui-btn layui-btn-normal" onclick="xadmin.open('修改地块','./admin-plot-update.html',800,600)">
+                            <i class="layui-icon layui-icon-edit"></i>修改地块</button>
+                        <button class="layui-btn layui-btn-danger" onclick="xadmin.open('删除地块','./admin-plot-delete.html',800,600)">
+                            <i class="layui-icon layui-icon-delete"></i>删除地块</button>
+                    </div>
 
                     <!-- 横向滚动容器 -->
                     <div style="overflow-x: auto;">
@@ -162,7 +168,7 @@
             console.log("收到修改地块数据：", updatedData);
 
             // 🔁 发起请求更新地块信息
-            fetch(`http://123.56.228.32:8080/admin/plots/${updatedData.id}`, {
+            fetch(`http://localhost:8080/admin/plots/${updatedData.id}`, {
                 method: "PUT",
                 headers: {
                     'Content-Type': 'application/json',
@@ -190,6 +196,14 @@
 <script>
     $(function () {
         query();
+        // 搜索过滤
+        $('#searchInput').on('input', function() {
+            const keyword = $(this).val().toLowerCase();
+            $('#tbody tr').each(function() {
+                const text = $(this).text().toLowerCase();
+                $(this).toggle(text.includes(keyword));
+            });
+        });
     });
 
 

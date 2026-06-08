@@ -8,7 +8,8 @@
 docs/changelog/
 ├── README.md                    ← 本文件
 ├── phase1-visual-upgrade.md     ← 第一阶段：视觉系统升级（已完成）
-├── phase2-feature-deep.md       ← 第二阶段：功能深度提升（待开始）
+├── phase2-feature-deep.md       ← 第二阶段：功能深度提升（已完成）
+├── phase2-5-bugfix-and-polish.md ← 第二阶段补充：Bug修复与功能打磨（已完成）
 └── phase3-advanced.md           ← 第三阶段：高级功能（可选）
 ```
 
@@ -17,7 +18,8 @@ docs/changelog/
 | 阶段 | 主题 | 状态 | 工作量 |
 |------|------|------|--------|
 | 第一阶段 | 视觉系统升级 | ✅ 已完成 | ~3h |
-| 第二阶段 | 功能深度提升 | ⬜ 待开始 | ~21h |
+| 第二阶段 | 功能深度提升 | ✅ 已完成 | ~1.5h |
+| 第二阶段补充 | Bug修复与功能打磨 | ✅ 已完成 | ~2h |
 | 第三阶段 | 高级功能 | ⬜ 可选 | ~18h |
 
 ## 第一阶段成果
@@ -28,10 +30,20 @@ docs/changelog/
 - 设计系统：统一的 CSS 变量（design-tokens.css）
 - 清理：删除18个遗留页面
 
-## 第二阶段计划
+## 第二阶段成果
 
-- 地图页面三栏布局
-- CRUD页面样式统一
-- 巡田报告页
-- 提取Cesium内联样式
-- 新增Dashboard接口
+- Cesium内联样式提取为独立CSS文件（318行）
+- CRUD页面样式统一（搜索框 + 统一表单样式 + 修复路径）
+- 地图页面三栏布局（左：地块列表 + 右：地块详情）
+- 巡田报告页（概览卡片 + 异常表格 + ECharts图表）
+- 新增Dashboard接口（overview + plot-stats）
+
+## 第二阶段补充成果
+
+- 巡田报告页重新设计（路线图 + 异常缩略图 + 打印优化）
+- LLM接口配置修复（DeepSeek function calling 稳定性）
+- AI助手工具调用死循环修复（schema required + 参数验证 + 结果精简）
+- AI助手思维链可视化修复（思考内容重复 + ID冲突）
+- CORS配置冲突修复（合并为单一全局配置）
+- 登录页字段名修复（res.message → res.msg）
+- 驾驶舱修复（401处理 + 快捷入口 layFilter 参数）

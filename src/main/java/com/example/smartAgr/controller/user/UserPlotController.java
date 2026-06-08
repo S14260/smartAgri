@@ -15,7 +15,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/user/plots")
-@CrossOrigin
 public class UserPlotController {
 
     @Autowired

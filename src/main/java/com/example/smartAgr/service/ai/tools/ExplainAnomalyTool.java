@@ -5,6 +5,7 @@ import com.example.smartAgr.service.admin.LlmService;
 import com.example.smartAgr.service.ai.AgentTool;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -81,6 +82,10 @@ public class ExplainAnomalyTool implements AgentTool {
         p.set("severity", severity);
 
         schema.set("properties", p);
+        ArrayNode required = objectMapper.createArrayNode();
+        required.add("plot");
+        required.add("anomaly_category");
+        schema.set("required", required);
         return schema;
     }
 

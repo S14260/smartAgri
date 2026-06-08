@@ -60,7 +60,7 @@ Database setup: import `src/main/resources/mydb.sql` into MySQL. Default credent
 - Plot coordinates stored as JSON TEXT in MySQL (not PostGIS)
 - Pagination is in-memory via `PageUtil` (fetches all, slices) — not database-level
 - Passwords are stored in plaintext (known issue)
-- CORS configured for 123.56.228.32:8080 in both `CorsConfig` and `WebMvcConfig`
+- CORS configured for localhost:8080 in both `CorsConfig` and `WebMvcConfig`
 
 ## Common Gotchas
 
