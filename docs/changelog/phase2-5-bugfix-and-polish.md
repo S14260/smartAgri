@@ -78,7 +78,7 @@
 #### DeepSeek配置（当前）
 - `base-url`: `https://api.deepseek.com/v1`
 - `model`: `deepseek-chat`
-- `api-key`: `${LLM_API_KEY:your-api-key-here}`
+- `api-key`: `sk-fdf066b5724d4c31a7f68c1095aa22cd`
 - `chat-endpoint`: `/chat/completions`
 
 #### System Prompt增强
