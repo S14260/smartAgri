@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>智慧农业遥感监测与巡田决策平台 — 作品展示</title>
+  <meta name="description" content="基于 Java Spring Boot + Python Flask + CesiumJS 的智慧农业管理系统，集成遥感影像处理、AI Agent 智能巡田、多时相异常检测与路径规划。">
+  <meta name="keywords" content="智慧农业,遥感监测,AI Agent,NDVI,异常检测,路径规划,CesiumJS,Spring Boot,Flask">
+  <meta property="og:title" content="智慧农业遥感监测与巡田决策平台">
+  <meta property="og:description" content="Java + Python 全栈农业遥感系统 — ReAct Agent · 多时相异常检测 · 2-opt 路径优化">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>🌾</text></svg>">
+  <link rel="stylesheet" href="css/style.css">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* Nav mobile open state */
+    @media (max-width: 768px) {
+      .nav-links.open {
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: rgba(7, 9, 15, 0.98);
+        backdrop-filter: blur(20px);
+        padding: 20px 24px;
+        gap: 16px;
+        border-bottom: 1px solid var(--border);
+      }
+    }
+    /* Hero badge dot */
+    .hero-badge-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    /* SVG chart line animation */
+    .chart-path {
+      stroke-dasharray: 600;
+      stroke-dashoffset: 600;
+      animation: drawLine 2s ease-out forwards;
+    }
+    @keyframes drawLine {
+      to { stroke-dashoffset: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ============ NAVIGATION ============ -->
+<nav class="nav">
+  <div class="container">
+    <a href="#" class="nav-logo"><span>&gt;_</span> SmartAgri <span class="nav-page-tag">首页</span></a>
+    <ul class="nav-links">
+      <li><a href="#intro" class="active">项目简介</a></li>
+      <li><a href="#architecture">架构</a></li>
+      <li><a href="#features">功能</a></li>
+      <li><a href="features.html">功能详情</a></li>
+      <li><a href="#screenshots">系统截图</a></li>
+      <li><a href="#tech">技术栈</a></li>
+      <li><a href="#contact">联系</a></li>
+    </ul>
+    <button class="nav-mobile-btn" aria-label="菜单">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- ============ HERO ============ -->
+<section class="hero">
+  <!-- Background effects -->
+  <div class="hero-glow hero-glow-1"></div>
+  <div class="hero-glow hero-glow-2"></div>
+  <div class="hero-glow hero-glow-3"></div>
+  <div class="hero-grid"></div>
+
+  <div class="container">
+    <!-- Left: Text -->
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span class="hero-badge-dot"></span>
+        全栈项目 · 2025
+      </div>
+      <h1>智慧农业<br><span class="gradient-text">遥感监测与巡田决策</span><br>平台</h1>
+      <p class="hero-desc">
+        基于 Java Spring Boot + Python Flask + CesiumJS 构建的农业遥感管理系统。集成 ReAct AI Agent、多时相异常检测、NDVI 影像处理与 2-opt 路径优化，实现从卫星数据到巡田决策的完整闭环。
+      </p>
+      <div class="hero-tags">
+        <span class="tag tag-green">Spring Boot</span>
+        <span class="tag tag-green">Flask</span>
+        <span class="tag tag-blue">CesiumJS</span>
+        <span class="tag tag-blue">Leaflet</span>
+        <span class="tag tag-amber">ReAct Agent</span>
+        <span class="tag tag-amber">YOLO11-Seg</span>
+        <span class="tag tag-amber">NDVI</span>
+      </div>
+      <div class="hero-buttons">
+        <a href="#features" class="btn btn-primary">探索功能 ↓</a>
+        <a href="http://123.56.228.32:8080" target="_blank" rel="noopener noreferrer" class="btn btn-primary">在线体验</a>
+        <a href="https://github.com/S14260/smart-agriculture-management" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">GitHub 仓库</a>
+      </div>
+    </div>
+
+    <!-- Right: Dashboard Visual -->
+    <div class="hero-visual">
+      <div class="hero-dashboard">
+        <div class="hero-dashboard-header">
+          <div class="hero-dashboard-dots">
+            <span></span><span></span><span></span>
+          </div>
+          <span class="hero-dashboard-title">dashboard — overview</span>
+        </div>
+
+        <div class="hero-stats-grid">
+          <div class="hero-stat-card">
+            <div class="hero-stat-label">地块总数</div>
+            <div class="hero-stat-value green">24</div>
+          </div>
+          <div class="hero-stat-card">
+            <div class="hero-stat-label">异常地块</div>
+            <div class="hero-stat-value amber">3</div>
+          </div>
+          <div class="hero-stat-card">
+            <div class="hero-stat-label">巡田工单</div>
+            <div class="hero-stat-value blue">18</div>
+          </div>
+        </div>
+
+        <div class="hero-chart-area">
+          <div class="hero-chart-label">NDVI 趋势 — 近30天</div>
+          <div class="hero-chart-line">
+            <svg viewBox="0 0 400 100" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#22c55e" stop-opacity="0.3"/>
+                  <stop offset="100%" stop-color="#22c55e" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <path d="M0,80 Q30,70 60,60 T120,45 T180,55 T240,35 T300,40 T360,25 T400,30" fill="none" stroke="#22c55e" stroke-width="2" class="chart-path"/>
+              <path d="M0,80 Q30,70 60,60 T120,45 T180,55 T240,35 T300,40 T360,25 T400,30 L400,100 L0,100 Z" fill="url(#lineGrad)" opacity="0.4"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Floating cards -->
+      <div class="hero-float-card card-1">
+        <div class="float-icon">🛰️</div>
+        <div class="float-label">NDVI 指数</div>
+        <div class="float-value" style="color:var(--green)">0.72</div>
+      </div>
+      <div class="hero-float-card card-2">
+        <div class="float-icon">🤖</div>
+        <div class="float-label">AI 状态</div>
+        <div class="float-value" style="color:var(--green)">运行中</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PROJECT INTRO ============ -->
+<section id="intro" class="section">
+  <div class="container">
+    <div class="fade-in">
+      <div class="section-label">// 项目简介</div>
+      <div class="section-title">从卫星数据到巡田决策的完整闭环</div>
+      <p class="section-desc">
+        三层分离架构，前端可视化、Java 业务逻辑、Python 遥感计算各司其职。管理员通过自然语言与 AI Agent 交互，自动完成异常检测与路径规划。
+      </p>
+    </div>
+
+    <div class="intro-grid">
+      <div class="intro-card glass-card fade-in fade-in-delay-1">
+        <div class="intro-card-icon green">🏗️</div>
+        <h3>三层分离架构</h3>
+        <p>前端 LayUI + CesiumJS 负责可视化，Spring Boot 处理业务逻辑与认证，Flask 微服务专注遥感计算与空间分析。</p>
+      </div>
+      <div class="intro-card glass-card fade-in fade-in-delay-2">
+        <div class="intro-card-icon blue">📡</div>
+        <h3>多源遥感处理</h3>
+        <p>支持 NDVI / EVI / SAVI / NDWI 四种光谱指数，自动坐标重投影、矢量裁剪、Lanczos 超分辨率与边缘抗锯齿。</p>
+      </div>
+      <div class="intro-card glass-card fade-in fade-in-delay-3">
+        <div class="intro-card-icon amber">🧠</div>
+        <h3>ReAct AI Agent</h3>
+        <p>基于 DeepSeek LLM 的推理-行动循环，5 个自动注册工具，SSE 流式输出思考过程与工具调用状态。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ WORKFLOW PIPELINE ============ -->
+<section class="section">
+  <div class="container">
+    <div class="fade-in">
+      <div class="section-label">// 端到端工作流</div>
+      <div class="section-title">从卫星数据到巡田打卡的完整闭环</div>
+      <p class="section-desc">
+        六步流水线：GEE 数据获取 → 遥感裁剪渲染 → 异常检测 → 路径规划 → 巡田工单生成 → GPS 打卡签到，全程自动化。
+      </p>
+    </div>
+
+    <div class="workflow fade-in">
+      <div class="workflow-pipeline">
+        <div class="workflow-step active">
+          <div class="workflow-step-icon">🛰️</div>
+          <div class="workflow-step-label">GEE 数据获取</div>
+          <div class="workflow-step-sub">Sentinel-2 卫星影像</div>
+        </div>
+        <div class="workflow-arrow">→</div>
+        <div class="workflow-step active">
+          <div class="workflow-step-icon">📡</div>
+          <div class="workflow-step-label">遥感裁剪渲染</div>
+          <div class="workflow-step-sub">NDVI · 重投影 · 超分辨率</div>
+        </div>
+        <div class="workflow-arrow">→</div>
+        <div class="workflow-step active">
+          <div class="workflow-step-icon">⚠️</div>
+          <div class="workflow-step-label">异常检测</div>
+          <div class="workflow-step-sub">多时相 · Z-Score · 优先级</div>
+        </div>
+        <div class="workflow-arrow">→</div>
+        <div class="workflow-step active">
+          <div class="workflow-step-icon">🛤️</div>
+          <div class="workflow-step-label">路径规划</div>
+          <div class="workflow-step-sub">2-opt · Haversine</div>
+        </div>
+        <div class="workflow-arrow">→</div>
+        <div class="workflow-step active">
+          <div class="workflow-step-icon">📋</div>
+          <div class="workflow-step-label">巡田工单生成</div>
+          <div class="workflow-step-sub">异常区域 · 路线 · 任务分配</div>
+        </div>
+        <div class="workflow-arrow">→</div>
+        <div class="workflow-step active">
+          <div class="workflow-step-icon">📍</div>
+          <div class="workflow-step-label">GPS 打卡签到</div>
+          <div class="workflow-step-sub">射线法 · Haversine 定位</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ARCHITECTURE ============ -->
+<section id="architecture" class="section">
+  <div class="container">
+    <div class="fade-in">
+      <div class="section-label">// 系统架构</div>
+      <div class="section-title">三层分离，职责清晰</div>
+      <p class="section-desc">
+        前端可视化层、Java 业务层、Python 计算层通过 HTTP / SSE 解耦通信，可独立扩展与部署。
+      </p>
+    </div>
+
+    <div class="arch-visual fade-in">
+      <div class="arch-layer glass-card">
+        <div class="arch-layer-icon">🌐</div>
+        <h3>前端可视化层</h3>
+        <p>用户界面 · 地图交互 · 数据展示</p>
+        <div class="arch-layer-tech">
+          <span>LayUI</span>
+          <span>Leaflet</span>
+          <span>CesiumJS</span>
+          <span>ECharts</span>
+          <span>SSE</span>
+        </div>
+      </div>
+
+      <div class="arch-arrow">→</div>
+
+      <div class="arch-layer glass-card">
+        <div class="arch-layer-icon">☕</div>
+        <h3>Java 业务层</h3>
+        <p>业务逻辑 · 用户认证 · API 网关</p>
+        <div class="arch-layer-tech">
+          <span>Spring Boot 2.6</span>
+          <span>JPA</span>
+          <span>MyBatis-Plus</span>
+          <span>JWT</span>
+          <span>OkHttp</span>
+        </div>
+      </div>
+
+      <div class="arch-arrow">→</div>
+
+      <div class="arch-layer glass-card">
+        <div class="arch-layer-icon">🐍</div>
+        <h3>Python 计算层</h3>
+        <p>遥感处理 · 异常检测 · 路径规划</p>
+        <div class="arch-layer-tech">
+          <span>Flask</span>
+          <span>FastAPI</span>
+          <span>GDAL</span>
+          <span>Rasterio</span>
+          <span>YOLO11-Seg</span>
+          <span>NumPy</span>
+          <span>SciPy</span>
+          <span>Shapely</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ BENTO GRID (Features) ============ -->
+<section id="features" class="section">
+  <div class="container">
+    <div class="fade-in">
+      <div class="section-label">// 核心功能</div>
+      <div class="section-title">核心功能模块</div>
+      <p class="section-desc">
+        地块管理、遥感处理、异常检测、路径规划、AI Agent、数据驾驶舱、GPS 打卡 — 覆盖农业遥感监测全链路。
+      </p>
+    </div>
+
+    <div class="bento-grid">
+      <!-- Card 1: 地块管理 + AI圈地 (span 2) -->
+      <div class="bento-card glass-card span-2 fade-in">
+        <div class="bento-card-accent green"></div>
+        <div class="bento-card-icon">🗺️</div>
+        <h3>地块管理 + AI 自动圈地</h3>
+        <p>支持 Leaflet.draw 手动圈地与 YOLO11-Seg 自动圈地，结合坐标转换、拓扑简化、面积计算和高德逆地理编码，实现地块快速建档。</p>
+        <div class="bento-card-visual">
+          <div class="mockup-map">
+            <svg viewBox="0 0 400 150" width="100%" height="100%">
+              <!-- Grid lines -->
+              <defs><pattern id="mg" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0L0 0 0 20" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="0.5"/></pattern></defs>
+              <rect width="400" height="150" fill="url(#mg)"/>
+              <!-- Plot A -->
+              <polygon points="40,30 120,20 140,80 60,90 30,60" fill="rgba(34,197,94,0.12)" stroke="#22c55e" stroke-width="1.5"/>
+              <text x="75" y="60" fill="#22c55e" font-size="9" font-family="JetBrains Mono,monospace">3号地 · 12.5亩</text>
+              <!-- Plot B -->
+              <polygon points="180,40 260,25 280,70 270,110 190,100 170,65" fill="rgba(59,130,246,0.12)" stroke="#3b82f6" stroke-width="1.5"/>
+              <text x="210" y="72" fill="#3b82f6" font-size="9" font-family="JetBrains Mono,monospace">7号地 · 28.3亩</text>
+              <!-- Plot C (AI detected) -->
+              <polygon points="310,50 370,35 385,90 340,105 300,80" fill="rgba(245,158,11,0.12)" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4 2"/>
+              <text x="320" y="75" fill="#f59e0b" font-size="9" font-family="JetBrains Mono,monospace">AI 检测</text>
+              <!-- AI badge -->
+              <rect x="310" y="95" width="70" height="16" rx="3" fill="rgba(245,158,11,0.2)" stroke="#f59e0b" stroke-width="0.5"/>
+              <text x="322" y="106" fill="#f59e0b" font-size="8" font-family="JetBrains Mono,monospace">YOLO11-Seg</text>
+              <!-- Coordinate label -->
+              <rect x="10" y="120" width="130" height="16" rx="3" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.08)" stroke-width="0.5"/>
+              <text x="18" y="131" fill="rgba(255,255,255,0.4)" font-size="8" font-family="JetBrains Mono,monospace">116.40°E  41.67°N</text>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2: AI Agent (span 2) -->
+      <div class="bento-card glass-card span-2 fade-in fade-in-delay-1" id="ai">
+        <div class="bento-card-accent amber"></div>
+        <div class="bento-card-icon">🤖</div>
+        <h3>ReAct AI Agent</h3>
+        <p>自然语言驱动的智能巡田。DeepSeek LLM 推理 + 5 个自动注册工具，SSE 流式输出 6 种事件类型，实时展示思考链。</p>
+        <div class="bento-card-visual">
+          <div class="mockup-chat">
+            <div class="mockup-chat-msg user">帮我看看3号地块有没有异常</div>
+            <div class="mockup-chat-msg thinking"><span class="mockup-dot"></span> 调用 query_plots → trigger_anomaly_detection</div>
+            <div class="mockup-chat-msg tool">⚡ tool_result: 发现2处异常区域</div>
+            <div class="mockup-chat-msg agent">3号地检测到 <strong>2处异常</strong>：西南角疑似干旱，东侧可能积水。建议优先巡田西南区域。</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3: 遥感处理 -->
+      <div class="bento-card glass-card fade-in fade-in-delay-2">
+        <div class="bento-card-accent blue"></div>
+        <div class="bento-card-icon">📡</div>
+        <h3>遥感影像处理</h3>
+        <p>GeoTIFF 读写、坐标重投影、矢量裁剪、Lanczos 6x 超分辨率、13 级 NDVI 配色。</p>
+        <div class="bento-card-visual">
+          <div class="mockup-rs-compare">
+            <div class="mockup-rs-before">
+              <div class="mockup-rs-label">原始</div>
+              <div class="mockup-rs-img" style="background:linear-gradient(135deg,#1a1a2e,#16213e,#1a2744)"></div>
+            </div>
+            <div class="mockup-rs-arrow">→</div>
+            <div class="mockup-rs-after">
+              <div class="mockup-rs-label">NDVI</div>
+              <div class="mockup-rs-img" style="background:linear-gradient(135deg,#7f1d1d,#b91c1c,#d97706,#15803d,#166534)"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 4: 异常检测 -->
+      <div class="bento-card glass-card fade-in fade-in-delay-3">
+        <div class="bento-card-accent amber"></div>
+        <div class="bento-card-icon">⚠️</div>
+        <h3>多时相异常检测</h3>
+        <p>子区域分割 · Delta NDVI · Z-Score · 线性回归斜率 · 综合优先级排序。</p>
+        <div class="bento-card-visual">
+          <div class="mockup-anomaly">
+            <svg viewBox="0 0 200 70" width="100%" height="100%">
+              <path d="M10,55 Q40,50 60,40 T100,35 T130,20 T155,45 T180,60" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+              <circle cx="130" cy="20" r="4" fill="#ef4444" opacity="0.8"/>
+              <circle cx="130" cy="20" r="8" fill="none" stroke="#ef4444" stroke-width="0.5" opacity="0.4"/>
+              <line x1="130" y1="28" x2="130" y2="55" stroke="#ef4444" stroke-width="0.5" stroke-dasharray="2 2" opacity="0.5"/>
+              <text x="138" y="16" fill="#ef4444" font-size="7" font-family="JetBrains Mono,monospace">Z=-2.8</text>
+            </svg>
+            <div class="mockup-anomaly-alert">
+              <span class="mockup-anomaly-dot high"></span>
+              <span>西南角 NDVI 持续下降</span>
+              <span class="mockup-anomaly-priority">P1</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 5: 路径规划 -->
+      <div class="bento-card glass-card fade-in fade-in-delay-1">
+        <div class="bento-card-accent green"></div>
+        <div class="bento-card-icon">🛤️</div>
+        <h3>智能路径规划</h3>
+        <p>最近邻 + 2-opt 优化 + Haversine 距离。异常驱动决策，输出 GeoJSON 与可视化报告。</p>
+        <div class="bento-card-visual">
+          <div class="mockup-route">
+            <svg viewBox="0 0 200 100" width="100%" height="100%">
+              <!-- Path -->
+              <path d="M20,80 L55,50 L100,30 L140,55 L175,25" fill="none" stroke="#22c55e" stroke-width="1.5" stroke-dasharray="4 2"/>
+              <path d="M20,80 L100,30 L55,50 L175,25 L140,55" fill="none" stroke="rgba(239,68,68,0.2)" stroke-width="1" stroke-dasharray="2 2"/>
+              <!-- Nodes -->
+              <circle cx="20" cy="80" r="5" fill="#22c55e"/><text x="10" y="95" fill="rgba(255,255,255,0.4)" font-size="7" font-family="JetBrains Mono,monospace">起点</text>
+              <circle cx="55" cy="50" r="4" fill="#3b82f6"/><text x="48" y="44" fill="#3b82f6" font-size="7" font-family="JetBrains Mono,monospace">P1</text>
+              <circle cx="100" cy="30" r="4" fill="#ef4444"/><text x="93" y="24" fill="#ef4444" font-size="7" font-family="JetBrains Mono,monospace">P2</text>
+              <circle cx="140" cy="55" r="4" fill="#3b82f6"/><text x="133" y="49" fill="#3b82f6" font-size="7" font-family="JetBrains Mono,monospace">P3</text>
+              <circle cx="175" cy="25" r="5" fill="#f59e0b"/><text x="162" y="20" fill="#f59e0b" font-size="7" font-family="JetBrains Mono,monospace">终点</text>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 6: 驾驶舱 -->
+      <div class="bento-card glass-card fade-in fade-in-delay-2">
+        <div class="bento-card-accent blue"></div>
+        <div class="bento-card-icon">📊</div>
+        <h3>数据驾驶舱</h3>
+        <p>统计卡片 + ECharts 图表：作物分布、地区分布、土壤类型、异常趋势。</p>
+        <div class="bento-card-visual">
+          <div class="mockup-dashboard">
+            <div class="mockup-dash-row">
+              <div class="mockup-dash-stat"><span class="mockup-dash-val" style="color:#22c55e">24</span><span class="mockup-dash-lbl">地块</span></div>
+              <div class="mockup-dash-stat"><span class="mockup-dash-val" style="color:#f59e0b">3</span><span class="mockup-dash-lbl">异常</span></div>
+              <div class="mockup-dash-stat"><span class="mockup-dash-val" style="color:#3b82f6">186</span><span class="mockup-dash-lbl">亩数</span></div>
+            </div>
+            <svg viewBox="0 0 200 40" width="100%" height="40">
+              <path d="M5,35 Q25,30 45,22 T85,18 T125,12 T165,15 T195,10" fill="none" stroke="#22c55e" stroke-width="1.5" opacity="0.7"/>
+              <path d="M5,35 Q25,30 45,22 T85,18 T125,12 T165,15 T195,10 L195,40 L5,40 Z" fill="#22c55e" opacity="0.08"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 7: 巡田任务工单生成 -->
+      <div class="bento-card glass-card fade-in">
+        <div class="bento-card-accent green"></div>
+        <div class="bento-card-icon">📋</div>
+        <h3>巡田任务工单生成</h3>
+        <p>基于异常检测结果自动生成巡田工单，关联异常区域、规划路线、分配巡检人员，支持工单状态跟踪与 LLM 智能报告。</p>
+        <div class="bento-card-visual">
+          <div class="mockup-tasks">
+            <div class="mockup-task-item">
+              <span class="mockup-task-id">#XT-0042</span>
+              <span class="mockup-task-name">3号地 · 小麦</span>
+              <span class="mockup-task-status pending">待巡检</span>
+            </div>
+            <div class="mockup-task-item">
+              <span class="mockup-task-id">#XT-0041</span>
+              <span class="mockup-task-name">7号地 · 玉米</span>
+              <span class="mockup-task-status running">巡检中</span>
+            </div>
+            <div class="mockup-task-item">
+              <span class="mockup-task-id">#XT-0040</span>
+              <span class="mockup-task-name">1号地 · 大豆</span>
+              <span class="mockup-task-status done">已完成</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 8: GPS 打卡签到 -->
+      <div class="bento-card glass-card fade-in fade-in-delay-1">
+        <div class="bento-card-accent blue"></div>
+        <div class="bento-card-icon">📍</div>
+        <h3>GPS 打卡签到</h3>
+        <p>基于射线法的多边形内外判断 + Haversine 距离计算，自动匹配地块、记录打卡时间与坐标，支持打卡记录查询。</p>
+        <div class="bento-card-visual">
+          <div class="mockup-checkin">
+            <div class="mockup-checkin-header">
+              <span class="mockup-checkin-icon">📍</span>
+              <span class="mockup-checkin-title">GPS 打卡</span>
+              <span class="mockup-checkin-badge">已定位</span>
+            </div>
+            <div class="mockup-checkin-coord">116.4074°E, 41.6732°N</div>
+            <div class="mockup-checkin-match">匹配地块：<strong>3号地 · 小麦</strong></div>
+            <div class="mockup-checkin-result">
+              <span class="mockup-checkin-ok">✓ 打卡成功</span>
+              <span class="mockup-checkin-time">2025-07-01 09:32</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FEATURES LINK ============ -->
+<section class="section" style="padding:60px 0">
+  <div class="container" style="text-align:center">
+    <div class="fade-in">
+      <p style="color:var(--text-secondary);margin-bottom:20px">遥感处理、AI 圈地、异常检测、路径规划、AI Agent — 五大核心功能的技术细节</p>
+      <a href="features.html" class="btn btn-primary" style="font-size:16px;padding:14px 32px">查看功能详情 →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SCREENSHOTS ============ -->
+<section id="screenshots" class="section">
+  <div class="container">
+    <div class="fade-in">
+      <div class="section-label">// 系统截图</div>
+      <div class="section-title">界面展示</div>
+      <p class="section-desc">管理端与用户端的核心页面，覆盖登录、地图、巡田、报告全流程。</p>
+    </div>
+
+    <div class="screenshots-carousel fade-in">
+      <div class="screenshot-item">
+        <img src="images/登陆界面.png" alt="登录界面" class="screenshot-img" data-lightbox="images/登陆界面.png">
+        <div class="screenshot-caption">
+          <h4>统一登录页</h4>
+          <p>管理员 / 用户双角色切换</p>
+        </div>
+      </div>
+
+      <div class="screenshot-item">
+        <img src="images/我的桌面.png" alt="数据驾驶舱" class="screenshot-img" data-lightbox="images/我的桌面.png">
+        <div class="screenshot-caption">
+          <h4>数据驾驶舱</h4>
+          <p>统计卡片 + ECharts 图表</p>
+        </div>
+      </div>
+
+      <div class="screenshot-item">
+        <img src="images/AI圈地.png" alt="AI 自动圈地" class="screenshot-img" data-lightbox="images/AI圈地.png">
+        <div class="screenshot-caption">
+          <h4>AI 自动圈地</h4>
+          <p>YOLO11影像分割 + Leaflet 编辑</p>
+        </div>
+      </div>
+
+      <div class="screenshot-item">
+        <img src="images/Agent农业助手.png" alt="AI Agent 助手" class="screenshot-img" data-lightbox="images/Agent农业助手.png">
+        <div class="screenshot-caption">
+          <h4>AI Agent 助手</h4>
+          <p>ReAct 推理 + SSE 流式输出</p>
+        </div>
+      </div>
+
+      <div class="screenshot-item">
+        <img src="images/异常检测结果面板.png" alt="异常检测" class="screenshot-img" data-lightbox="images/异常检测结果面板.png">
+        <div class="screenshot-caption">
+          <h4>异常检测结果</h4>
+          <p>多时相分析 · 优先级排序</p>
+        </div>
+      </div>
+
+      <div class="screenshot-item">
+        <img src="images/路径规划.png" alt="路径规划" class="screenshot-img" data-lightbox="images/路径规划.png">
+        <div class="screenshot-caption">
+          <h4>路径规划</h4>
+          <p>2-opt 优化 · CesiumJS 可视化</p>
+        </div>
+      </div>
+
+      <div class="screenshot-item">
+        <img src="images/巡田报告.png" alt="巡田报告" class="screenshot-img" data-lightbox="images/巡田报告.png">
+        <div class="screenshot-caption">
+          <h4>巡田报告</h4>
+          <p>LLM 智能生成分析报告</p>
+        </div>
+      </div>
+
+      <div class="screenshot-item">
+        <img src="images/巡田任务单.png" alt="巡田工单" class="screenshot-img" data-lightbox="images/巡田任务单.png">
+        <div class="screenshot-caption">
+          <h4>巡田任务工单</h4>
+          <p>异常区域 · 巡检状态跟踪</p>
+        </div>
+      </div>
+
+      <div class="screenshot-item">
+        <img src="images/%E5%9C%B0%E5%9D%97%E6%89%93%E5%8D%A1.png" alt="地块打卡" class="screenshot-img" data-lightbox="images/%E5%9C%B0%E5%9D%97%E6%89%93%E5%8D%A1.png">
+        <div class="screenshot-caption">
+          <h4>GPS 地块打卡</h4>
+          <p>射线法定位 · 自动匹配地块</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============ DEMO VIDEO ============ -->
+<section class="section">
+  <div class="container">
+    <div class="fade-in">
+      <div class="section-label">// 演示视频</div>
+      <div class="section-title">功能演示</div>
+    </div>
+
+    <div class="video-section fade-in">
+      <div class="video-container">
+        <div class="video-placeholder">
+          <div class="video-placeholder-icon">▶</div>
+          <span>演示视频待替换</span>
+          <span style="font-size:12px;opacity:0.5">替换 &lt;video&gt; 标签 src 即可</span>
+        </div>
+        <!-- 取消注释并替换 src 以启用视频
+        <video controls poster="images/video-cover.png">
+          <source src="video/demo.mp4" type="video/mp4">
+        </video>
+        -->
+      </div>
+
+      <div class="video-info">
+        <h3>核心演示内容</h3>
+        <div class="video-info-list">
+          <div class="video-info-item">
+            <span class="check">✓</span>
+            <span>地图圈地与地块管理</span>
+          </div>
+          <div class="video-info-item">
+            <span class="check">✓</span>
+            <span>NDVI 遥感影像裁剪处理</span>
+          </div>
+          <div class="video-info-item">
+            <span class="check">✓</span>
+            <span>多时相异常检测流程</span>
+          </div>
+          <div class="video-info-item">
+            <span class="check">✓</span>
+            <span>AI Agent 自然语言对话</span>
+          </div>
+          <div class="video-info-item">
+            <span class="check">✓</span>
+            <span>SSE 流式思考链可视化</span>
+          </div>
+          <div class="video-info-item">
+            <span class="check">✓</span>
+            <span>2-opt 路径规划动画</span>
+          </div>
+          <div class="video-info-item">
+            <span class="check">✓</span>
+            <span>CesiumJS 3D 地球展示</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TECH STACK ============ -->
+<section id="tech" class="section">
+  <div class="container">
+    <div class="fade-in">
+      <div class="section-label">// 技术栈</div>
+      <div class="section-title">技术选型</div>
+      <p class="section-desc">覆盖后端、前端、Python 计算、AI 模型四大领域。</p>
+    </div>
+
+    <div class="tech-grid fade-in">
+      <!-- 后端 -->
+      <div class="tech-category">
+        <h4>后端 · Java</h4>
+        <div class="tech-list">
+          <div class="tech-item">Spring Boot 2.6.13 <span class="tech-status done">done</span></div>
+          <div class="tech-item">Spring Data JPA <span class="tech-status done">done</span></div>
+          <div class="tech-item">MyBatis-Plus 3.5.5 <span class="tech-status done">done</span></div>
+          <div class="tech-item">JWT 双Token认证 <span class="tech-status done">done</span></div>
+          <div class="tech-item">OkHttp 4.12 <span class="tech-status done">done</span></div>
+          <div class="tech-item">MySQL 8.x <span class="tech-status done">done</span></div>
+        </div>
+      </div>
+
+      <!-- Python -->
+      <div class="tech-category">
+        <h4>计算层 · Python</h4>
+        <div class="tech-list">
+          <div class="tech-item">Flask <span class="tech-status done">done</span></div>
+          <div class="tech-item">FastAPI <span class="tech-status done">done</span></div>
+          <div class="tech-item">GDAL / Rasterio <span class="tech-status done">done</span></div>
+          <div class="tech-item">Shapely / GeoPandas <span class="tech-status done">done</span></div>
+          <div class="tech-item">NumPy / SciPy <span class="tech-status done">done</span></div>
+          <div class="tech-item">Ultralytics YOLO <span class="tech-status done">done</span></div>
+          <div class="tech-item">PyProj <span class="tech-status done">done</span></div>
+          <div class="tech-item">OpenCV <span class="tech-status done">done</span></div>
+        </div>
+      </div>
+
+      <!-- 前端 -->
+      <div class="tech-category">
+        <h4>前端 · 可视化</h4>
+        <div class="tech-list">
+          <div class="tech-item">LayUI <span class="tech-status done">done</span></div>
+          <div class="tech-item">Leaflet + Leaflet.draw <span class="tech-status done">done</span></div>
+          <div class="tech-item">CesiumJS 1.140 <span class="tech-status done">done</span></div>
+          <div class="tech-item">ECharts <span class="tech-status done">done</span></div>
+          <div class="tech-item">marked.js <span class="tech-status done">done</span></div>
+          <div class="tech-item">SSE 流式通信 <span class="tech-status done">done</span></div>
+        </div>
+      </div>
+
+      <!-- AI -->
+      <div class="tech-category">
+        <h4>AI · 模型</h4>
+        <div class="tech-list">
+          <div class="tech-item">DeepSeek LLM <span class="tech-status done">done</span></div>
+          <div class="tech-item">ReAct 推理循环 <span class="tech-status done">done</span></div>
+          <div class="tech-item">Function Calling <span class="tech-status done">done</span></div>
+          <div class="tech-item">SSE 流式输出 <span class="tech-status done">done</span></div>
+          <div class="tech-item">YOLO11-Seg 实例分割 <span class="tech-status done">done</span></div>
+          <div class="tech-item">YOLO11 目标检测 <span class="tech-status done">done</span></div>
+          <div class="tech-item">Shapely 拓扑简化 <span class="tech-status done">done</span></div>
+          <div class="tech-item">作物识别模型 <span class="tech-status planned">planned</span></div>
+          <div class="tech-item">病害分类模型 <span class="tech-status planned">planned</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ GITHUB ============ -->
+<section class="section">
+  <div class="container">
+    <div class="github-card glass-card fade-in">
+      <div class="github-info">
+        <h3>开源仓库</h3>
+        <p>完整源码、数据库脚本、部署文档、API 接口说明均在 GitHub 仓库中。包含 Java 后端、Python 微服务与前端页面三部分。</p>
+        <a href="github.com/S14260/smart-agriculture-management" target="_blank" rel="noopener noreferrer" class="github-link">
+          <span>📦</span> github.com/S14260/smart-agriculture-management
+        </a>
+      </div>
+      <div class="github-structure">
+        <div class="github-structure-item">
+          <span class="github-structure-icon">📁</span>
+          <span class="github-structure-name">src/main/java/</span>
+          <span class="github-structure-desc">Spring Boot 后端</span>
+        </div>
+        <div class="github-structure-item">
+          <span class="github-structure-icon">📁</span>
+          <span class="github-structure-name">api/</span>
+          <span class="github-structure-desc">Flask 微服务</span>
+        </div>
+        <div class="github-structure-item">
+          <span class="github-structure-icon">📁</span>
+          <span class="github-structure-name">src/main/resources/static/</span>
+          <span class="github-structure-desc">前端页面</span>
+        </div>
+        <div class="github-structure-item">
+          <span class="github-structure-icon">📄</span>
+          <span class="github-structure-name">mydb.sql</span>
+          <span class="github-structure-desc">数据库脚本</span>
+        </div>
+        <div class="github-structure-item">
+          <span class="github-structure-icon">📄</span>
+          <span class="github-structure-name">pom.xml</span>
+          <span class="github-structure-desc">Maven 配置</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CONTACT ============ -->
+<section id="contact" class="section">
+  <div class="container">
+    <div class="fade-in">
+      <div class="section-label">// 联系方式</div>
+      <div class="section-title">欢迎交流</div>
+      <p class="section-desc">对项目或合作感兴趣？欢迎通过以下方式联系我。</p>
+    </div>
+
+    <div class="contact-grid fade-in">
+      <a href="https://github.com/S14260" target="_blank" rel="noopener noreferrer" class="contact-card glass-card">
+        <div class="contact-icon">📦</div>
+        <h4>GitHub</h4>
+        <p>github.com/S14260</p>
+      </a>
+      <a href="mailto:sx14260@163.com" class="contact-card glass-card">
+        <div class="contact-icon">✉️</div>
+        <h4>邮箱</h4>
+        <p>sx14260@163.com</p>
+      </a>
+      <a href="#" class="contact-card glass-card">
+        <div class="contact-icon">💬</div>
+        <h4>微信</h4>
+        <p>SunKaiVxin</p>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="footer">
+  <div class="container">
+    <p>© 2025 智慧农业遥感监测与巡田决策平台 · Built with Spring Boot + Flask + CesiumJS</p>
+  </div>
+</footer>
+
+<!-- ============ LIGHTBOX ============ -->
+<div class="lightbox" id="lightbox">
+  <img src="" alt="截图预览">
+</div>
+
+<script src="js/main.js"></script>
+</body>
+</html>

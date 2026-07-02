@@ -105,7 +105,7 @@
 ======================== */
 Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI4Mjk2MjRhNy00YWIyLTQxZWQtOGZmYi02ZWIyNDc5OTgyY2QiLCJpZCI6NDE4NDc4LCJpYXQiOjE3NzYyNDE4MTJ9.jDM1zCdKiaw4UgeFbNp7Akr1TS-v2rSOwsXjvsaU6CQ";
 
-const API_URL = "http://localhost:8080/admin/plots";
+const API_URL = "/admin/plots";
 const FLASK_URL = "http://123.56.228.32:8000";
 const token = localStorage.getItem("token_admin");
 
@@ -1165,7 +1165,7 @@ window.viewAnomalyImage = function(imgPath, plotName) {
 async function callAiExplain(subregion) {
     layui.layer.msg('正在调用 AI 分析...', {icon: 16, shade: 0.3, time: 0});
     try {
-        const res = await fetch('http://localhost:8080/admin/ai/explain', {
+        const res = await fetch('/admin/ai/explain', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'token': token },
             body: JSON.stringify({
@@ -1503,7 +1503,7 @@ function initAiChat() {
         const responseDiv = appendMessage('assistant', '', true);
 
         try {
-            const res = await fetch('http://localhost:8080/admin/ai/chat/stream', {
+            const res = await fetch('/admin/ai/chat/stream', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'token': token },
                 body: JSON.stringify({ sessionId: chatSessionId, message: msg })

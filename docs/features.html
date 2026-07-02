@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>功能详情 — 智慧农业遥感监测与巡田决策平台</title>
+  <meta name="description" content="智慧农业平台核心功能详解：遥感影像处理、AI自动圈地、多时相异常检测、智能路径规划、AI Agent 交互演示。">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>🌾</text></svg>">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    .features-hero {
+      padding: 140px 0 60px;
+      text-align: center;
+    }
+    .features-hero h1 {
+      font-family: var(--font-display);
+      font-size: clamp(28px, 4vw, 42px);
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-bottom: 12px;
+    }
+    .features-hero p {
+      font-size: 16px;
+      color: var(--text-secondary);
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    .features-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--text-tertiary);
+      margin-bottom: 24px;
+      transition: color 0.2s;
+    }
+    .features-back:hover { color: var(--green); }
+    .features-toc {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 32px;
+    }
+    .features-toc a {
+      padding: 8px 16px;
+      border-radius: 100px;
+      font-size: 13px;
+      background: var(--bg-glass);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      transition: all 0.2s;
+    }
+    .features-toc a:hover {
+      border-color: var(--green);
+      color: var(--green);
+    }
+    @media (max-width: 768px) {
+      .rs-compare { grid-template-columns: 1fr; }
+      .rs-arrow { transform: rotate(90deg); justify-self: center; }
+      .ai-field-pipeline { flex-direction: column; gap: 8px; }
+      .ai-field-arrow { transform: rotate(90deg); margin: 4px 0; }
+      .ai-field-visual { grid-template-columns: 1fr; }
+      .ai-field-arrow-big { transform: rotate(90deg); justify-self: center; }
+      .ai-section { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="container">
+    <a href="index.html" class="nav-logo"><span>&gt;_</span> SmartAgri <span class="nav-page-tag">功能详情</span></a>
+    <ul class="nav-links">
+      <li><a href="index.html">首页</a></li>
+      <li><a href="#remote-sensing">遥感处理</a></li>
+      <li><a href="#ai-field">AI 圈地</a></li>
+      <li><a href="#anomaly">异常检测</a></li>
+      <li><a href="#path-planning">路径规划</a></li>
+      <li><a href="#ai-agent">AI Agent</a></li>
+    </ul>
+    <button class="nav-mobile-btn" aria-label="菜单">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="features-hero">
+  <div class="container">
+    <a href="index.html" class="features-back">← 返回首页</a>
+    <h1>核心功能<span class="gradient-text">详解</span></h1>
+    <p>从卫星数据获取到巡田决策的完整技术链路，按工作流顺序展示每个模块的实现细节。</p>
+    <div class="features-toc">
+      <a href="#remote-sensing">遥感影像处理</a>
+      <a href="#ai-field">AI 自动圈地</a>
+      <a href="#anomaly">异常检测</a>
+      <a href="#path-planning">路径规划</a>
+      <a href="#ai-agent">AI Agent</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 1. REMOTE SENSING ============ -->
+<section id="remote-sensing" class="section">
+  <div class="container">
+    <div class="fade-in">
+      <div class="section-label">// 01 遥感影像处理</div>
+      <div class="section-title">从原始卫星数据到 NDVI 热力图</div>
+      <p class="section-desc">
+        以河北沽源县 Sentinel-2 卫星影像为数据源，经过坐标重投影、地块边界矢量裁剪、Lanczos 超分辨率插值、13 级 NDVI 配色与边缘抗锯齿，生成地块级 NDVI 热力图。
+      </p>
+    </div>
+
+    <div class="rs-compare fade-in">
+      <div class="rs-image-card">
+        <img src="images/%E5%8E%9F%E5%A7%8B%E5%BD%B1%E5%83%8F(%E6%B2%BD%E6%BA%90%E5%8E%BF).png" alt="原始卫星影像 — 沽源县" data-lightbox="images/%E5%8E%9F%E5%A7%8B%E5%BD%B1%E5%83%8F(%E6%B2%BD%E6%BA%90%E5%8E%BF).png" style="width:100%;height:280px;object-fit:cover;cursor:pointer">
+        <span class="rs-image-label before">原始数据 沽源县</span>
+      </div>
+      <div class="rs-arrow">→</div>
+      <div class="rs-image-card">
+        <div class="rs-img-rotate">
+          <img src="images/%E5%A4%84%E7%90%86%E7%BB%93%E6%9E%9C(%E6%9F%90%E5%9C%B0%E5%9D%97).png" alt="NDVI 处理结果 — 某地块" data-lightbox="images/%E5%A4%84%E7%90%86%E7%BB%93%E6%9E%9C(%E6%9F%90%E5%9C%B0%E5%9D%97).png">
+        </div>
+        <span class="rs-image-label after">处理结果 某地块</span>
+      </div>
+    </div>
+
+    <div class="rs-flow fade-in">
+      <div class="rs-flow-step glass-card">
+        <div class="rs-flow-step-num">01</div>
+        <h4>坐标重投影</h4>
+        <p>非 WGS84 自动检测并转换</p>
+      </div>
+      <div class="rs-flow-step glass-card">
+        <div class="rs-flow-step-num">02</div>
+        <h4>矢量裁剪</h4>
+        <p>按地块边界精确裁剪</p>
+      </div>
+      <div class="rs-flow-step glass-card">
+        <div class="rs-flow-step-num">03</div>
+        <h4>超分辨率</h4>
+        <p>Lanczos 6x 插值增强</p>
+      </div>
+      <div class="rs-flow-step glass-card">
+        <div class="rs-flow-step-num">04</div>
+        <h4>边缘抗锯齿</h4>
+        <p>欧氏距离变换边缘平滑</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2. AI FIELD DETECTION ============ -->
+<section id="ai-field" class="section">
+  <div class="container">
+    <div class="fade-in">
+      <div class="section-label">// 02 AI 自动圈地</div>
+      <div class="section-title">卫星影像智能分割，一键生成地块边界</div>
+      <p class="section-desc">
+        基于 YOLO11-Seg 实例分割模型，从卫星影像中自动识别耕地边界，像素坐标转经纬度后经 Shapely 拓扑简化，直接写入 Leaflet 编辑。
+      </p>
+    </div>
+
+    <div class="ai-field-pipeline fade-in">
+      <div class="ai-field-step glass-card">
+        <div class="ai-field-step-icon">🛰️</div>
+        <h4>卫星影像输入</h4>
+        <p>地图截图 + 经纬度范围</p>
+      </div>
+      <div class="ai-field-arrow">→</div>
+      <div class="ai-field-step glass-card">
+        <div class="ai-field-step-icon">🧠</div>
+        <h4>YOLO11-Seg 推理</h4>
+        <p>实例分割 · 640px · conf 0.3</p>
+      </div>
+      <div class="ai-field-arrow">→</div>
+      <div class="ai-field-step glass-card">
+        <div class="ai-field-step-icon">📐</div>
+        <h4>像素→经纬度转换</h4>
+        <p>地图 bounds 映射</p>
+      </div>
+      <div class="ai-field-arrow">→</div>
+      <div class="ai-field-step glass-card">
+        <div class="ai-field-step-icon">✂️</div>
+        <h4>Shapely 拓扑简化</h4>
+        <p>去除冗余顶点 · 保留拓扑</p>
+      </div>
+      <div class="ai-field-arrow">→</div>
+      <div class="ai-field-step glass-card">
+        <div class="ai-field-step-icon">🗺️</div>
+        <h4>Leaflet 渲染编辑</h4>
+        <p>多边形叠加 · 手动微调</p>
+      </div>
+    </div>
+
+    <div class="ai-field-visual fade-in">
+      <div class="ai-field-before glass-card">
+        <div class="ai-field-visual-label">输入 · 卫星影像</div>
+        <div class="ai-field-img" style="background:linear-gradient(135deg,#1a2744,#0d1b2a,#162447);">
+          <svg viewBox="0 0 200 120" width="100%" height="100%">
+            <rect width="200" height="120" fill="rgba(255,255,255,0.02)"/>
+            <rect x="10" y="10" width="180" height="100" rx="4" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>
+            <text x="100" y="65" text-anchor="middle" fill="rgba(255,255,255,0.2)" font-size="10" font-family="JetBrains Mono,monospace">Sentinel-2 影像</text>
+          </svg>
+        </div>
+      </div>
+      <div class="ai-field-arrow-big">→</div>
+      <div class="ai-field-after glass-card">
+        <div class="ai-field-visual-label">输出 · 分割结果</div>
+        <div class="ai-field-img" style="background:linear-gradient(135deg,#0d1b2a,#0a1628,#0d1f12);">
+          <svg viewBox="0 0 200 120" width="100%" height="100%">
+            <polygon points="20,25 70,15 85,55 40,65 15,45" fill="rgba(34,197,94,0.15)" stroke="#22c55e" stroke-width="1.2"/>
+            <polygon points="90,20 150,10 165,50 155,80 95,75 85,45" fill="rgba(59,130,246,0.15)" stroke="#3b82f6" stroke-width="1.2"/>
+            <polygon points="40,75 100,65 120,100 80,110 30,95" fill="rgba(245,158,11,0.15)" stroke="#f59e0b" stroke-width="1.2"/>
+            <text x="45" y="42" fill="#22c55e" font-size="7" font-family="JetBrains Mono,monospace">12.5亩</text>
+            <text x="110" y="48" fill="#3b82f6" font-size="7" font-family="JetBrains Mono,monospace">28.3亩</text>
+            <text x="65" y="88" fill="#f59e0b" font-size="7" font-family="JetBrains Mono,monospace">8.7亩</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3. ANOMALY DETECTION ============ -->
+<section id="anomaly" class="section">
+  <div class="container">
+    <div class="fade-in">
+      <div class="section-label">// 03 多时相异常检测</div>
+      <div class="section-title">像素级 + 区域级联合异常分析</div>
+      <p class="section-desc">
+        对多期遥感影像进行子区域分割，通过 Delta NDVI、Z-Score、线性回归斜率联合判定异常类型（干旱、积水、病虫害），按综合优先级排序输出。
+      </p>
+    </div>
+
+    <!-- Anomaly Types with Curves -->
+    <div class="anomaly-types fade-in">
+      <!-- 干旱 -->
+      <div class="anomaly-type-card glass-card">
+        <div class="anomaly-type-header">
+          <span class="anomaly-type-icon" style="color:#ef4444">🏜️</span>
+          <h4>干旱胁迫</h4>
+        </div>
+        <div class="anomaly-type-rule">NDVI 持续下降趋势</div>
+        <div class="anomaly-type-curve">
+          <svg viewBox="0 0 240 80" width="100%" height="100%">
+            <!-- Normal baseline -->
+            <path d="M20,55 Q60,50 100,48 T180,46 T220,45" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1" stroke-dasharray="3 3"/>
+            <!-- Drought curve -->
+            <path d="M20,40 Q60,42 100,48 T180,62 T220,70" fill="none" stroke="#ef4444" stroke-width="1.8"/>
+            <!-- Anomaly region -->
+            <rect x="140" y="35" width="80" height="40" rx="4" fill="rgba(239,68,68,0.06)" stroke="rgba(239,68,68,0.15)" stroke-width="0.5"/>
+            <text x="155" y="52" fill="#ef4444" font-size="7" font-family="JetBrains Mono,monospace">异常区间</text>
+            <!-- Labels -->
+            <text x="20" y="35" fill="rgba(255,255,255,0.3)" font-size="7" font-family="JetBrains Mono,monospace">NDVI</text>
+            <text x="190" y="78" fill="rgba(255,255,255,0.2)" font-size="7" font-family="JetBrains Mono,monospace">时间 →</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- 积水 -->
+      <div class="anomaly-type-card glass-card">
+        <div class="anomaly-type-header">
+          <span class="anomaly-type-icon" style="color:#3b82f6">💧</span>
+          <h4>积水</h4>
+        </div>
+        <div class="anomaly-type-rule">NDWI 反向升高 + NDVI 下降</div>
+        <div class="anomaly-type-curve">
+          <svg viewBox="0 0 240 80" width="100%" height="100%">
+            <!-- NDVI dropping -->
+            <path d="M20,30 Q60,32 100,38 T180,55 T220,65" fill="none" stroke="#22c55e" stroke-width="1.8"/>
+            <!-- NDWI rising -->
+            <path d="M20,60 Q60,55 100,48 T180,35 T220,25" fill="none" stroke="#3b82f6" stroke-width="1.8"/>
+            <!-- Crossing point -->
+            <circle cx="120" cy="44" r="4" fill="none" stroke="#f59e0b" stroke-width="1"/>
+            <text x="128" y="42" fill="#f59e0b" font-size="7" font-family="JetBrains Mono,monospace">交叉</text>
+            <!-- Labels -->
+            <text x="20" y="25" fill="#22c55e" font-size="7" font-family="JetBrains Mono,monospace">NDVI ↓</text>
+            <text x="20" y="73" fill="#3b82f6" font-size="7" font-family="JetBrains Mono,monospace">NDWI ↑</text>
+            <text x="190" y="78" fill="rgba(255,255,255,0.2)" font-size="7" font-family="JetBrains Mono,monospace">时间 →</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- 病虫害 -->
+      <div class="anomaly-type-card glass-card">
+        <div class="anomaly-type-header">
+          <span class="anomaly-type-icon" style="color:#f59e0b">🐛</span>
+          <h4>病虫害</h4>
+        </div>
+        <div class="anomaly-type-rule">多指数联合异常波动</div>
+        <div class="anomaly-type-curve">
+          <svg viewBox="0 0 240 80" width="100%" height="100%">
+            <!-- EVI -->
+            <path d="M20,35 Q40,30 60,38 T100,42 T120,28 T160,50 T200,35 T220,40" fill="none" stroke="#f59e0b" stroke-width="1.2" opacity="0.8"/>
+            <!-- SAVI -->
+            <path d="M20,45 Q50,40 80,48 T110,35 T140,55 T180,40 T220,48" fill="none" stroke="#a855f7" stroke-width="1.2" opacity="0.6"/>
+            <!-- NDVI -->
+            <path d="M20,40 Q55,35 90,44 T125,50 T155,32 T190,52 T220,45" fill="none" stroke="#22c55e" stroke-width="1.2" opacity="0.6"/>
+            <!-- Anomaly zone -->
+            <rect x="105" y="22" width="35" height="38" rx="3" fill="rgba(245,158,11,0.08)" stroke="rgba(245,158,11,0.2)" stroke-width="0.5"/>
+            <!-- Labels -->
+            <text x="215" y="38" fill="#f59e0b" font-size="6" font-family="JetBrains Mono,monospace">EVI</text>
+            <text x="215" y="50" fill="#a855f7" font-size="6" font-family="JetBrains Mono,monospace">SAVI</text>
+            <text x="215" y="62" fill="#22c55e" font-size="6" font-family="JetBrains Mono,monospace">NDVI</text>
+            <text x="190" y="78" fill="rgba(255,255,255,0.2)" font-size="7" font-family="JetBrains Mono,monospace">时间 →</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detection Pipeline -->
+    <div class="anomaly-pipeline fade-in">
+      <div class="anomaly-pipeline-title">检测流程</div>
+      <div class="anomaly-pipeline-steps">
+        <div class="anomaly-step">
+          <span class="anomaly-step-num">01</span>
+          <span class="anomaly-step-text">子区域分割</span>
+          <span class="anomaly-step-desc">NDVI 分级 · 连通区分析</span>
+        </div>
+        <div class="anomaly-step-arrow">→</div>
+        <div class="anomaly-step">
+          <span class="anomaly-step-num">02</span>
+          <span class="anomaly-step-text">多指标计算</span>
+          <span class="anomaly-step-desc">Delta · Z-Score · 回归斜率</span>
+        </div>
+        <div class="anomaly-step-arrow">→</div>
+        <div class="anomaly-step">
+          <span class="anomaly-step-num">03</span>
+          <span class="anomaly-step-text">异常类型判定</span>
+          <span class="anomaly-step-desc">干旱 / 积水 / 病虫害</span>
+        </div>
+        <div class="anomaly-step-arrow">→</div>
+        <div class="anomaly-step">
+          <span class="anomaly-step-num">04</span>
+          <span class="anomaly-step-text">优先级排序</span>
+          <span class="anomaly-step-desc">综合严重度 · 面积 · 时序</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Result Mockup -->
+    <div class="anomaly-result fade-in glass-card">
+      <div class="anomaly-result-header">
+        <span>异常检测结果</span>
+        <span class="anomaly-result-count">3 条记录</span>
+      </div>
+      <div class="anomaly-result-list">
+        <div class="anomaly-result-item">
+          <span class="anomaly-result-dot high"></span>
+          <span class="anomaly-result-location">3号地 · 西南角</span>
+          <span class="anomaly-result-type">干旱</span>
+          <span class="anomaly-result-priority high">P1</span>
+        </div>
+        <div class="anomaly-result-item">
+          <span class="anomaly-result-dot medium"></span>
+          <span class="anomaly-result-location">3号地 · 东侧边界</span>
+          <span class="anomaly-result-type">积水</span>
+          <span class="anomaly-result-priority medium">P2</span>
+        </div>
+        <div class="anomaly-result-item">
+          <span class="anomaly-result-dot low"></span>
+          <span class="anomaly-result-location">7号地 · 中部</span>
+          <span class="anomaly-result-type">病虫害</span>
+          <span class="anomaly-result-priority low">P3</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4. PATH PLANNING ============ -->
+<section id="path-planning" class="section">
+  <div class="container">
+    <div class="fade-in">
+      <div class="section-label">// 04 智能路径规划</div>
+      <div class="section-title">异常驱动的巡田路线优化</div>
+      <p class="section-desc">
+        基于异常权重的地块优先级排序，最近邻初始路径 + 2-opt 局部优化，Haversine 球面距离计算。
+      </p>
+    </div>
+
+    <div class="pp-timeline fade-in">
+      <div class="pp-timeline-item">
+        <div class="pp-timeline-dot"></div>
+        <h4>异常权重计算</h4>
+        <p>综合异常优先级、严重程度与面积，加权计算每个地块的巡田权重。</p>
+        <div class="pp-tech">
+          <span class="tag tag-green">priority × 0.5</span>
+          <span class="tag tag-blue">severity × 0.3</span>
+          <span class="tag tag-amber">area × 0.2</span>
+        </div>
+      </div>
+      <div class="pp-timeline-item">
+        <div class="pp-timeline-dot"></div>
+        <h4>最近邻初始路径</h4>
+        <p>从最西端点出发，贪心选择最近未访问地块，快速生成初始可行路径。</p>
+        <div class="pp-tech">
+          <span class="tag tag-green">Nearest Neighbor</span>
+          <span class="tag tag-blue">West-most Start</span>
+        </div>
+      </div>
+      <div class="pp-timeline-item">
+        <div class="pp-timeline-dot"></div>
+        <h4>2-opt 局部优化</h4>
+        <p>迭代 200 次交换路径段，消除交叉、缩短总距离。Haversine 公式计算球面距离。</p>
+        <div class="pp-tech">
+          <span class="tag tag-green">2-opt × 200</span>
+          <span class="tag tag-amber">Haversine</span>
+        </div>
+      </div>
+      <div class="pp-timeline-item">
+        <div class="pp-timeline-dot"></div>
+        <h4>结果输出</h4>
+        <p>GeoJSON 格式路径数据、可视化 PNG 图像、量化评估报告，前端 Leaflet / CesiumJS 可视化。</p>
+        <div class="pp-tech">
+          <span class="tag tag-blue">GeoJSON</span>
+          <span class="tag tag-green">PNG</span>
+          <span class="tag tag-amber">Report</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5. AI AGENT ============ -->
+<section id="ai-agent" class="section">
+  <div class="container">
+    <div class="fade-in">
+      <div class="section-label">// 05 AI Agent 交互演示</div>
+      <div class="section-title">自然语言驱动的智能巡田</div>
+      <p class="section-desc">
+        用户用自然语言提问，Agent 自动推理意图、调用工具、返回结构化结果。SSE 流式输出思考过程。
+      </p>
+    </div>
+
+    <div class="ai-section fade-in" id="ai-section">
+      <div class="ai-info">
+        <h3>ReAct 推理循环</h3>
+        <p>基于 Reasoning + Acting 模式，LLM 理解用户意图后自动规划执行步骤，调用工具获取数据，将结果回传继续推理，直到输出最终回答。</p>
+        <div class="ai-tools-list">
+          <div class="ai-tool-item">
+            <span class="ai-tool-name">query_plots</span>
+            <span class="ai-tool-desc">查询地块信息</span>
+          </div>
+          <div class="ai-tool-item">
+            <span class="ai-tool-name">trigger_anomaly_detection</span>
+            <span class="ai-tool-desc">启动异常检测任务</span>
+          </div>
+          <div class="ai-tool-item">
+            <span class="ai-tool-name">get_anomaly_records</span>
+            <span class="ai-tool-desc">获取异常记录</span>
+          </div>
+          <div class="ai-tool-item">
+            <span class="ai-tool-name">explain_anomaly</span>
+            <span class="ai-tool-desc">异常智能解释</span>
+          </div>
+          <div class="ai-tool-item">
+            <span class="ai-tool-name">generate_patrol_route</span>
+            <span class="ai-tool-desc">生成巡田路径</span>
+          </div>
+        </div>
+        <button id="chat-trigger" class="btn btn-primary" style="margin-top:24px">▶ 播放对话演示</button>
+      </div>
+
+      <div class="ai-chat">
+        <div class="ai-chat-header">
+          <div class="ai-chat-avatar">🤖</div>
+          <div>
+            <div class="ai-chat-name">农业 AI 助手</div>
+            <div class="ai-chat-status">● 在线</div>
+          </div>
+        </div>
+        <div class="ai-chat-messages" id="chat-messages">
+          <div class="ai-message assistant" style="opacity:0.5;font-size:13px">点击「播放对话演示」查看 AI Agent 工作流程…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <p>© 2025 智慧农业遥感监测与巡田决策平台 · <a href="index.html">返回首页</a></p>
+  </div>
+</footer>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox">
+  <img src="" alt="截图预览">
+</div>
+
+<script src="js/main.js"></script>
+</body>
+</html>

@@ -14,7 +14,18 @@
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
       "Bash(git push *)",
-      "Bash(./mvnw clean *)"
+      "Bash(./mvnw clean *)",
+      "WebFetch(domain:github.com)",
+      "Bash(gh repo *)",
+      "Bash(git rm *)",
+      "Bash(git commit *)",
+      "Bash(pip install *)",
+      "Bash(mkdir -p ~/.claude/skills)",
+      "Bash(git clone *)",
+      "WebSearch",
+      "Bash(gh search *)",
+      "Bash(gh api *)",
+      "mcp__mimo-image-recognition__understand_image"
     ]
   }
 }
