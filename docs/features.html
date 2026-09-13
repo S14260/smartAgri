@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>功能详情 — 智慧农业遥感监测与巡田决策平台</title>
-  <meta name="description" content="智慧农业平台核心功能详解：遥感影像处理、AI自动圈地、多时相异常检测、智能路径规划、AI Agent 交互演示。">
+  <meta name="description" content="智慧农业平台核心功能详解：遥感影像处理、AI自动圈地、多时相异常检测、异常驱动的分层路径规划、AI Agent 交互演示。">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>🌾</text></svg>">
   <link rel="stylesheet" href="css/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -58,6 +58,180 @@
       border-color: var(--green);
       color: var(--green);
     }
+
+    /* ---------- 02 自动圈地：图注与影像元数据 ---------- */
+    .ai-field-visual-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+    }
+    .ai-field-meta {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      white-space: nowrap;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    /* ---------- 04 异常驱动的分层路径规划 ---------- */
+    .pp-layer-grid {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 18px;
+      align-items: center;
+      margin-top: 26px;
+    }
+    .pp-layer-card { padding: 16px 18px 18px; }
+    .pp-layer-tag {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      letter-spacing: 1.2px;
+      padding: 4px 11px;
+      border-radius: 100px;
+      margin-bottom: 12px;
+    }
+    .pp-layer-tag.l1 {
+      color: var(--green);
+      background: var(--green-dim);
+      border: 1px solid rgba(34,197,94,0.28);
+    }
+    .pp-layer-tag.l2 {
+      color: var(--blue);
+      background: var(--blue-dim);
+      border: 1px solid rgba(59,130,246,0.28);
+    }
+    .pp-layer-card h4 {
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .pp-layer-card > p {
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+      margin-bottom: 12px;
+    }
+    .pp-layer-svg {
+      display: block;
+      width: 100%;
+      height: 200px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: linear-gradient(160deg, #0b1017, #0d1620);
+    }
+    .pp-layer-arrow {
+      font-size: 18px;
+      color: var(--text-tertiary);
+    }
+
+    .pp-card {
+      margin-top: 16px;
+      padding: 18px 20px;
+    }
+    .pp-step {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      letter-spacing: 1.2px;
+      color: var(--green);
+      margin-bottom: 8px;
+    }
+    .pp-card h4 {
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .pp-card > p {
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+      max-width: 860px;
+    }
+
+    .pp-cost-formula {
+      margin-top: 12px;
+      padding: 11px 16px;
+      font-family: var(--font-mono);
+      font-size: 14px;
+      color: #cfebff;
+      border: 1px solid var(--border);
+      border-left: 2px solid var(--green);
+      border-radius: var(--radius-sm);
+      background: rgba(34,197,94,0.05);
+    }
+    .pp-cost-scroll { overflow-x: auto; }
+    .pp-cost-table {
+      width: 100%;
+      margin-top: 12px;
+      border-collapse: collapse;
+    }
+    .pp-cost-table th {
+      text-align: left;
+      font-weight: 500;
+      font-size: 12px;
+      letter-spacing: 0.3px;
+      color: var(--text-tertiary);
+      padding: 0 12px 8px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .pp-cost-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      color: var(--text-secondary);
+    }
+    .pp-cost-table tr:last-child td { border-bottom: none; }
+    .pp-cost-table td:first-child {
+      font-family: inherit;
+      font-size: 12.5px;
+      color: var(--text-primary);
+      white-space: nowrap;
+    }
+    .pp-cost-val {
+      color: var(--green);
+      font-weight: 600;
+    }
+    .pp-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    .pp-cost-note {
+      margin-top: 12px;
+      padding: 10px 14px;
+      font-size: 12.5px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      border: 1px solid rgba(245,158,11,0.2);
+      border-radius: var(--radius-sm);
+      background: rgba(245,158,11,0.07);
+    }
+    .pp-legend {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px 16px;
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .pp-legend > span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .pp-legend .pp-dot { margin-right: 0; }
+    .pp-legend-note { color: var(--text-tertiary); font-size: 11.5px; }
+
     @media (max-width: 768px) {
       .rs-compare { grid-template-columns: 1fr; }
       .rs-arrow { transform: rotate(90deg); justify-self: center; }
@@ -65,7 +239,15 @@
       .ai-field-arrow { transform: rotate(90deg); margin: 4px 0; }
       .ai-field-visual { grid-template-columns: 1fr; }
       .ai-field-arrow-big { transform: rotate(90deg); justify-self: center; }
+      .ai-field-meta { display: none; }
       .ai-section { grid-template-columns: 1fr; }
+      .pp-layer-grid { grid-template-columns: 1fr; gap: 14px; }
+      .pp-layer-arrow { transform: rotate(90deg); justify-self: center; }
+      .pp-card { padding: 16px 15px; }
+      .pp-cost-formula { font-size: 13px; }
+      .pp-cost-table th { padding: 0 8px 8px; font-size: 11.5px; }
+      .pp-cost-table td { padding: 8px 8px; font-size: 12px; }
+      .pp-cost-table td:first-child { font-size: 12px; }
     }
   </style>
 </head>
@@ -200,12 +382,101 @@
 
     <div class="ai-field-visual fade-in">
       <div class="ai-field-before glass-card">
-        <div class="ai-field-visual-label">输入 · 卫星影像</div>
-        <div class="ai-field-img" style="background:linear-gradient(135deg,#1a2744,#0d1b2a,#162447);">
-          <svg viewBox="0 0 200 120" width="100%" height="100%">
-            <rect width="200" height="120" fill="rgba(255,255,255,0.02)"/>
-            <rect x="10" y="10" width="180" height="100" rx="4" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>
-            <text x="100" y="65" text-anchor="middle" fill="rgba(255,255,255,0.2)" font-size="10" font-family="JetBrains Mono,monospace">Sentinel-2 影像</text>
+        <div class="ai-field-visual-label">
+          <span>输入 · 卫星影像</span>
+          <span class="ai-field-meta">Sentinel-2 · 10 m · 116.40°E 41.67°N</span>
+        </div>
+        <div class="ai-field-img" style="background:linear-gradient(135deg,#16241a,#0d1b2a);">
+          <svg viewBox="0 0 400 120" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" role="img" aria-label="农田卫星影像">
+            <defs>
+              <linearGradient id="satGround" x1="0" y1="0" x2="0.4" y2="1">
+                <stop offset="0%" stop-color="#243a22"/>
+                <stop offset="100%" stop-color="#16241a"/>
+              </linearGradient>
+              <linearGradient id="satLight" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#ffffff" stop-opacity="0.09"/>
+                <stop offset="55%" stop-color="#ffffff" stop-opacity="0"/>
+              </linearGradient>
+              <radialGradient id="satVignette" cx="0.5" cy="0.5" r="0.72">
+                <stop offset="55%" stop-color="#000000" stop-opacity="0"/>
+                <stop offset="100%" stop-color="#000000" stop-opacity="0.45"/>
+              </radialGradient>
+              <filter id="satGrain">
+                <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/>
+                <feColorMatrix type="saturate" values="0"/>
+              </filter>
+              <filter id="satHaze" x="-25%" y="-50%" width="150%" height="200%">
+                <feGaussianBlur stdDeviation="5"/>
+              </filter>
+            </defs>
+
+            <rect width="400" height="120" fill="url(#satGround)"/>
+
+            <!-- 地块：条带状拼接，深色描边即田埂与防风林带 -->
+            <g stroke="#1e2a1c" stroke-width="1.5" stroke-linejoin="round">
+              <polygon points="0,0 118,0 112,34 0,30" fill="#4a5f3d"/>
+              <polygon points="118,0 258,0 262,26 112,34" fill="#6b7346"/>
+              <polygon points="258,0 400,0 400,38 262,26" fill="#3d5236"/>
+              <polygon points="0,30 112,34 122,76 0,72" fill="#7d7a55"/>
+              <polygon points="112,34 262,26 268,70 122,76" fill="#566b46"/>
+              <polygon points="262,26 400,38 400,80 268,70" fill="#8a8263"/>
+              <polygon points="0,72 122,76 130,120 0,120" fill="#5f6a45"/>
+              <polygon points="122,76 268,70 274,120 130,120" fill="#465c3a"/>
+              <polygon points="268,70 400,80 400,120 274,120" fill="#5a6b4a"/>
+            </g>
+
+            <!-- 田间道路 -->
+            <path d="M0,31 L112,35 L262,27 L400,39" fill="none" stroke="#8f8a70" stroke-width="1.2" opacity="0.4"/>
+            <path d="M0,73 L122,77 L268,71 L400,81" fill="none" stroke="#8f8a70" stroke-width="0.9" opacity="0.3"/>
+            <path d="M115,2 L119,74 L126,120" fill="none" stroke="#8f8a70" stroke-width="0.9" opacity="0.32"/>
+            <path d="M260,2 L265,70 L271,120" fill="none" stroke="#8f8a70" stroke-width="0.8" opacity="0.26"/>
+
+            <!-- 沟渠 / 河流：暗岸 + 水面 + 高光 -->
+            <path d="M-4,50 C58,42 150,70 214,86 C268,99 332,112 404,108" fill="none"
+                  stroke="#182b38" stroke-width="6.5" stroke-linecap="round" opacity="0.8"/>
+            <path d="M-4,50 C58,42 150,70 214,86 C268,99 332,112 404,108" fill="none"
+                  stroke="#33586e" stroke-width="2.7" stroke-linecap="round"/>
+            <path d="M-4,50 C58,42 150,70 214,86 C268,99 332,112 404,108" fill="none"
+                  stroke="#5b8aa5" stroke-width="0.8" stroke-linecap="round" opacity="0.4"/>
+
+            <!-- 库塘 -->
+            <polygon points="336,80 372,74 386,88 352,100 332,92" fill="#2b4a5e" opacity="0.92"/>
+
+            <!-- 防风林带与零星树丛：沿田埂交点分布 -->
+            <g fill="#22301f">
+              <circle cx="115" cy="31" r="3.2"/>
+              <circle cx="122" cy="36" r="2.2"/>
+              <circle cx="262" cy="27" r="2.7"/>
+              <circle cx="118" cy="74" r="2.9"/>
+              <circle cx="265" cy="70" r="2.4"/>
+              <circle cx="270" cy="75" r="1.9"/>
+              <circle cx="196" cy="30" r="2.2"/>
+              <circle cx="60" cy="72" r="2"/>
+              <circle cx="340" cy="40" r="2.3"/>
+            </g>
+
+            <!-- 零星建筑 -->
+            <g fill="#9a9689" opacity="0.65">
+              <rect x="30" y="98" width="5" height="3.4" rx="0.6"/>
+              <rect x="38" y="103" width="4" height="2.8" rx="0.6"/>
+              <rect x="300" y="50" width="4.4" height="3" rx="0.6"/>
+            </g>
+
+            <!-- 暗绿薄纱：压住整体饱和度，贴近真彩色成像 -->
+            <rect width="400" height="120" fill="#121c16" opacity="0.15"/>
+
+            <!-- 云影 -->
+            <g filter="url(#satHaze)" opacity="0.2">
+              <ellipse cx="118" cy="34" rx="62" ry="13" fill="#08120d"/>
+              <ellipse cx="320" cy="88" rx="46" ry="11" fill="#08120d"/>
+            </g>
+
+            <!-- 传感器颗粒噪点 -->
+            <rect width="400" height="120" filter="url(#satGrain)" opacity="0.055"/>
+
+            <!-- 斜向光照 + 四周暗角 -->
+            <rect width="400" height="120" fill="url(#satLight)"/>
+            <rect width="400" height="120" fill="url(#satVignette)"/>
           </svg>
         </div>
       </div>
@@ -217,9 +488,9 @@
             <polygon points="20,25 70,15 85,55 40,65 15,45" fill="rgba(34,197,94,0.15)" stroke="#22c55e" stroke-width="1.2"/>
             <polygon points="90,20 150,10 165,50 155,80 95,75 85,45" fill="rgba(59,130,246,0.15)" stroke="#3b82f6" stroke-width="1.2"/>
             <polygon points="40,75 100,65 120,100 80,110 30,95" fill="rgba(245,158,11,0.15)" stroke="#f59e0b" stroke-width="1.2"/>
-            <text x="45" y="42" fill="#22c55e" font-size="7" font-family="JetBrains Mono,monospace">12.5亩</text>
-            <text x="110" y="48" fill="#3b82f6" font-size="7" font-family="JetBrains Mono,monospace">28.3亩</text>
-            <text x="65" y="88" fill="#f59e0b" font-size="7" font-family="JetBrains Mono,monospace">8.7亩</text>
+            <text x="45" y="42" fill="#22c55e" font-size="9" font-family="JetBrains Mono,monospace">12.5亩</text>
+            <text x="110" y="48" fill="#3b82f6" font-size="9" font-family="JetBrains Mono,monospace">28.3亩</text>
+            <text x="65" y="88" fill="#f59e0b" font-size="9" font-family="JetBrains Mono,monospace">8.7亩</text>
           </svg>
         </div>
       </div>
@@ -255,10 +526,10 @@
             <path d="M20,40 Q60,42 100,48 T180,62 T220,70" fill="none" stroke="#ef4444" stroke-width="1.8"/>
             <!-- Anomaly region -->
             <rect x="140" y="35" width="80" height="40" rx="4" fill="rgba(239,68,68,0.06)" stroke="rgba(239,68,68,0.15)" stroke-width="0.5"/>
-            <text x="155" y="52" fill="#ef4444" font-size="7" font-family="JetBrains Mono,monospace">异常区间</text>
+            <text x="155" y="52" fill="#ef4444" font-size="10" font-family="JetBrains Mono,monospace">异常区间</text>
             <!-- Labels -->
-            <text x="20" y="35" fill="rgba(255,255,255,0.3)" font-size="7" font-family="JetBrains Mono,monospace">NDVI</text>
-            <text x="190" y="78" fill="rgba(255,255,255,0.2)" font-size="7" font-family="JetBrains Mono,monospace">时间 →</text>
+            <text x="20" y="35" fill="rgba(255,255,255,0.4)" font-size="10" font-family="JetBrains Mono,monospace">NDVI</text>
+            <text x="190" y="78" fill="rgba(255,255,255,0.3)" font-size="10" font-family="JetBrains Mono,monospace">时间 →</text>
           </svg>
         </div>
       </div>
@@ -278,11 +549,11 @@
             <path d="M20,60 Q60,55 100,48 T180,35 T220,25" fill="none" stroke="#3b82f6" stroke-width="1.8"/>
             <!-- Crossing point -->
             <circle cx="120" cy="44" r="4" fill="none" stroke="#f59e0b" stroke-width="1"/>
-            <text x="128" y="42" fill="#f59e0b" font-size="7" font-family="JetBrains Mono,monospace">交叉</text>
+            <text x="128" y="42" fill="#f59e0b" font-size="10" font-family="JetBrains Mono,monospace">交叉</text>
             <!-- Labels -->
-            <text x="20" y="25" fill="#22c55e" font-size="7" font-family="JetBrains Mono,monospace">NDVI ↓</text>
-            <text x="20" y="73" fill="#3b82f6" font-size="7" font-family="JetBrains Mono,monospace">NDWI ↑</text>
-            <text x="190" y="78" fill="rgba(255,255,255,0.2)" font-size="7" font-family="JetBrains Mono,monospace">时间 →</text>
+            <text x="20" y="25" fill="#22c55e" font-size="10" font-family="JetBrains Mono,monospace">NDVI ↓</text>
+            <text x="20" y="73" fill="#3b82f6" font-size="10" font-family="JetBrains Mono,monospace">NDWI ↑</text>
+            <text x="190" y="78" fill="rgba(255,255,255,0.3)" font-size="10" font-family="JetBrains Mono,monospace">时间 →</text>
           </svg>
         </div>
       </div>
@@ -305,10 +576,10 @@
             <!-- Anomaly zone -->
             <rect x="105" y="22" width="35" height="38" rx="3" fill="rgba(245,158,11,0.08)" stroke="rgba(245,158,11,0.2)" stroke-width="0.5"/>
             <!-- Labels -->
-            <text x="215" y="38" fill="#f59e0b" font-size="6" font-family="JetBrains Mono,monospace">EVI</text>
-            <text x="215" y="50" fill="#a855f7" font-size="6" font-family="JetBrains Mono,monospace">SAVI</text>
-            <text x="215" y="62" fill="#22c55e" font-size="6" font-family="JetBrains Mono,monospace">NDVI</text>
-            <text x="190" y="78" fill="rgba(255,255,255,0.2)" font-size="7" font-family="JetBrains Mono,monospace">时间 →</text>
+            <text x="206" y="38" fill="#f59e0b" font-size="10" font-family="JetBrains Mono,monospace">EVI</text>
+            <text x="206" y="50" fill="#a855f7" font-size="10" font-family="JetBrains Mono,monospace">SAVI</text>
+            <text x="206" y="62" fill="#22c55e" font-size="10" font-family="JetBrains Mono,monospace">NDVI</text>
+            <text x="190" y="78" fill="rgba(255,255,255,0.3)" font-size="10" font-family="JetBrains Mono,monospace">时间 →</text>
           </svg>
         </div>
       </div>
@@ -379,49 +650,212 @@
   <div class="container">
     <div class="fade-in">
       <div class="section-label">// 04 智能路径规划</div>
-      <div class="section-title">异常驱动的巡田路线优化</div>
+      <div class="section-title">异常驱动的分层路径规划</div>
       <p class="section-desc">
-        基于异常权重的地块优先级排序，最近邻初始路径 + 2-opt 局部优化，Haversine 球面距离计算。
+        巡田不是把地块挨个走一遍，而是"哪里问题大先去哪里"。第一步把异常换算成每个地块"该不该先巡"的分数，第二步据此排出路线 —— 既照顾异常重的地块，又保证路线不绕远。
       </p>
+    </div>
+
+    <!-- 两层结构示意 -->
+    <div class="pp-layer-grid fade-in">
+      <div class="pp-layer-card glass-card">
+        <span class="pp-layer-tag l1">第一层 · 地块内</span>
+        <h4>把地块里的异常点串起来</h4>
+        <p>一个地块内可能有好几处异常，按远近依次连成一条线；起点定在最西边，少走回头路。</p>
+        <svg class="pp-layer-svg" viewBox="0 0 320 182" role="img" aria-label="地块内最近邻路径示意">
+          <defs>
+            <marker id="ppArrow1" markerWidth="7" markerHeight="7" refX="5.4" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 Z" fill="#22c55e"/>
+            </marker>
+          </defs>
+
+          <polygon points="34,26 250,18 296,92 236,168 76,164 22,98"
+                   fill="rgba(34,197,94,0.07)" stroke="#22c55e" stroke-width="1.2"/>
+          <g opacity="0.08" stroke="#22c55e" stroke-width="0.4">
+            <line x1="34" y1="60" x2="290" y2="54"/>
+            <line x1="30" y1="110" x2="284" y2="104"/>
+            <line x1="90" y1="22" x2="86" y2="166"/>
+            <line x1="170" y1="20" x2="168" y2="166"/>
+            <line x1="240" y1="18" x2="240" y2="166"/>
+          </g>
+
+          <text x="58" y="44" font-size="10" font-family="JetBrains Mono,monospace"
+                fill="rgba(34,197,94,0.75)">3 号地 · 28.3 亩</text>
+
+          <polyline points="78,72 96,124 160,140 232,124 206,66 140,58"
+                    fill="none" stroke="#22c55e" stroke-width="1.5"
+                    stroke-dasharray="5 3" stroke-linejoin="round" marker-end="url(#ppArrow1)"/>
+
+          <circle cx="78" cy="72" r="5.5" fill="#ef4444"/>
+          <circle cx="96" cy="124" r="4" fill="#3b82f6"/>
+          <circle cx="160" cy="140" r="5.5" fill="#ef4444"/>
+          <circle cx="232" cy="124" r="4" fill="#f59e0b"/>
+          <circle cx="206" cy="66" r="3.5" fill="#3b82f6"/>
+          <circle cx="140" cy="58" r="4.5" fill="#f59e0b"/>
+
+          <g font-size="9" font-family="JetBrains Mono,monospace" fill="rgba(255,255,255,0.6)">
+            <text x="86" y="70">1</text>
+            <text x="103" y="121">2</text>
+            <text x="168" y="138">3</text>
+            <text x="240" y="121">4</text>
+            <text x="213" y="63">5</text>
+            <text x="148" y="55">6</text>
+          </g>
+
+          <circle cx="78" cy="72" r="11" fill="none" stroke="#ef4444" stroke-width="0.9" opacity="0.5"/>
+          <text x="8" y="70" font-size="10" font-family="JetBrains Mono,monospace" fill="#ef4444">起点</text>
+        </svg>
+        <div class="pp-legend">
+          <span><i class="pp-dot" style="background:#ef4444"></i>严重度高</span>
+          <span><i class="pp-dot" style="background:#f59e0b"></i>中</span>
+          <span><i class="pp-dot" style="background:#3b82f6"></i>低</span>
+          <span class="pp-legend-note">数字 = 访问顺序</span>
+        </div>
+      </div>
+
+      <div class="pp-layer-arrow">→</div>
+
+      <div class="pp-layer-card glass-card">
+        <span class="pp-layer-tag l2">第二层 · 地块间</span>
+        <h4>决定先去哪个地块</h4>
+        <p>从问题最重的地块出发，每一步都挑「距离 ÷ 权重」得分最低的下一个地块 —— 既不是最近的，也不是最严重的。</p>
+        <svg class="pp-layer-svg" viewBox="0 0 320 182" role="img" aria-label="地块间代价择优示意">
+          <defs>
+            <marker id="ppArrow2" markerWidth="7" markerHeight="7" refX="5.4" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 Z" fill="#22c55e"/>
+            </marker>
+          </defs>
+
+          <polygon points="36,34 96,28 112,58 92,84 42,82 26,56"
+                   fill="rgba(239,68,68,0.10)" stroke="#ef4444" stroke-width="1.1"/>
+          <polygon points="216,26 286,22 300,52 280,78 226,74 208,48"
+                   fill="rgba(59,130,246,0.10)" stroke="#3b82f6" stroke-width="1.1"/>
+          <polygon points="52,124 118,120 132,152 110,178 58,176 38,150"
+                   fill="rgba(245,158,11,0.10)" stroke="#f59e0b" stroke-width="1.1"/>
+          <polygon points="218,126 288,122 300,152 280,178 226,176 208,148"
+                   fill="rgba(139,92,246,0.10)" stroke="#8b5cf6" stroke-width="1.1"/>
+
+          <!-- 备选连接（代价更高，未选中） -->
+          <line x1="67" y1="57" x2="253" y2="50" stroke="rgba(255,255,255,0.15)"
+                stroke-width="0.8" stroke-dasharray="3 3"/>
+          <line x1="67" y1="57" x2="253" y2="150" stroke="rgba(255,255,255,0.15)"
+                stroke-width="0.8" stroke-dasharray="3 3"/>
+          <text x="146" y="47" font-size="10" font-family="JetBrains Mono,monospace"
+                fill="rgba(255,255,255,0.38)">16.9</text>
+          <text x="192" y="116" font-size="10" font-family="JetBrains Mono,monospace"
+                fill="rgba(255,255,255,0.38)">26.0</text>
+
+          <!-- 选中路径 A→C→B→D -->
+          <line x1="67" y1="57" x2="82.6" y2="138.2" stroke="#22c55e" stroke-width="1.8"
+                marker-end="url(#ppArrow2)"/>
+          <line x1="85" y1="151" x2="241.9" y2="56.7" stroke="#22c55e" stroke-width="1.8"
+                marker-end="url(#ppArrow2)"/>
+          <line x1="253" y1="50" x2="253" y2="137" stroke="#22c55e" stroke-width="1.8"
+                marker-end="url(#ppArrow2)"/>
+
+          <!-- 选中线段的代价 -->
+          <g font-size="10" font-family="JetBrains Mono,monospace" fill="#22c55e">
+            <text x="48" y="110">5.0</text>
+            <text x="168" y="96">17.8</text>
+            <text x="258" y="104">12.5</text>
+          </g>
+
+          <!-- 质心与异常权重 -->
+          <circle cx="67" cy="57" r="4" fill="#ef4444"/>
+          <circle cx="253" cy="50" r="4" fill="#3b82f6"/>
+          <circle cx="85" cy="151" r="4" fill="#f59e0b"/>
+          <circle cx="253" cy="150" r="4" fill="#8b5cf6"/>
+
+          <g font-size="10" font-family="JetBrains Mono,monospace">
+            <text x="54" y="46" fill="#ef4444">w=32</text>
+            <text x="240" y="40" fill="#3b82f6">w=11</text>
+            <text x="64" y="170" fill="#f59e0b">w=19</text>
+            <text x="240" y="170" fill="#8b5cf6">w=8</text>
+          </g>
+
+          <circle cx="67" cy="57" r="10" fill="none" stroke="#ef4444" stroke-width="0.9" opacity="0.55"/>
+          <text x="8" y="120" font-size="10" font-family="JetBrains Mono,monospace" fill="#ef4444">起点</text>
+          <text x="262" y="120" font-size="10" font-family="JetBrains Mono,monospace" fill="#8b5cf6">终点</text>
+        </svg>
+        <div class="pp-legend">
+          <span><i class="pp-dot" style="background:#22c55e"></i>选中的路线</span>
+          <span><i class="pp-dot" style="background:rgba(255,255,255,0.3)"></i>放弃的备选</span>
+          <span class="pp-legend-note">起点 = 异常权重最高的地块 · w = 异常权重</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 关键一步：代价函数 -->
+    <div class="pp-card glass-card fade-in">
+      <span class="pp-step">关键一步</span>
+      <h4>为什么要「除以异常权重」？</h4>
+      <p>只看距离，远处的重灾区会被跳过；只看严重度，路线又会来回横跳。用距离除以权重，异常重的地块就相当于"变近了"，两个目标一起进入排序。</p>
+      <div class="pp-cost-formula">代价 = 距离 &divide; 异常权重　　分数越低，越先安排</div>
+      <div class="pp-cost-scroll">
+        <table class="pp-cost-table">
+          <thead>
+            <tr>
+              <th>候选地块</th>
+              <th>异常权重</th>
+              <th>距当前位置</th>
+              <th>代价</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="pp-dot" style="background:#ef4444"></span>A · 很严重</td>
+              <td>100</td>
+              <td>10 000 m</td>
+              <td class="pp-cost-val">100</td>
+            </tr>
+            <tr>
+              <td><span class="pp-dot" style="background:#3b82f6"></span>B · 一般</td>
+              <td>20</td>
+              <td>2 000 m</td>
+              <td class="pp-cost-val">100</td>
+            </tr>
+            <tr>
+              <td><span class="pp-dot" style="background:#f59e0b"></span>C · 很轻微</td>
+              <td>10</td>
+              <td>1 000 m</td>
+              <td class="pp-cost-val">100</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pp-cost-note">
+        三个地块得分完全相同 —— 又远又严重的和又近又轻微的同等看待，不让任何单一因素说了算。
+      </div>
     </div>
 
     <div class="pp-timeline fade-in">
       <div class="pp-timeline-item">
         <div class="pp-timeline-dot"></div>
-        <h4>异常权重计算</h4>
-        <p>综合异常优先级、严重程度与面积，加权计算每个地块的巡田权重。</p>
+        <h4>第一步 · 算异常权重</h4>
+        <p>把每个地块内部所有异常按优先级、严重度、面积加权求和，得到一个"该不该先巡"的分数。异常越多越严重，分数越高。</p>
         <div class="pp-tech">
-          <span class="tag tag-green">priority × 0.5</span>
-          <span class="tag tag-blue">severity × 0.3</span>
-          <span class="tag tag-amber">area × 0.2</span>
+          <span class="tag tag-green">面积取对数</span>
+          <span class="tag tag-blue">按地块累加</span>
         </div>
       </div>
       <div class="pp-timeline-item">
         <div class="pp-timeline-dot"></div>
-        <h4>最近邻初始路径</h4>
-        <p>从最西端点出发，贪心选择最近未访问地块，快速生成初始可行路径。</p>
+        <h4>第二步 · 分两层排路线</h4>
+        <p>地块内部就近串起来（第一层），地块之间按「距离 &divide; 权重」排序（第二层），拼成一条完整路线；再用 2-opt 反复交换线段消除交叉，把总长度压短。</p>
         <div class="pp-tech">
-          <span class="tag tag-green">Nearest Neighbor</span>
-          <span class="tag tag-blue">West-most Start</span>
+          <span class="tag tag-green">最近邻</span>
+          <span class="tag tag-blue">距离 &divide; 权重</span>
+          <span class="tag tag-amber">2-opt 优化</span>
         </div>
       </div>
       <div class="pp-timeline-item">
         <div class="pp-timeline-dot"></div>
-        <h4>2-opt 局部优化</h4>
-        <p>迭代 200 次交换路径段，消除交叉、缩短总距离。Haversine 公式计算球面距离。</p>
-        <div class="pp-tech">
-          <span class="tag tag-green">2-opt × 200</span>
-          <span class="tag tag-amber">Haversine</span>
-        </div>
-      </div>
-      <div class="pp-timeline-item">
-        <div class="pp-timeline-dot"></div>
-        <h4>结果输出</h4>
-        <p>GeoJSON 格式路径数据、可视化 PNG 图像、量化评估报告，前端 Leaflet / CesiumJS 可视化。</p>
+        <h4>第三步 · 输出与效果对比</h4>
+        <p>输出路线数据与 300 dpi 示意图，并和"只挑最近的走"这种朴素方案对比路径长度，量化优化效果。</p>
         <div class="pp-tech">
           <span class="tag tag-blue">GeoJSON</span>
-          <span class="tag tag-green">PNG</span>
-          <span class="tag tag-amber">Report</span>
+          <span class="tag tag-green">PNG @300dpi</span>
+          <span class="tag tag-amber">长度对比</span>
         </div>
       </div>
     </div>
@@ -487,7 +921,7 @@
 <!-- FOOTER -->
 <footer class="footer">
   <div class="container">
-    <p>© 2025 智慧农业遥感监测与巡田决策平台 · <a href="index.html">返回首页</a></p>
+    <p>© 2026 智慧农业遥感监测与巡田决策平台</p>
   </div>
 </footer>
 

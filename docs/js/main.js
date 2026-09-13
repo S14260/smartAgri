@@ -140,36 +140,6 @@
     }
   });
 
-  /* ---------- Screenshots Carousel Auto-scroll ---------- */
-  const carousel = document.querySelector('.screenshots-carousel');
-  if (carousel) {
-    let scrollDir = 1;
-    let autoScrollTimer;
-
-    function autoScroll() {
-      const maxScroll = carousel.scrollWidth - carousel.clientWidth;
-      if (maxScroll <= 0) return;
-
-      carousel.scrollLeft += scrollDir * 1;
-      if (carousel.scrollLeft >= maxScroll) scrollDir = -1;
-      if (carousel.scrollLeft <= 0) scrollDir = 1;
-    }
-
-    function startAutoScroll() {
-      autoScrollTimer = setInterval(autoScroll, 30);
-    }
-
-    function stopAutoScroll() {
-      clearInterval(autoScrollTimer);
-    }
-
-    startAutoScroll();
-    carousel.addEventListener('mouseenter', stopAutoScroll);
-    carousel.addEventListener('mouseleave', startAutoScroll);
-    carousel.addEventListener('touchstart', stopAutoScroll, { passive: true });
-    carousel.addEventListener('touchend', startAutoScroll, { passive: true });
-  }
-
   /* ---------- Bento Mini Chart Bar Heights ---------- */
   document.querySelectorAll('.mini-chart').forEach((chart) => {
     const bars = chart.querySelectorAll('.mini-chart-bar');

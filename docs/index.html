@@ -56,12 +56,23 @@
   <div class="container">
     <a href="#" class="nav-logo"><span>&gt;_</span> SmartAgri <span class="nav-page-tag">首页</span></a>
     <ul class="nav-links">
-      <li><a href="#intro" class="active">项目简介</a></li>
+      <li><a href="#background" class="active">项目背景</a></li>
+      <li><a href="#work">我的工作</a></li>
+      <li><a href="#intro">技术亮点</a></li>
       <li><a href="#architecture">架构</a></li>
-      <li><a href="#features">功能</a></li>
-      <li><a href="features.html">功能详情</a></li>
-      <li><a href="#demo-video">演示视频</a></li>
+      <li class="nav-dropdown">
+        <a href="#features">功能<span class="nav-caret">▾</span></a>
+        <div class="nav-dropdown-menu">
+          <a href="features.html">功能详情总览</a>
+          <a href="features.html#remote-sensing">遥感影像处理</a>
+          <a href="features.html#ai-field">AI 自动圈地</a>
+          <a href="features.html#anomaly">多时相异常检测</a>
+          <a href="features.html#path-planning">智能路径规划</a>
+          <a href="features.html#ai-agent">AI Agent 交互</a>
+        </div>
+      </li>
       <li><a href="#screenshots">系统截图</a></li>
+      <li><a href="#demo-video">演示视频</a></li>
       <li><a href="#tech">技术栈</a></li>
       <li><a href="#contact">联系</a></li>
     </ul>
@@ -84,11 +95,11 @@
     <div class="hero-content">
       <div class="hero-badge">
         <span class="hero-badge-dot"></span>
-        全栈项目 · 2026
+        全栈项目 2026
       </div>
       <h1>智慧农业<br><span class="gradient-text">遥感监测与巡田决策</span><br>平台</h1>
       <p class="hero-desc">
-        基于 Java Spring Boot + Python Flask + CesiumJS 构建的农业遥感管理系统。集成 ReAct AI Agent、多时相异常检测、NDVI 影像处理与 2-opt 路径优化，实现从卫星数据到巡田决策的完整闭环。
+        面向农田数字化管理场景，打通从卫星影像到巡田任务的完整业务闭环：地块建档 → 遥感影像处理 → 农田异常识别 → 巡田路径规划 → 任务工单生成 → 打卡反馈，把巡田从“凭经验走一圈”变成“按数据定点查”。
       </p>
       <div class="hero-tags">
         <span class="tag tag-green">Spring Boot</span>
@@ -163,27 +174,107 @@
   </div>
 </section>
 
-<!-- ============ PROJECT INTRO ============ -->
-<section id="intro" class="section">
+<!-- ============ PROJECT BACKGROUND ============ -->
+<section id="background" class="section">
   <div class="container">
     <div class="fade-in">
-      <div class="section-label">// 项目简介</div>
-      <div class="section-title">从卫星数据到巡田决策的完整闭环</div>
+      <div class="section-label">// 项目背景</div>
+      <div class="section-title">为什么做这个系统</div>
       <p class="section-desc">
-        三层分离架构，前端可视化、Java 业务逻辑、Python 遥感计算各司其职。管理员通过自然语言与 AI Agent 交互，自动完成异常检测与路径规划。
+        农田巡田长期依赖人工经验：走到哪算哪、异常发现滞后，发现问题后也缺少可追溯的记录。
       </p>
     </div>
 
     <div class="intro-grid">
       <div class="intro-card glass-card fade-in fade-in-delay-1">
-        <div class="intro-card-icon green">🏗️</div>
-        <h3>三层分离架构</h3>
-        <p>前端 LayUI + CesiumJS 负责可视化，Spring Boot 处理业务逻辑与认证，Flask 微服务专注遥感计算与空间分析。</p>
+        <div class="intro-card-icon amber">🐌</div>
+        <h3>巡田效率低</h3>
+        <p>地块分散、路线靠经验临时决定，容易重复走回头路；异常区域无法预先排序，重点地块反而可能被漏掉。</p>
       </div>
       <div class="intro-card glass-card fade-in fade-in-delay-2">
+        <div class="intro-card-icon blue">📉</div>
+        <h3>异常发现滞后</h3>
+        <p>作物长势问题往往等到肉眼可见时才被发现，缺少卫星影像层面的早期预警手段。</p>
+      </div>
+      <div class="intro-card glass-card fade-in fade-in-delay-3">
+        <div class="intro-card-icon green">🧭</div>
+        <h3>过程无留痕</h3>
+        <p>巡田结果靠口头或零散表格汇报，缺少统一的工单、报告与到场打卡记录，难以回溯与考核。</p>
+      </div>
+    </div>
+
+    <div class="fade-in" style="margin-top:56px">
+      <div class="section-label">// 项目定位</div>
+      <div class="section-title">以数据代替经验，重新组织巡田流程</div>
+      <p class="section-desc">
+        以遥感影像为数据源、以异常识别为决策依据、以任务工单为执行载体，构建「影像处理 → 异常识别 → 优先级排序 → 路径规划 → 工单下发 → 到场打卡」的完整链路，
+        让有限的巡田人力优先投放到真正需要关注的地块上，同时让每一次巡田都有据可查。
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MY WORK ============ -->
+<section id="work" class="section">
+  <div class="container">
+    <div class="fade-in">
+      <div class="section-label">// 我的工作</div>
+      <div class="section-title">从数据到前端，覆盖四个方向</div>
+      <p class="section-desc">
+        从数据库设计、后端接口、遥感算法到前端可视化与部署文档，四个方向的能力在同一个项目中贯通。
+      </p>
+    </div>
+
+    <div class="bento-grid">
+      <div class="bento-card glass-card fade-in">
+        <div class="bento-card-accent green"></div>
+        <div class="bento-card-icon">☕</div>
+        <h3>后端与数据层</h3>
+        <p>设计数据库表结构；基于 Spring Boot 实现地块、用户、打卡等业务接口；基于 JWT 实现管理员与用户双角色认证、权限隔离与统一返回格式。</p>
+      </div>
+      <div class="bento-card glass-card fade-in fade-in-delay-1">
+        <div class="bento-card-accent blue"></div>
+        <div class="bento-card-icon">📡</div>
+        <h3>遥感计算服务</h3>
+        <p>基于 Python / Flask 实现影像裁剪、坐标重投影、植被指数计算与边缘平滑；完成子区域分割、多时相异常判定与优先级评分；标注并训练 YOLO 分割模型，用于地块自动圈定。</p>
+      </div>
+      <div class="bento-card glass-card fade-in fade-in-delay-2">
+        <div class="bento-card-accent amber"></div>
+        <div class="bento-card-icon">🖥️</div>
+        <h3>前端与可视化</h3>
+        <p>从零实现 14 个业务页面：地块列表与圈地编辑、Leaflet 二维巡田、Cesium 三维场景、ECharts 数据驾驶舱与数据大屏。</p>
+      </div>
+      <div class="bento-card glass-card fade-in fade-in-delay-3">
+        <div class="bento-card-accent green"></div>
+        <div class="bento-card-icon">🤖</div>
+        <h3>AI Agent 集成</h3>
+        <p>实现 ReAct 推理循环与 Function Calling，封装 5 个业务工具，通过 SSE 向前端流式输出思考过程与工具调用状态，打通从自然语言到业务执行的链路。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PROJECT INTRO ============ -->
+<section id="intro" class="section">
+  <div class="container">
+    <div class="fade-in">
+      <div class="section-label">// 技术亮点</div>
+      <div class="section-title">算法与 AI 双引擎</div>
+      <p class="section-desc">
+        一条线把卫星影像变成可决策的数据：光谱指数计算 + 深度学习分割；一条线把自然语言变成可执行的业务操作：ReAct Agent。
+      </p>
+    </div>
+
+    <div class="intro-grid">
+      <div class="intro-card glass-card fade-in fade-in-delay-1">
         <div class="intro-card-icon blue">📡</div>
         <h3>多源遥感处理</h3>
         <p>支持 NDVI / EVI / SAVI / NDWI 四种光谱指数，自动坐标重投影、矢量裁剪、Lanczos 超分辨率与边缘抗锯齿。</p>
+      </div>
+      <div class="intro-card glass-card fade-in fade-in-delay-2">
+        <div class="intro-card-icon green">🛰️</div>
+        <h3>地块自动圈定</h3>
+        <p>标注样本并训练 YOLO11 分割模型，从卫星影像中自动提取地块边界，替代人工逐个描点圈地。</p>
       </div>
       <div class="intro-card glass-card fade-in fade-in-delay-3">
         <div class="intro-card-icon amber">🧠</div>
@@ -315,7 +406,7 @@
       <div class="section-label">// 核心功能</div>
       <div class="section-title">核心功能模块</div>
       <p class="section-desc">
-        地块管理、遥感处理、异常检测、路径规划、AI Agent、数据驾驶舱、GPS 打卡 — 覆盖农业遥感监测全链路。
+        地块管理、遥感影像处理、异常检测、路径规划、AI Agent、数据驾驶舱、巡田工单、GPS 打卡 — 覆盖农业遥感监测全链路。
       </p>
     </div>
 
@@ -418,7 +509,7 @@
         <div class="bento-card-accent green"></div>
         <div class="bento-card-icon">🛤️</div>
         <h3>智能路径规划</h3>
-        <p>最近邻 + 2-opt 优化 + Haversine 距离。异常驱动决策，输出 GeoJSON 与可视化报告。</p>
+        <p>异常驱动的分层路径规划：最近邻串联、距离 ÷ 异常权重择优、2-opt 消除交叉，输出可视化报告。</p>
         <div class="bento-card-visual">
           <div class="mockup-route">
             <svg viewBox="0 0 200 100" width="100%" height="100%">
@@ -441,7 +532,7 @@
         <div class="bento-card-accent blue"></div>
         <div class="bento-card-icon">📊</div>
         <h3>数据驾驶舱</h3>
-        <p>统计卡片 + ECharts 图表：作物分布、地区分布、土壤类型、异常趋势。</p>
+        <p>统计面板 + 数据大屏：ECharts 呈现作物分布、地区分布、土壤类型、异常趋势。</p>
         <div class="bento-card-visual">
           <div class="mockup-dashboard">
             <div class="mockup-dash-row">
@@ -507,14 +598,9 @@
         </div>
       </div>
     </div>
-  </div>
-</section>
 
-<!-- ============ FEATURES LINK ============ -->
-<section class="section" style="padding:60px 0">
-  <div class="container" style="text-align:center">
-    <div class="fade-in">
-      <p style="color:var(--text-secondary);margin-bottom:20px">遥感处理、AI 圈地、异常检测、路径规划、AI Agent — 五大核心功能的技术细节</p>
+    <div class="fade-in" style="text-align:center;margin-top:40px">
+      <p style="color:var(--text-secondary);margin-bottom:20px">遥感影像处理、AI 自动圈地、异常检测、路径规划、AI Agent — 五大核心功能的技术细节</p>
       <a href="features.html" class="btn btn-primary" style="font-size:16px;padding:14px 32px">查看功能详情 →</a>
     </div>
   </div>
@@ -529,7 +615,7 @@
       <p class="section-desc">管理端与用户端的核心页面，覆盖登录、地图、巡田、报告全流程。</p>
     </div>
 
-    <div class="screenshots-carousel fade-in">
+    <div class="screenshots-grid fade-in">
       <div class="screenshot-item">
         <img src="images/登陆界面.png" alt="登录界面" class="screenshot-img" data-lightbox="images/登陆界面.png">
         <div class="screenshot-caption">
@@ -539,10 +625,18 @@
       </div>
 
       <div class="screenshot-item">
-        <img src="images/我的桌面.png" alt="数据驾驶舱" class="screenshot-img" data-lightbox="images/我的桌面.png">
+        <img src="images/我的桌面.png" alt="我的桌面" class="screenshot-img" data-lightbox="images/我的桌面.png">
         <div class="screenshot-caption">
-          <h4>数据驾驶舱</h4>
-          <p>统计卡片 + ECharts 图表</p>
+          <h4>我的桌面</h4>
+          <p>统计面板 + ECharts 图表</p>
+        </div>
+      </div>
+
+      <div class="screenshot-item">
+        <img src="images/数据大屏.png" alt="数据大屏" class="screenshot-img" data-lightbox="images/数据大屏.png">
+        <div class="screenshot-caption">
+          <h4>数据大屏</h4>
+          <p>地图 · 分布图表 · 影像档案 · 巡田工单</p>
         </div>
       </div>
 
@@ -716,8 +810,6 @@
           <div class="tech-item">YOLO11-Seg 实例分割 <span class="tech-status done">done</span></div>
           <div class="tech-item">YOLO11 目标检测 <span class="tech-status done">done</span></div>
           <div class="tech-item">Shapely 拓扑简化 <span class="tech-status done">done</span></div>
-          <div class="tech-item">作物识别模型 <span class="tech-status planned">planned</span></div>
-          <div class="tech-item">病害分类模型 <span class="tech-status planned">planned</span></div>
         </div>
       </div>
     </div>
@@ -798,7 +890,7 @@
 <!-- ============ FOOTER ============ -->
 <footer class="footer">
   <div class="container">
-    <p>© 2026 智慧农业遥感监测与巡田决策平台 · Built with Spring Boot + Flask + CesiumJS</p>
+    <p>© 2026 智慧农业遥感监测与巡田决策平台</p>
   </div>
 </footer>
 

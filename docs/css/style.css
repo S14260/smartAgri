@@ -42,6 +42,9 @@
   --container-width: 1200px;
   --container-padding: 24px;
 
+  /* 桌面端整体缩放系数。改这里就等于改浏览器缩放比例 */
+  --ui-zoom: 1;
+
   /* Type */
   --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -59,6 +62,14 @@ html {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* 桌面端整体缩到 80%，复刻浏览器 80% 缩放的观感：版面收窄、两侧留白。
+   媒体查询看的是真实视口宽度，不受 zoom 影响，所以断点行为符合预期。
+   手机上不缩放 —— 否则正文字号会掉到 12.8px。 */
+@media (min-width: 1025px) {
+  :root { --ui-zoom: 0.8; }
+  html { zoom: var(--ui-zoom); }
 }
 
 body {
@@ -291,6 +302,79 @@ button {
   border-radius: 1px;
 }
 
+/* ---------- 导航下拉菜单（悬停 / 键盘聚焦展开） ---------- */
+.nav-dropdown {
+  position: relative;
+}
+
+.nav-caret {
+  display: inline-block;
+  margin-left: 3px;
+  font-size: 9px;
+  transform: translateY(-1px);
+  transition: transform 0.2s ease;
+}
+
+.nav-dropdown:hover .nav-caret,
+.nav-dropdown:focus-within .nav-caret {
+  transform: translateY(-1px) rotate(180deg);
+}
+
+.nav-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 14px);
+  left: 50%;
+  transform: translateX(-50%) translateY(-6px);
+  min-width: 176px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: rgba(17, 20, 28, 0.96);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+  z-index: 120;
+}
+
+/* 透明桥接条补上 nav 与菜单之间的间隙，避免鼠标移入时闪断 */
+.nav-dropdown-menu::before {
+  content: '';
+  position: absolute;
+  top: -14px;
+  left: 0;
+  right: 0;
+  height: 14px;
+}
+
+.nav-dropdown:hover .nav-dropdown-menu,
+.nav-dropdown:focus-within .nav-dropdown-menu {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+.nav-links .nav-dropdown-menu a {
+  display: block;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.nav-links .nav-dropdown-menu a:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.07);
+}
+
 .nav-page-tag {
   font-family: var(--font-display);
   font-size: 11px;
@@ -324,7 +408,8 @@ button {
    HERO
    ============================================ */
 .hero {
-  min-height: 100vh;
+  /* 除以 --ui-zoom：vh 不被 zoom 补偿，不除会让首屏只占视口 80% 高 */
+  min-height: calc(100vh / var(--ui-zoom));
   display: flex;
   align-items: center;
   padding-top: 80px;
@@ -1230,7 +1315,7 @@ button {
 }
 
 .ai-tool-desc {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-tertiary);
 }
 
@@ -1454,13 +1539,13 @@ button {
 }
 
 .rs-flow-step h4 {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   margin-bottom: 4px;
 }
 
 .rs-flow-step p {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-tertiary);
 }
 
@@ -1494,7 +1579,7 @@ button {
 }
 
 .anomaly-type-rule {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-secondary);
   margin-bottom: 12px;
 }
@@ -1559,7 +1644,7 @@ button {
 }
 
 .anomaly-step-desc {
-  font-size: 11px;
+  font-size: 12.5px;
   color: var(--text-tertiary);
 }
 
@@ -1694,13 +1779,13 @@ button {
 
 .ai-field-step h4 {
   font-family: var(--font-display);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   margin-bottom: 4px;
 }
 
 .ai-field-step p {
-  font-size: 11px;
+  font-size: 12.5px;
   color: var(--text-tertiary);
 }
 
@@ -1726,7 +1811,7 @@ button {
 
 .ai-field-visual-label {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-tertiary);
   margin-bottom: 10px;
   text-transform: uppercase;
@@ -1769,9 +1854,9 @@ button {
    PATH PLANNING
    ============================================ */
 .pp-timeline {
-  margin-top: 40px;
+  margin-top: 24px;
   position: relative;
-  padding-left: 40px;
+  padding-left: 36px;
 }
 
 .pp-timeline::before {
@@ -1786,7 +1871,7 @@ button {
 
 .pp-timeline-item {
   position: relative;
-  padding: 0 0 40px 0;
+  padding: 0 0 22px 0;
 }
 
 .pp-timeline-item:last-child {
@@ -1795,10 +1880,10 @@ button {
 
 .pp-timeline-dot {
   position: absolute;
-  left: -33px;
+  left: -30px;
   top: 4px;
-  width: 12px;
-  height: 12px;
+  width: 11px;
+  height: 11px;
   border-radius: 50%;
   background: var(--bg-deep);
   border: 2px solid var(--green);
@@ -1806,13 +1891,13 @@ button {
 
 .pp-timeline-item h4 {
   font-family: var(--font-display);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
-  margin-bottom: 6px;
+  margin-bottom: 5px;
 }
 
 .pp-timeline-item p {
-  font-size: 14px;
+  font-size: 12.5px;
   color: var(--text-secondary);
   line-height: 1.6;
 }
@@ -1827,32 +1912,15 @@ button {
 /* ============================================
    SCREENSHOTS
    ============================================ */
-.screenshots-carousel {
-  display: flex;
+/* 平铺网格：所有截图一屏可见，无需横向拖动 */
+.screenshots-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 20px;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
   padding: 20px 0;
-  -webkit-overflow-scrolling: touch;
-}
-
-.screenshots-carousel::-webkit-scrollbar {
-  height: 6px;
-}
-
-.screenshots-carousel::-webkit-scrollbar-track {
-  background: var(--bg-card);
-  border-radius: 3px;
-}
-
-.screenshots-carousel::-webkit-scrollbar-thumb {
-  background: var(--border-hover);
-  border-radius: 3px;
 }
 
 .screenshot-item {
-  flex: 0 0 360px;
-  scroll-snap-align: start;
   border-radius: var(--radius-lg);
   overflow: hidden;
   border: 1px solid var(--border);
@@ -1864,16 +1932,19 @@ button {
   transform: translateY(-4px);
 }
 
+/* 截图多为 1920×869（约 2.2:1），用接近的比例减少裁切 */
 .screenshot-img {
+  display: block;
   width: 100%;
-  height: 220px;
+  aspect-ratio: 20 / 9;
   object-fit: cover;
+  object-position: top center;
   background: var(--bg-elevated);
 }
 
 .screenshot-img-placeholder {
   width: 100%;
-  height: 220px;
+  aspect-ratio: 20 / 9;
   background: var(--bg-elevated);
   display: flex;
   align-items: center;
@@ -2214,8 +2285,8 @@ button {
 }
 
 .lightbox img {
-  max-width: 90vw;
-  max-height: 90vh;
+  max-width: calc(90vw / var(--ui-zoom));
+  max-height: calc(90vh / var(--ui-zoom));
   border-radius: var(--radius-md);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
@@ -2272,6 +2343,15 @@ button {
   .contact-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .screenshots-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* 导航项较多，中等屏收紧间距避免溢出换行 */
+  .nav-links {
+    gap: 20px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -2317,10 +2397,6 @@ button {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .screenshot-item {
-    flex: 0 0 300px;
-  }
-
   .stats-grid {
     grid-template-columns: 1fr 1fr;
   }
@@ -2340,6 +2416,10 @@ button {
   }
 
   .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .screenshots-grid {
     grid-template-columns: 1fr;
   }
 }
