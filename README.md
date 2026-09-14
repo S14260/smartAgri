@@ -205,7 +205,9 @@ smart-agriculture-management/
 - JDK 1.8+
 - Maven 3.6+
 - MySQL 5.7+
-- Python 3.8+
+
+> 这三项就够了，**Python 不是必需的**——计算层已经部署在服务器上，见第 4 节。
+> 只有要改计算层代码时才需要本地 Python 环境。
 
 ### 1. 数据库
 
@@ -258,33 +260,47 @@ export LLM_API_KEY=sk-xxx
 ./mvnw spring-boot:run
 ```
 
-### 4. 启动 Flask 微服务
+### 4. 计算层（默认不需要启动）
 
-Python 计算层是**两个独立服务**，按需启动：
+Python 计算层的两个服务**都已经部署在 `123.56.228.32`（端口 8000）**，代码里的地址默认就指向它。
 
-**4.1 遥感 / 巡田服务（端口 8000）**
+所以本地把系统跑起来**不需要装 Python、不需要启动 Flask**——做完第 3 步就结束了，直接看第 5 步。
+
+**4.1 本地启动计算层（只有改计算层代码时才需要）**
+
+需要改 `api/` 下的算法或路由时，在本地起服务验证：
 
 ```bash
+# 遥感 / 巡田服务（端口 8000）
 cd api/ndvi
 pip install -r requirements.txt
 python app.py
 ```
 
-**4.2 农田分割检测服务（YOLO）**
-
 ```bash
+# 农田分割检测服务（YOLO）
 cd api/farm_field_detection
-pip install ultralytics flask
 python app.py
 ```
 
-> ⚠️ 该目录下的 `requirements.txt` 目前是空文件，依赖清单待补全（至少需要
-> `ultralytics`、`flask`）。本地已有一份可跑的虚拟环境 `api/farm_field_detection/venv`，
-> 可在那里执行 `pip freeze > requirements.txt` 补上。
+> ⚠️ **不建议为了"把功能跑通"而本地装这套依赖。** `rasterio`、`geopandas`、`pyproj` 需要与
+> Python 版本匹配的 GDAL 二进制 wheel，在 Windows 上不是 `pip install` 一把过的事，容易卡很久。
+> 只想让系统可用的话，用已部署的服务就行。
 
-> ⚠️ **服务地址是硬编码的**。代码里默认指向部署服务器 `123.56.228.32`，本地调试需要改：
+> ⚠️ `api/farm_field_detection/requirements.txt` 目前是**空文件**（依赖清单未补）。
+> 磁盘上有一份可用的虚拟环境 `api/farm_field_detection/venv`，需要时可在其中执行
+> `pip freeze > requirements.txt`。
+
+> ⚠️ **本地启动计算层之前必须先改地址**，否则前端打到的仍然是服务器。代码里默认指向
+> `123.56.228.32`：
 > - `api/ndvi/app.py` 的 `NDVI_BASE_URL`、`XUNTIAN_RESULT_BASE`
 > - 前端 `admin-patrol.html` 等页面的 `FLASK_BASE`
+>
+> 改完**不要把本地地址提交上去**。
+
+> ⚠️ **计算层会反过来调用 Java 层**。`api/ndvi/app.py` 里的 `/admin/plots`、`/user/plots`
+> 是**代理到 `NDVI_BASE_URL:8080`** 的，不读本地数据。如果发现 NDVI 裁剪拿到的地块
+> 不是你本地新建的，先查这两处转到了哪台机器。
 
 > 📦 **模型权重**。仓库只保留推理必需的 `api/farm_field_detection/best.pt` 和训练成果
 > `api/farm_field_detection/runs/segment/field_segmentation/weights/best.pt`。
@@ -298,6 +314,9 @@ python app.py
 
 ## API 接口
 
+> 下面是速查表。**完整契约**（鉴权方式、返回格式、请求/响应字段、逐接口参数、已知不一致）
+> 见 [`docs/api-contract.md`](docs/api-contract.md)，对外对接时以那份为准。
+
 ### Java 后端 (port 8080)
 
 | 接口 | 方法 | 说明 |
@@ -305,7 +324,7 @@ python app.py
 | `/admin/ai/chat/stream` | POST | SSE 流式 AI 对话 |
 | `/admin/dashboard/overview` | GET | 驾驶舱概览数据 |
 | `/admin/plots` | GET/POST | 地块 CRUD |
-| `/admin/llm/explain` | POST | 异常智能分析 |
+| `/admin/ai/explain` | POST | 异常智能分析 |
 
 ### Flask 微服务 (port 8000)
 
