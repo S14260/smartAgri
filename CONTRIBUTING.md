@@ -121,7 +121,7 @@ git push --force-with-lease origin feat/xxx
 
 ```sql
 -- 例：新增字段
-ALTER TABLE plot ADD COLUMN soil_type VARCHAR(32) DEFAULT NULL COMMENT '土壤类型';
+ALTER TABLE admin_plots ADD COLUMN soil_type VARCHAR(32) DEFAULT NULL COMMENT '土壤类型';
 ```
 
 新人上手时必须能靠 `mydb.sql` 建出和别人一致的库。如果你在本地手改了表结构却没更新脚本，别人的库就会悄悄不一致，然后在某个莫名其妙的查询上报错。
@@ -140,8 +140,11 @@ cd smartAgri
 1. **数据库**：`mysql -u root -p mydb < src/main/resources/mydb.sql`
 2. **`application.yml` 不在仓库里**（含密码，被 gitignore）。从 README 的模板复制一份到
    `src/main/resources/application.yml` 再填自己的配置。
-3. **Flask 服务有两个**，入口是 `api/ndvi/app.py` 和 `api/farm_field_detection/app.py`，
-   不是 `api/app.py`。服务地址在代码里硬编码指向 `123.56.228.32`，本地调试要改成 `localhost`。
+3. **计算层不用你启动**。Python 计算层（Flask :8000）已经部署在 `123.56.228.32`，代码里的
+   地址默认就指向它。建库 + 配好 `application.yml` + 起 Java 后端，功能就是完整的。
+   只有要改 `api/` 下的算法或路由时才需要本地启动——届时入口是 `api/ndvi/app.py` 和
+   `api/farm_field_detection/app.py`（**不是** `api/app.py`），并且要记得改服务地址、
+   别把本地地址提交上去。
 
 ---
 
