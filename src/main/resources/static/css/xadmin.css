@@ -318,7 +318,6 @@ body{
 }
 .page-content .layui-tab-title .layui-this:after{
     height: 39px;
-    background: var(--primary-color, #1E88E5);
 }
 .page-content .layui-tab-title li .layui-tab-close{
     border-radius: 50%;

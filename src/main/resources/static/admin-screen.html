@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>数据大屏 — 农田智能监测与巡田决策平台</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./css/font.css">
+    <link rel="stylesheet" href="./lib/css/leaflet.css">
+    <link rel="stylesheet" href="./css/screen.css">
+    <script src="./js/jquery.min.js"></script>
+    <script src="./lib/echarts.min.js"></script>
+    <script src="./lib/leaflet/leaflet.js"></script>
+</head>
+<body>
+
+<div class="stage-wrap">
+    <div class="screen" id="screen">
+
+        <!-- ====== 标题栏 ====== -->
+        <div class="scr-header">
+            <div class="scr-header-left">
+                <div class="src-status" id="srcStatus">
+                    <span class="dot"></span>
+                    <span id="srcStatusText">数据源连接中</span>
+                </div>
+            </div>
+
+            <div class="scr-title">
+                <h1>农田智能监测与巡田决策平台</h1>
+                <p>SMART AGRICULTURE MONITORING &amp; PATROL DECISION PLATFORM</p>
+            </div>
+
+            <div class="scr-header-right">
+                <div class="scr-clock">
+                    <div class="time" id="clockTime">--:--:--</div>
+                    <div class="date" id="clockDate">----------</div>
+                </div>
+                <div class="scr-btn" id="btnFullscreen" title="切换全屏">
+                    <i class="iconfont">&#xe696;</i>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====== KPI 指标 ====== -->
+        <div class="scr-kpis">
+            <div class="kpi">
+                <span class="sweep"></span>
+                <i class="iconfont ico">&#xe699;</i>
+                <div class="body">
+                    <div class="num"><span id="kpiPlots">--</span></div>
+                    <div class="label">地块总数</div>
+                </div>
+            </div>
+            <div class="kpi">
+                <span class="sweep"></span>
+                <i class="iconfont ico">&#xe6b2;</i>
+                <div class="body">
+                    <div class="num"><span id="kpiArea">--</span><span class="unit">亩</span></div>
+                    <div class="label">种植总面积</div>
+                </div>
+            </div>
+            <div class="kpi">
+                <span class="sweep"></span>
+                <i class="iconfont ico">&#xe6bb;</i>
+                <div class="body">
+                    <div class="num"><span id="kpiPunch">--</span></div>
+                    <div class="label">巡田打卡</div>
+                </div>
+            </div>
+            <div class="kpi">
+                <span class="sweep"></span>
+                <i class="iconfont ico">&#xe6b6;</i>
+                <div class="body">
+                    <div class="num"><span id="kpiAnomaly">--</span></div>
+                    <div class="label">异常区域</div>
+                </div>
+            </div>
+            <div class="kpi">
+                <span class="sweep"></span>
+                <i class="iconfont ico">&#xe6a2;</i>
+                <div class="body">
+                    <div class="num"><span id="kpiTickets">--</span></div>
+                    <div class="label">巡田工单</div>
+                </div>
+            </div>
+            <div class="kpi">
+                <span class="sweep"></span>
+                <i class="iconfont ico">&#xe6a8;</i>
+                <div class="body">
+                    <div class="num"><span id="kpiImages">--</span></div>
+                    <div class="label">遥感影像</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====== 主体：左图表 | 中地图 | 右图表 ====== -->
+        <div class="scr-row main">
+
+            <div class="scr-col">
+                <div class="panel">
+                    <div class="panel-hd">
+                        <div class="t"><i class="iconfont">&#xe699;</i>作物类型分布</div>
+                        <div class="extra">按地块数</div>
+                    </div>
+                    <div class="panel-bd">
+                        <div class="chart" id="chartCrop"></div>
+                    </div>
+                </div>
+                <div class="panel">
+                    <div class="panel-hd">
+                        <div class="t"><i class="iconfont">&#xe6ce;</i>土壤类型分布</div>
+                        <div class="extra">按地块数</div>
+                    </div>
+                    <div class="panel-bd">
+                        <div class="chart" id="chartSoil"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-hd">
+                    <div class="t"><i class="iconfont">&#xe6e6;</i>地块分布地图</div>
+                    <div class="extra" id="mapInfo">加载中...</div>
+                </div>
+                <div class="panel-bd map-bd">
+                    <div id="screenMap"></div>
+                </div>
+            </div>
+
+            <div class="scr-col">
+                <div class="panel">
+                    <div class="panel-hd">
+                        <div class="t"><i class="iconfont">&#xe6b2;</i>地区地块分布</div>
+                        <div class="extra">按地块数</div>
+                    </div>
+                    <div class="panel-bd">
+                        <div class="chart" id="chartRegion"></div>
+                    </div>
+                </div>
+                <div class="panel">
+                    <div class="panel-hd">
+                        <div class="t"><i class="iconfont">&#xe6a8;</i>遥感影像档案</div>
+                        <div class="extra" id="imageCount">--</div>
+                    </div>
+                    <div class="panel-bd">
+                        <div class="scroll-y" id="imageScroll">
+                            <div class="scroll-inner" id="imageList">
+                                <div class="placeholder"><i class="iconfont">&#xe6aa;</i><div>加载中...</div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ====== 底部：巡田工单（全宽三列） ====== -->
+        <div class="scr-row bottom">
+            <div class="panel">
+                <div class="panel-hd">
+                    <div class="t"><i class="iconfont">&#xe6a2;</i>最新巡田工单</div>
+                    <div class="extra" id="ticketCount">--</div>
+                </div>
+                <div class="panel-bd">
+                    <div class="scroll-y" id="ticketScroll">
+                        <div class="scroll-inner ticket-grid" id="ticketList">
+                            <div class="placeholder"><i class="iconfont">&#xe6aa;</i><div>加载中...</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="screen-tip">数据大屏 · 按 1920×1080 设计，已等比自适应</div>
+
+<script>
+/* ==========================================================================
+   数据大屏脚本
+   ========================================================================== */
+
+// ====== 配置 ======
+var SCREEN_CONFIG = {
+    // Flask 遥感 / 巡田服务地址。本地运行时改为 'http://localhost:8000'
+    flaskBase: 'http://123.56.228.32:8000',
+    // 自动刷新间隔（毫秒），设为 0 关闭自动刷新
+    refreshInterval: 60000,
+    // 列表自动滚动速度（像素 / 帧），设为 0 关闭
+    autoScrollSpeed: 0.35,
+    // 天地图密钥（与 admin-patrol.html 使用的同一个）
+    tiandituToken: '19fc987939ebbcbcb3f0954ab6cf75be',
+    // 地图初始中心与缩放（无地块数据时的兜底视野）
+    mapCenter: [39.5, 116.0],
+    mapZoom: 8,
+    // 遥感影像地区：Flask 按 ./ndvi_files/<id>/ 分目录存放，接口只认这里的英文 id
+    regions: [
+        { id: 'guyuan', name: '沽源' },
+        { id: 'zhangbei', name: '张北' },
+        { id: 'ninghe', name: '宁河' }
+    ]
+};
+
+// Java 后端地址（同主机 8080）
+var API_BASE = window.location.protocol + '//' + window.location.hostname + ':8080';
+
+var PALETTE = ['#00e5ff', '#3d8bff', '#2ce8b0', '#ffb020', '#ff5c7a', '#9b7bff', '#4dd0e1', '#7e9bb5'];
+
+var charts = {};
+var scrollTimers = {};
+var SRC = { javaTotal: 0, javaFail: 0, flaskTotal: 0, flaskFail: 0 };
+
+// ====== 工具函数 ======
+function authHeaders() {
+    var t = localStorage.getItem('token_admin') || '';
+    return t ? { 'token': t } : {};
+}
+
+function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+}
+
+function pad2(n) {
+    return String(n).padStart(2, '0');
+}
+
+function countUp(el, target, decimals) {
+    var dur = 900, t0 = null;
+    function step(ts) {
+        if (t0 === null) { t0 = ts; }
+        var k = Math.min(1, (ts - t0) / dur);
+        var eased = 1 - Math.pow(1 - k, 3);
+        var v = target * eased;
+        el.textContent = decimals ? v.toFixed(decimals) : String(Math.round(v));
+        if (k < 1) { requestAnimationFrame(step); }
+    }
+    requestAnimationFrame(step);
+}
+
+function setKpi(id, value, decimals) {
+    var el = document.getElementById(id);
+    if (!el) { return; }
+    if (value === null || value === undefined || value === '' || isNaN(Number(value))) {
+        el.textContent = '--';
+        return;
+    }
+    countUp(el, Number(value), decimals || 0);
+}
+
+// ====== 数据源状态 ======
+function track(kind, ok) {
+    SRC[kind + 'Total']++;
+    if (!ok) { SRC[kind + 'Fail']++; }
+    updateStatus();
+}
+
+function updateStatus() {
+    var el = document.getElementById('srcStatus');
+    var text = document.getElementById('srcStatusText');
+    var total = SRC.javaTotal + SRC.flaskTotal;
+    var fail = SRC.javaFail + SRC.flaskFail;
+
+    el.classList.remove('is-offline');
+    if (total === 0) {
+        text.textContent = '数据源连接中';
+    } else if (fail === 0) {
+        text.textContent = '数据源正常';
+    } else if (fail === total) {
+        el.classList.add('is-offline');
+        text.textContent = '数据源离线';
+    } else {
+        el.classList.add('is-offline');
+        text.textContent = '部分数据源离线';
+    }
+}
+
+// ====== 时钟与缩放 ======
+function updateClock() {
+    var now = new Date();
+    var wd = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+    document.getElementById('clockTime').textContent =
+        pad2(now.getHours()) + ':' + pad2(now.getMinutes()) + ':' + pad2(now.getSeconds());
+    document.getElementById('clockDate').textContent =
+        now.getFullYear() + '-' + pad2(now.getMonth() + 1) + '-' + pad2(now.getDate()) + ' ' + wd[now.getDay()];
+}
+
+function fitStage() {
+    var s = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+    document.getElementById('screen').style.transform = 'scale(' + s + ')';
+}
+
+// ====== 图表 ======
+function tipStyle() {
+    return {
+        backgroundColor: 'rgba(6,20,40,0.94)',
+        borderColor: '#1b4b6b',
+        borderWidth: 1,
+        textStyle: { color: '#d6ecff', fontSize: 12 }
+    };
+}
+
+function emptyOption(msg) {
+    return {
+        title: {
+            text: msg,
+            left: 'center',
+            top: 'middle',
+            textStyle: { color: '#3f6c8c', fontSize: 14, fontWeight: 'normal' }
+        }
+    };
+}
+
+function initCharts() {
+    charts.crop = echarts.init(document.getElementById('chartCrop'));
+    charts.region = echarts.init(document.getElementById('chartRegion'));
+    charts.soil = echarts.init(document.getElementById('chartSoil'));
+    charts.crop.setOption(emptyOption('暂无作物数据'));
+    charts.region.setOption(emptyOption('暂无地区数据'));
+    charts.soil.setOption(emptyOption('暂无土壤数据'));
+}
+
+function toPairs(map) {
+    if (!map) { return []; }
+    return Object.keys(map)
+        .map(function (k) { return { name: k, value: Number(map[k]) || 0 }; })
+        .sort(function (a, b) { return b.value - a.value; });
+}
+
+function fromPlots(plots, field) {
+    var map = {};
+    (plots || []).forEach(function (p) {
+        var key = p[field];
+        if (!key) { return; }
+        map[key] = (map[key] || 0) + 1;
+    });
+    return toPairs(map);
+}
+
+function renderCropRose(pairs) {
+    var c = charts.crop;
+    c.clear();
+    if (!pairs.length) { c.setOption(emptyOption('暂无作物数据')); return; }
+    c.setOption({
+        tooltip: $.extend({ trigger: 'item', formatter: '{b}<br/>{c} 块（{d}%）' }, tipStyle()),
+        legend: {
+            orient: 'vertical', right: 8, top: 'center',
+            itemWidth: 9, itemHeight: 9, itemGap: 12,
+            textStyle: { color: '#9cc4e0', fontSize: 12 }
+        },
+        color: PALETTE,
+        series: [{
+            type: 'pie',
+            roseType: 'radius',
+            radius: ['16%', '70%'],
+            center: ['32%', '52%'],
+            itemStyle: {
+                borderColor: '#061428', borderWidth: 2,
+                shadowBlur: 12, shadowColor: 'rgba(0,229,255,0.35)'
+            },
+            label: { show: false },
+            labelLine: { show: false },
+            emphasis: {
+                label: { show: true, color: '#ffffff', fontSize: 13, fontWeight: 'bold', formatter: '{b}\n{c} 块' },
+                itemStyle: { shadowBlur: 24, shadowColor: 'rgba(0,229,255,0.85)' }
+            },
+            data: pairs
+        }]
+    });
+}
+
+function renderRegionBar(pairs) {
+    var c = charts.region;
+    c.clear();
+    if (!pairs.length) { c.setOption(emptyOption('暂无地区数据')); return; }
+
+    var keys = pairs.map(function (p) { return p.name; });
+    var values = pairs.map(function (p) { return p.value; });
+    var rotate = keys.length > 7 ? 30 : 0;
+
+    c.setOption({
+        tooltip: $.extend({ trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: '{b}<br/>{c} 块' }, tipStyle()),
+        grid: { left: 48, right: 26, top: 34, bottom: rotate ? 58 : 40 },
+        xAxis: {
+            type: 'category',
+            data: keys,
+            axisLabel: { color: '#9cc4e0', fontSize: 12, interval: 0, rotate: rotate },
+            axisLine: { lineStyle: { color: '#1b4b6b' } },
+            axisTick: { show: false }
+        },
+        yAxis: {
+            type: 'value',
+            axisLabel: { color: '#5e88ac', fontSize: 12 },
+            splitLine: { lineStyle: { color: 'rgba(27,75,107,0.5)' } },
+            axisLine: { show: false }
+        },
+        series: [{
+            type: 'bar',
+            data: values,
+            barWidth: '46%',
+            itemStyle: {
+                borderRadius: [3, 3, 0, 0],
+                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                    { offset: 0, color: '#00e5ff' },
+                    { offset: 1, color: 'rgba(0,229,255,0.1)' }
+                ]),
+                shadowBlur: 12,
+                shadowColor: 'rgba(0,229,255,0.4)'
+            },
+            label: { show: true, position: 'top', color: '#bee9ff', fontSize: 12 },
+            emphasis: {
+                itemStyle: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        { offset: 0, color: '#5cffe8' },
+                        { offset: 1, color: 'rgba(0,229,255,0.28)' }
+                    ])
+                }
+            }
+        }]
+    });
+}
+
+function renderSoilDoughnut(pairs) {
+    var c = charts.soil;
+    c.clear();
+    if (!pairs.length) { c.setOption(emptyOption('暂无土壤数据')); return; }
+
+    var total = pairs.reduce(function (s, p) { return s + p.value; }, 0);
+
+    c.setOption({
+        tooltip: $.extend({ trigger: 'item', formatter: '{b}<br/>{c} 块（{d}%）' }, tipStyle()),
+        legend: {
+            bottom: 2, left: 'center',
+            itemWidth: 9, itemHeight: 9, itemGap: 14,
+            textStyle: { color: '#9cc4e0', fontSize: 12 }
+        },
+        color: PALETTE,
+        graphic: [
+            {
+                type: 'text', left: 'center', top: '34%',
+                style: { text: String(total), fill: '#eaf9ff', fontSize: 30, fontWeight: 'bold', textAlign: 'center' }
+            },
+            {
+                type: 'text', left: 'center', top: '48%',
+                style: { text: '地块总数', fill: '#6c93b8', fontSize: 12, textAlign: 'center' }
+            }
+        ],
+        series: [{
+            type: 'pie',
+            radius: ['46%', '64%'],
+            center: ['50%', '42%'],
+            itemStyle: {
+                borderColor: '#061428', borderWidth: 2,
+                shadowBlur: 12, shadowColor: 'rgba(0,229,255,0.3)'
+            },
+            label: { show: false },
+            labelLine: { show: false },
+            emphasis: {
+                label: { show: true, color: '#ffffff', fontSize: 13, fontWeight: 'bold', formatter: '{b} {c}块' },
+                itemStyle: { shadowBlur: 22, shadowColor: 'rgba(0,229,255,0.8)' }
+            },
+            data: pairs
+        }]
+    });
+}
+
+// ====== 地图 ======
+var screenMap = null;
+var plotLayer = null;
+var mapFitted = false;
+var mapInfoDefault = '加载中...';
+
+// 协议相对地址：本地 http 页面走 http 瓦片，作品集站点 https 页面自动走 https，
+// 避免 HTTPS 页面加载 HTTP 瓦片被浏览器按混合内容拦截
+function tiandituUrl(layer) {
+    return '//t0.tianditu.gov.cn/' + layer + '_w/wmts?SERVICE=WMTS&REQUEST=GetTile' +
+        '&VERSION=1.0.0&LAYER=' + layer + '&STYLE=default&TILEMATRIXSET=w' +
+        '&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=' + SCREEN_CONFIG.tiandituToken;
+}
+
+function setMapInfo(text) {
+    var el = document.getElementById('mapInfo');
+    if (el) { el.textContent = text; }
+}
+
+function initMap() {
+    var el = document.getElementById('screenMap');
+    if (!el || typeof L === 'undefined') { return; }
+
+    screenMap = L.map(el, {
+        center: SCREEN_CONFIG.mapCenter,
+        zoom: SCREEN_CONFIG.mapZoom,
+        zoomControl: false
+    });
+
+    L.control.zoom({ position: 'bottomright' }).addTo(screenMap);
+
+    // 卫星底图：交给 CSS 做暗化处理
+    L.tileLayer(tiandituUrl('img'), {
+        maxZoom: 18,
+        attribution: '© 天地图'
+    }).addTo(screenMap);
+
+    // 注记层单独一个 pane，避免被暗化滤镜压暗
+    screenMap.createPane('labelPane');
+    var labelPane = screenMap.getPane('labelPane');
+    labelPane.style.zIndex = 250;
+    labelPane.style.pointerEvents = 'none';
+    L.tileLayer(tiandituUrl('cia'), { maxZoom: 18, pane: 'labelPane' }).addTo(screenMap);
+
+    L.DomUtil.addClass(screenMap.getContainer(), 'map-tiles-dark');
+
+    plotLayer = L.layerGroup().addTo(screenMap);
+    setTimeout(function () { screenMap.invalidateSize(); }, 80);
+}
+
+function tooltipHtml(p) {
+    return '<b>' + esc(p.plotName || '未命名地块') + '</b><br>' +
+        '作物：' + esc(p.currentCrop || '—') + '<br>' +
+        '土壤：' + esc(p.soilType || '—') + '<br>' +
+        '地区：' + esc(p.region || '—') + '<br>' +
+        '面积：' + esc(p.area != null ? p.area : '—') + ' 亩';
+}
+
+function renderPlots(plots) {
+    if (!plotLayer) { return; }
+    plotLayer.clearLayers();
+
+    var count = 0;
+    var bounds = L.latLngBounds();
+
+    (plots || []).forEach(function (p) {
+        var geo;
+        try {
+            geo = (typeof p.coordinates === 'string') ? JSON.parse(p.coordinates) : p.coordinates;
+        } catch (e) {
+            return;
+        }
+        if (!geo) { return; }
+
+        var style = {
+            color: '#00e5ff',
+            weight: 2,
+            opacity: 0.95,
+            fillColor: '#00e5ff',
+            fillOpacity: 0.14,
+            className: 'plot-shape'
+        };
+
+        var layer = null;
+        try {
+            if (geo.shapeType === 'polygon' && geo.latlngs) {
+                layer = L.polygon(geo.latlngs, style);
+            } else if (geo.shapeType === 'circle' && geo.center) {
+                layer = L.circle(geo.center, $.extend({ radius: geo.radius }, style));
+            }
+        } catch (e) {
+            return;
+        }
+        if (!layer) { return; }
+
+        count++;
+        try { bounds.extend(layer.getBounds()); } catch (e) { /* 几何无效则跳过视野统计 */ }
+
+        layer.bindTooltip(tooltipHtml(p), {
+            className: 'plot-tip',
+            direction: 'top',
+            sticky: true,
+            opacity: 1
+        });
+
+        layer.on('mouseover', function () {
+            this.setStyle({ color: '#5cffe8', weight: 3, fillOpacity: 0.4 });
+            setMapInfo((p.plotName || '未命名地块') + ' · ' + (p.currentCrop || '—') +
+                (p.area != null ? ' · ' + p.area + ' 亩' : ''));
+        });
+        layer.on('mouseout', function () {
+            this.setStyle({ color: '#00e5ff', weight: 2, fillOpacity: 0.14 });
+            setMapInfo(mapInfoDefault);
+        });
+
+        layer.addTo(plotLayer);
+    });
+
+    mapInfoDefault = count ? ('共 ' + count + ' 个地块') : '暂无地块数据';
+    setMapInfo(mapInfoDefault);
+
+    // 只在首次有数据时定位视野，避免自动刷新打断用户的手动缩放
+    if (count && !mapFitted && bounds.isValid()) {
+        try {
+            screenMap.fitBounds(bounds, { padding: [26, 26] });
+            mapFitted = true;
+        } catch (e) { /* 视野设置失败不影响渲染 */ }
+    }
+}
+
+// ====== 列表渲染 ======
+function placeholderHtml(msg, icon) {
+    return '<div class="placeholder"><i class="iconfont">' + (icon || '&#xe6b6;') + '</i>' +
+        '<div>' + esc(msg) + '</div></div>';
+}
+
+function fmtTicketTime(r) {
+    var raw = String((r && (r.timestamp || r.generate_time)) || '');
+    var d = raw.replace(/\D/g, '');
+    if (d.length >= 12) {
+        return d.substr(0, 4) + '-' + d.substr(4, 2) + '-' + d.substr(6, 2) +
+            ' ' + d.substr(8, 2) + ':' + d.substr(10, 2);
+    }
+    return raw || '--';
+}
+
+function renderTickets(reports) {
+    var box = document.getElementById('ticketList');
+    document.getElementById('ticketCount').textContent = '共 ' + reports.length + ' 条';
+
+    if (!reports.length) {
+        box.innerHTML = placeholderHtml('暂无巡田工单', '&#xe6a2;');
+        return;
+    }
+
+    var html = '';
+    // 三列排布，面板高度只够放 3 行
+    reports.slice(0, 9).forEach(function (r) {
+        var count = Number(r.total_anomaly_count) || 0;
+        var level = count >= 5 ? 'high' : (count >= 2 ? 'medium' : 'low');
+        var levelText = count >= 5 ? '高风险' : (count >= 2 ? '中风险' : '低风险');
+        html += '<div class="ticket">' +
+            '<span class="dot ' + level + '"></span>' +
+            '<div class="info">' +
+            '<div class="name">巡田工单 ' + esc(fmtTicketTime(r)) + '</div>' +
+            '<div class="meta">发现 ' + count + ' 个异常区域</div>' +
+            '</div>' +
+            '<span class="badge ' + level + '">' + levelText + '</span>' +
+            '</div>';
+    });
+    box.innerHTML = html;
+}
+
+// 接口返回的日期是 MMDD（如 1028），与 year 拼成可读日期
+function fmtNdviDate(year, date) {
+    var d = String(date || '');
+    if (!year) { return d; }
+    if (d.length < 4) { return d ? year + ' ' + d : String(year); }
+    return year + '-' + d.slice(0, 2) + '-' + d.slice(2, 4);
+}
+
+function renderImages(files) {
+    var box = document.getElementById('imageList');
+    var items = (files || []).map(function (f) {
+        if (typeof f === 'string') { return { label: f, tag: '' }; }
+        var label = f.filename || f.name || '';
+        if (f.regionName) { label = f.regionName + ' · ' + fmtNdviDate(f.year, f.date); }
+        return { label: label, tag: f.year || '' };
+    }).filter(function (it) { return it.label; });
+
+    document.getElementById('imageCount').textContent = '共 ' + items.length + ' 份';
+
+    if (!items.length) {
+        box.innerHTML = placeholderHtml('暂无遥感影像', '&#xe6a8;');
+        resetAutoScroll();
+        return;
+    }
+
+    var html = '';
+    items.slice(0, 20).forEach(function (it, i) {
+        html += '<div class="img-item">' +
+            '<i class="iconfont">&#xe6a8;</i>' +
+            '<span class="fname">' + esc(it.label) + '</span>' +
+            '<span class="tag">' + (i === 0 ? '最新' : esc(it.tag)) + '</span>' +
+            '</div>';
+    });
+    box.innerHTML = html;
+    resetAutoScroll();
+}
+
+// ====== 列表自动滚动 ======
+// 工单改为全宽三列铺满，不需要滚动；只有右侧影像档案是单列长列表
+function resetAutoScroll() {
+    ['imageScroll'].forEach(function (id) {
+        var box = document.getElementById(id);
+        if (scrollTimers[id]) {
+            clearInterval(scrollTimers[id]);
+            scrollTimers[id] = null;
+        }
+        if (!box) { return; }
+        box.scrollTop = 0;
+        if (!SCREEN_CONFIG.autoScrollSpeed) { return; }
+
+        scrollTimers[id] = setInterval(function () {
+            if (box.scrollHeight <= box.clientHeight + 2) { return; }
+            box.scrollTop += SCREEN_CONFIG.autoScrollSpeed;
+            if (box.scrollTop + box.clientHeight >= box.scrollHeight) {
+                box.scrollTop = 0;
+            }
+        }, 40);
+    });
+}
+
+// ====== 数据加载 ======
+function loadOverview() {
+    $.ajax({
+        url: API_BASE + '/admin/dashboard/overview',
+        headers: authHeaders(),
+        dataType: 'json',
+        success: function (res) {
+            track('java', true);
+            var d = (res && res.data) ? res.data : (res || {});
+            setKpi('kpiPlots', d.plotCount, 0);
+            setKpi('kpiArea', d.totalArea, 1);
+            setKpi('kpiPunch', d.punchCount, 0);
+        },
+        error: function () {
+            track('java', false);
+            setKpi('kpiPlots', null);
+            setKpi('kpiArea', null);
+            setKpi('kpiPunch', null);
+        }
+    });
+}
+
+function loadPlotStats() {
+    $.ajax({
+        url: API_BASE + '/admin/dashboard/plot-stats',
+        headers: authHeaders(),
+        dataType: 'json',
+        success: function (res) {
+            var s = (res && res.data) ? res.data : (res || {});
+            renderCropRose(toPairs(s.byCrop));
+            renderRegionBar(toPairs(s.byRegion));
+            renderSoilDoughnut(toPairs(s.bySoil));
+        },
+        error: function () {
+            // 降级：直接取地块列表自行统计
+            $.ajax({
+                url: API_BASE + '/admin/plots',
+                headers: authHeaders(),
+                dataType: 'json',
+                success: function (data) {
+                    var plots = Array.isArray(data) ? data : ((data && data.data) || []);
+                    renderCropRose(fromPlots(plots, 'currentCrop'));
+                    renderRegionBar(fromPlots(plots, 'region'));
+                    renderSoilDoughnut(fromPlots(plots, 'soilType'));
+                },
+                error: function () {
+                    renderCropRose([]);
+                    renderRegionBar([]);
+                    renderSoilDoughnut([]);
+                }
+            });
+        }
+    });
+}
+
+function loadPlots() {
+    $.ajax({
+        url: API_BASE + '/admin/plots',
+        headers: authHeaders(),
+        dataType: 'json',
+        success: function (data) {
+            var plots = Array.isArray(data) ? data : ((data && data.data) || []);
+            renderPlots(plots);
+        },
+        error: function () {
+            mapInfoDefault = '地块数据未连接';
+            setMapInfo(mapInfoDefault);
+        }
+    });
+}
+
+function loadPatrolReports() {
+    $.ajax({
+        url: SCREEN_CONFIG.flaskBase + '/xuntian/reports',
+        dataType: 'json',
+        success: function (data) {
+            track('flask', true);
+            var reports = Array.isArray(data) ? data : [];
+            setKpi('kpiAnomaly', reports.length ? (Number(reports[0].total_anomaly_count) || 0) : 0, 0);
+            setKpi('kpiTickets', reports.length, 0);
+            renderTickets(reports);
+        },
+        error: function () {
+            track('flask', false);
+            setKpi('kpiAnomaly', null);
+            setKpi('kpiTickets', null);
+            document.getElementById('ticketCount').textContent = '--';
+            document.getElementById('ticketList').innerHTML = placeholderHtml('巡田工单服务未连接', '&#xe6a2;');
+            resetAutoScroll();
+        }
+    });
+}
+
+// 影像按 ./ndvi_files/<region>/ 分目录存放，不带 region 只会扫根目录而返回空数组，
+// 因此按地区逐个拉取后合并（与 admin-patrol.html 的取数方式一致）
+function loadNdviList() {
+    var regions = SCREEN_CONFIG.regions || [];
+    if (!regions.length) { return; }
+
+    var merged = [];
+    var done = 0;
+    var failed = 0;
+
+    function finish() {
+        done++;
+        if (done < regions.length) { return; }
+
+        var ok = done - failed;
+        if (!ok) {
+            setKpi('kpiImages', null);
+            document.getElementById('imageCount').textContent = '--';
+            document.getElementById('imageList').innerHTML = placeholderHtml('遥感影像服务未连接', '&#xe6a8;');
+            resetAutoScroll();
+            return;
+        }
+
+        merged.sort(function (a, b) {
+            return (b.year + b.date).localeCompare(a.year + a.date);
+        });
+        setKpi('kpiImages', merged.length, 0);
+        renderImages(merged);
+    }
+
+    regions.forEach(function (r) {
+        $.ajax({
+            url: SCREEN_CONFIG.flaskBase + '/admin/ndvilist',
+            data: { region: r.id },
+            dataType: 'json',
+            success: function (data) {
+                var list = Array.isArray(data) ? data : [];
+                list.forEach(function (f) {
+                    merged.push({
+                        regionName: r.name,
+                        year: f.year || '',
+                        date: f.date || '',
+                        filename: f.filename || ''
+                    });
+                });
+                track('flask', true);
+                finish();
+            },
+            error: function () {
+                failed++;
+                track('flask', false);
+                finish();
+            }
+        });
+    });
+}
+
+function loadAll() {
+    SRC.javaTotal = 0;
+    SRC.javaFail = 0;
+    SRC.flaskTotal = 0;
+    SRC.flaskFail = 0;
+    updateStatus();
+
+    loadOverview();
+    loadPlotStats();
+    loadPlots();
+    loadPatrolReports();
+    loadNdviList();
+}
+
+// ====== 全屏 ======
+function toggleFullscreen() {
+    if (document.fullscreenElement) {
+        if (document.exitFullscreen) { document.exitFullscreen(); }
+    } else {
+        var el = document.documentElement;
+        var req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+        if (req) { req.call(el); }
+    }
+}
+
+function resizeAll() {
+    fitStage();
+    Object.keys(charts).forEach(function (k) { charts[k].resize(); });
+    if (screenMap) { screenMap.invalidateSize(); }
+}
+
+function onFullscreenChange() {
+    document.body.classList.toggle('is-fullscreen', !!document.fullscreenElement);
+    resizeAll();
+}
+
+// ====== 初始化 ======
+$(function () {
+    fitStage();
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    initCharts();
+    initMap();
+    loadAll();
+
+    if (SCREEN_CONFIG.refreshInterval > 0) {
+        setInterval(loadAll, SCREEN_CONFIG.refreshInterval);
+    }
+
+    document.getElementById('btnFullscreen').addEventListener('click', toggleFullscreen);
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+    window.addEventListener('resize', resizeAll);
+});
+</script>
+</body>
+</html>

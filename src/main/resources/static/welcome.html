@@ -91,6 +91,10 @@
         <div class="quick-actions">
             <div class="title"><i class="fa fa-th-large"></i> 快捷入口</div>
             <div class="action-grid">
+                <a class="action-item" onclick="window.open('admin-screen.html')">
+                    <div class="icon bg-blue"><i class="fa fa-desktop"></i></div>
+                    <div class="name">数据大屏</div>
+                </a>
                 <a class="action-item" onclick="parent.xadmin && parent.xadmin.add_tab && parent.xadmin.add_tab('地块列表','admin-plots-list.html',false,'adminTab')">
                     <div class="icon bg-blue"><i class="fa fa-list"></i></div>
                     <div class="name">地块管理</div>
@@ -245,24 +249,54 @@ function loadStats() {
     });
 
     // 3. 遥感影像数据
-    $.ajax({
-        url: FLASK_BASE + '/admin/ndvilist',
-        success: function(data) {
-            var files = Array.isArray(data) ? data : [];
-            if (files.length > 0) {
-                // 获取最新日期
-                var dates = files.map(function(f) { return f.filename || ''; }).sort().reverse();
-                var latest = dates[0];
-                // 提取日期部分
-                var match = latest.match(/(\d{4}-\d{2}-\d{2})/);
-                document.getElementById('statLatestImage').textContent = match ? match[1] : files.length + '份';
-            } else {
-                document.getElementById('statLatestImage').textContent = '0';
-            }
-        },
-        error: function() {
-            document.getElementById('statLatestImage').textContent = '--';
+    loadLatestNdvi();
+}
+
+// ====== 遥感影像：取全部地区中最新的一期 ======
+// 影像按 ./ndvi_files/<region>/ 分目录存放，不带 region 只会扫根目录而返回空数组，
+// 因此按地区逐个拉取（与 admin-patrol.html 的取数方式一致）
+var NDVI_REGIONS = ['guyuan', 'zhangbei', 'ninghe'];
+
+function loadLatestNdvi() {
+    var latestKey = '';
+    var latestText = '';
+    var total = 0;
+    var done = 0;
+    var failed = 0;
+
+    function finish() {
+        done++;
+        if (done < NDVI_REGIONS.length) { return; }
+        var el = document.getElementById('statLatestImage');
+        if (!total && failed === NDVI_REGIONS.length) {
+            el.textContent = '--';
+        } else {
+            el.textContent = latestText || '0';
         }
+    }
+
+    NDVI_REGIONS.forEach(function(region) {
+        $.ajax({
+            url: FLASK_BASE + '/admin/ndvilist',
+            data: { region: region },
+            success: function(data) {
+                var files = Array.isArray(data) ? data : [];
+                total += files.length;
+                files.forEach(function(f) {
+                    var date = String(f.date || '');
+                    var key = String(f.year || '') + date;
+                    if (key > latestKey) {
+                        latestKey = key;
+                        latestText = f.year + '-' + date.slice(0, 2) + '-' + date.slice(2, 4);
+                    }
+                });
+                finish();
+            },
+            error: function() {
+                failed++;
+                finish();
+            }
+        });
     });
 }
 
