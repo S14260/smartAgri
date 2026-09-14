@@ -32,3 +32,28 @@ src/main/resources/application.yml
 ### VS Code ###
 .vscode/
 node_modules
+
+### Claude Code 本机配置 ###
+.claude/
+
+### Python ###
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+venv/
+.venv/
+
+### 运行时产物 ###
+*.pid
+*.log
+
+### 模型权重：只保留推理必需的 2 个，其余不入库 ###
+*.pt
+!api/farm_field_detection/best.pt
+!api/farm_field_detection/runs/segment/field_segmentation/weights/best.pt
+
+### YOLO 训练中间产物（体积大；需要时本地重跑 train.py 生成）###
+api/farm_field_detection/runs/**/*.jpg
+api/farm_field_detection/runs/**/*.png
+api/farm_field_detection/runs/**/*.json

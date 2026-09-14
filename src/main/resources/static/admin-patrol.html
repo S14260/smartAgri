@@ -54,8 +54,8 @@
                 </div>
             </div>
 
-            <!-- 左侧面板：地块列表 -->
-            <div class="side-panel left-panel" id="leftPanel">
+            <!-- 左侧面板：地块列表（默认折叠，点击左侧把手展开） -->
+            <div class="side-panel left-panel collapsed" id="leftPanel">
                 <div class="panel-tabs">
                     <a class="active" data-tab="plots" onclick="switchTab(this, 'plots')">地块列表</a>
                     <a data-tab="anomalies" onclick="switchTab(this, 'anomalies')">异常记录</a>
@@ -68,8 +68,8 @@
                 </div>
             </div>
             <!-- 左侧面板折叠按钮 -->
-            <div class="panel-toggle-btn" id="leftPanelToggle" onclick="toggleLeftPanel()" title="折叠/展开地块列表">
-                <i class="fa fa-angle-left" id="leftPanelToggleIcon"></i>
+            <div class="panel-toggle-btn collapsed" id="leftPanelToggle" onclick="toggleLeftPanel()" title="折叠/展开地块列表">
+                <i class="fa fa-angle-right" id="leftPanelToggleIcon"></i>
             </div>
 
             <!-- 右侧面板：地块详情 -->

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>AI 圈地 Demo - 遥感影像</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
+  <style>
+    #map { width: 100%; height: 800px; }
+
+    /* 按钮样式 */
+    #btn, #exportBtn {
+      position: absolute;
+      top: 10px;
+      padding: 6px 12px;
+      z-index: 1000;
+    }
+
+    /* 按钮位置 */
+    #btn { left: 120px; }
+    #exportBtn { left: 260px; }
+
+    /* 调整编辑点大小 */
+    .leaflet-editing-icon {
+      width: 8px !important;
+      height: 8px !important;
+      margin-left: -4px;
+      margin-top: -4px;
+      border-radius: 50%;
+      border: 2px solid #fff;
+      background-color: red;
+    }
+  </style>
+</head>
+<body>
+  <button id="btn">AI 自动圈地</button>
+  <button id="exportBtn">导出 GeoJSON</button>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+  <script src="https://unpkg.com/leaflet-image/leaflet-image.js"></script>
+
+  <script>
+    const tk = "19fc987939ebbcbcb3f0954ab6cf75be";
+
+    const map = L.map("map").setView([39.1, 117.1], 13);
+
+    // 天地图影像和注记
+    L.tileLayer(
+      "http://t{s}.tianditu.gov.cn/img_w/wmts?" +
+      "service=wmts&request=GetTile&version=1.0.0&LAYER=img&STYLE=default&TILEMATRIXSET=w&" +
+      "TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&FORMAT=tiles&tk=" + tk,
+      { subdomains: "01234567", maxZoom: 18 }
+    ).addTo(map);
+    L.tileLayer(
+      "http://t{s}.tianditu.gov.cn/cia_w/wmts?" +
+      "service=wmts&request=GetTile&version=1.0.0&LAYER=cia&STYLE=default&TILEMATRIXSET=w&" +
+      "TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&FORMAT=tiles&tk=" + tk,
+      { subdomains: "01234567", maxZoom: 18 }
+    ).addTo(map);
+
+    const drawnItems = new L.FeatureGroup();
+    map.addLayer(drawnItems);
+
+    const drawControl = new L.Control.Draw({
+      edit: { featureGroup: drawnItems },
+      draw: false
+    });
+    map.addControl(drawControl);
+
+    document.getElementById("btn").onclick = function () {
+      drawnItems.clearLayers();
+
+      leafletImage(map, function(err, canvas) {
+        if (err) { alert("截图失败"); return; }
+
+        canvas.toBlob(async function(blob) {
+          const bounds = map.getBounds();
+          const payload = new FormData();
+          payload.append("file", blob, "screenshot.jpg");
+          payload.append("bounds", JSON.stringify([
+            [bounds.getNorth(), bounds.getWest()],
+            [bounds.getSouth(), bounds.getEast()]
+          ]));
+
+          try {
+            const res = await fetch("http://localhost:8000/predict", { method: "POST", body: payload });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+
+            if (data.polygons) {
+              data.polygons.forEach(latlngs => {
+                const polygon = L.polygon(latlngs, { color: "red", fillOpacity: 0.3 });
+                drawnItems.addLayer(polygon);
+              });
+
+              drawControl._toolbars.edit._modes.edit.handler.enable();
+            } else if (data.error) {
+              alert("AI预测出错: " + data.error);
+            }
+          } catch(err) {
+            alert("请求失败: " + err.message);
+          }
+        }, "image/jpeg", 0.7);
+      });
+    };
+
+    document.getElementById("exportBtn").onclick = function () {
+      const geojson = { type: "FeatureCollection", features: [] };
+      drawnItems.eachLayer(layer => {
+        if (layer instanceof L.Polygon) {
+          const coords = layer.getLatLngs()[0].map(ll => [ll.lng, ll.lat]);
+          geojson.features.push({
+            type: "Feature",
+            geometry: { type: "Polygon", coordinates: [coords] },
+            properties: {}
+          });
+        }
+      });
+      const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "polygons.geojson";
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+  </script>
+</body>
+</html>
