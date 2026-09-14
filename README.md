@@ -260,11 +260,36 @@ export LLM_API_KEY=sk-xxx
 
 ### 4. 启动 Flask 微服务
 
+Python 计算层是**两个独立服务**，按需启动：
+
+**4.1 遥感 / 巡田服务（端口 8000）**
+
 ```bash
-cd api
+cd api/ndvi
 pip install -r requirements.txt
 python app.py
 ```
+
+**4.2 农田分割检测服务（YOLO）**
+
+```bash
+cd api/farm_field_detection
+pip install ultralytics flask
+python app.py
+```
+
+> ⚠️ 该目录下的 `requirements.txt` 目前是空文件，依赖清单待补全（至少需要
+> `ultralytics`、`flask`）。本地已有一份可跑的虚拟环境 `api/farm_field_detection/venv`，
+> 可在那里执行 `pip freeze > requirements.txt` 补上。
+
+> ⚠️ **服务地址是硬编码的**。代码里默认指向部署服务器 `123.56.228.32`，本地调试需要改：
+> - `api/ndvi/app.py` 的 `NDVI_BASE_URL`、`XUNTIAN_RESULT_BASE`
+> - 前端 `admin-patrol.html` 等页面的 `FLASK_BASE`
+
+> 📦 **模型权重**。仓库只保留推理必需的 `api/farm_field_detection/best.pt` 和训练成果
+> `api/farm_field_detection/runs/segment/field_segmentation/weights/best.pt`。
+> 训练中间产物（批次可视化图、多边形 json）和未被代码引用的预训练底模未入库；
+> 需要时重跑 `train.py` 生成，底模 `yolo11s-seg.pt` 由 ultralytics 自动下载。
 
 ### 5. 访问
 
